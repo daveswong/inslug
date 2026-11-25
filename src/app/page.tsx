@@ -4,6 +4,7 @@ import { getSettings } from "@/lib/settings";
 import { isLoggedIn } from "@/lib/auth";
 import SiteFooter from "@/components/SiteFooter";
 import { formatDate, postDisplayDate, postFlags } from "@/lib/post-utils";
+import { getT } from "@/lib/i18n";
 
 // new 标签依赖当前时间，文章也随时会变，必须动态渲染
 export const dynamic = "force-dynamic";
@@ -13,6 +14,7 @@ type Props = {
 };
 
 export default async function Home({ searchParams }: Props) {
+  const t = await getT();
   const { page: pageParam, tag } = await searchParams;
   const settings = await getSettings();
   const loggedIn = await isLoggedIn();
@@ -59,11 +61,12 @@ export default async function Home({ searchParams }: Props) {
             className="search-input"
             type="search"
             name="q"
-            placeholder="搜索文章"
-            aria-label="搜索文章"
+            placeholder={t("搜索文章")}
+            aria-label={t("搜索文章")}
           />
           <button className="btn btn-outline-light btn-plain" type="submit">
-            搜索
+            
+            {t("搜索")}
           </button>
         </form>
         {tags.length > 0 && (
@@ -78,14 +81,14 @@ export default async function Home({ searchParams }: Props) {
       </section>
 
       <section className="section">
-        <h2 className="section-title">{tag ? `标签：${tag}` : "更新"}</h2>
+        <h2 className="section-title">{tag ? `标签：${tag}` : t("更新")}</h2>
         {items.length === 0 ? (
           <p className="notice">
-            {tag ? "这个标签下还没有文章。" : "还没有文章。"}
+            {tag ? t("这个标签下还没有文章。") : t("还没有文章。")}
             {tag && (
               <>
                 {" "}
-                <a href="/">查看全部</a>
+                <a href="/">{t("查看全部")}</a>
               </>
             )}
           </p>
@@ -110,11 +113,11 @@ export default async function Home({ searchParams }: Props) {
         )}
         {totalPages > 1 && (
           <nav className="pager">
-            {page > 1 ? <a href={pageHref(page - 1)}>上一页</a> : <span className="pager-off">上一页</span>}
+            {page > 1 ? <a href={pageHref(page - 1)}>{t("上一页")}</a> : <span className="pager-off">{t("上一页")}</span>}
             <span className="pager-index">
               {page} / {totalPages}
             </span>
-            {page < totalPages ? <a href={pageHref(page + 1)}>下一页</a> : <span className="pager-off">下一页</span>}
+            {page < totalPages ? <a href={pageHref(page + 1)}>{t("下一页")}</a> : <span className="pager-off">{t("下一页")}</span>}
           </nav>
         )}
       </section>

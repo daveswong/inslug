@@ -4,25 +4,27 @@ import { isLoggedIn } from "@/lib/auth";
 import { listPasskeys } from "@/lib/passkey";
 import { clientKey } from "@/lib/rate-limit";
 import { mailReady, requestPasskeyChange } from "@/lib/change-request";
+import { getT } from "@/lib/i18n";
 
 export async function POST(req: Request) {
+  const t = await getT();
   if (!(await isLoggedIn())) {
-    return NextResponse.json({ error: "请先登录" }, { status: 401 });
+    return NextResponse.json({ error: t("请先登录") }, { status: 401 });
   }
 
   const body = (await req.json().catch(() => ({}))) as { credentialId?: string };
   const credentialId = String(body.credentialId ?? "");
   if (!credentialId) {
-    return NextResponse.json({ error: "缺少凭据编号" }, { status: 400 });
+    return NextResponse.json({ error: t("缺少凭据编号") }, { status: 400 });
   }
 
   const all = await listPasskeys();
   if (!all.some((key) => key.credentialId === credentialId)) {
-    return NextResponse.json({ error: "没有找到这把 Passkey" }, { status: 404 });
+    return NextResponse.json({ error: t("没有找到这把 Passkey") }, { status: 404 });
   }
   if (!(await mailReady())) {
     return NextResponse.json(
-      { error: "还没配好邮件确认，暂时不能删除 Passkey" },
+      { error: t("还没配好邮件确认，暂时不能删除 Passkey") },
       { status: 503 }
     );
   }

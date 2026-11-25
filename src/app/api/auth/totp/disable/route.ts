@@ -4,24 +4,26 @@ import { isLoggedIn } from "@/lib/auth";
 import { getAuth } from "@/lib/credentials";
 import { clientKey } from "@/lib/rate-limit";
 import { mailReady, requestTotpChange } from "@/lib/change-request";
+import { getT } from "@/lib/i18n";
 
 export async function POST(req: Request) {
+  const t = await getT();
   if (!(await isLoggedIn())) {
-    return NextResponse.json({ error: "请先登录" }, { status: 401 });
+    return NextResponse.json({ error: t("请先登录") }, { status: 401 });
   }
 
   let auth;
   try {
     auth = await getAuth();
   } catch {
-    return NextResponse.json({ error: "数据库暂时不可用，稍后再试" }, { status: 503 });
+    return NextResponse.json({ error: t("数据库暂时不可用，稍后再试") }, { status: 503 });
   }
   if (!auth.totpSecret) {
-    return NextResponse.json({ error: "现在没有绑定验证器" }, { status: 400 });
+    return NextResponse.json({ error: t("现在没有绑定验证器") }, { status: 400 });
   }
   if (!(await mailReady())) {
     return NextResponse.json(
-      { error: "还没配好邮件确认，暂时不能解绑" },
+      { error: t("还没配好邮件确认，暂时不能解绑") },
       { status: 503 }
     );
   }

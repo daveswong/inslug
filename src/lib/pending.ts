@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { getDb } from "./mongodb";
+import { getT } from "@/lib/i18n";
 
 /**
  * 待确认的凭据变更。
@@ -50,6 +51,7 @@ export async function createPendingChange(input: {
   ip: string;
   ua: string;
 }): Promise<{ token: string } | { error: string }> {
+  const t = await getT();
   const col = await collection();
   const now = Date.now();
 
@@ -57,7 +59,7 @@ export async function createPendingChange(input: {
     createdAt: { $gte: new Date(now - RATE_WINDOW_MS) },
   });
   if (recent >= RATE_MAX) {
-    return { error: "确认邮件发得太频繁，请 10 分钟后再试" };
+    return { error: t("确认邮件发得太频繁，请 10 分钟后再试") };
   }
 
   const token = randomBytes(32).toString("base64url");

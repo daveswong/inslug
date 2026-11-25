@@ -1,3 +1,4 @@
+import { getT } from "@/lib/i18n";
 /**
  * 发信：直接用 Resend 的 HTTP 接口，一个 fetch 就够，不引 SMTP 库。
  *
@@ -28,8 +29,9 @@ export async function sendMail(input: {
   text: string;
   html: string;
 }): Promise<void> {
+  const t = await getT();
   const cfg = mailConfig();
-  if (!cfg) throw new Error("未配置发信服务（RESEND_API_KEY / RESEND_FROM）");
+  if (!cfg) throw new Error(t("未配置发信服务（RESEND_API_KEY / RESEND_FROM）"));
 
   const res = await fetch(RESEND_ENDPOINT, {
     method: "POST",

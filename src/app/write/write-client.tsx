@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import type { Block } from "@blocknote/core";
 import type { Visibility } from "@/lib/types";
 import { deletePostAction, savePost } from "./actions";
+import { useT } from "@/components/i18n-provider";
 
 // BlockNote 依赖浏览器 API，关闭 SSR
 const BlockEditor = dynamic(() => import("@/components/BlockEditor"), {
@@ -22,12 +23,6 @@ type Props = {
   availableTags: string[];
 };
 
-const VISIBILITY_OPTIONS: { value: Visibility; label: string }[] = [
-  { value: "public", label: "公开" },
-  { value: "private", label: "私有" },
-  { value: "draft", label: "草稿" },
-];
-
 export default function WriteClient({
   slug,
   initialTitle,
@@ -36,6 +31,12 @@ export default function WriteClient({
   initialVisibility,
   availableTags,
 }: Props) {
+  const t = useT();
+  const VISIBILITY_OPTIONS: { value: Visibility; label: string }[] = [
+    { value: "public", label: t("公开") },
+    { value: "private", label: t("私有") },
+    { value: "draft", label: t("草稿") },
+  ];
   const router = useRouter();
   const [title, setTitle] = useState(initialTitle);
   const [tags, setTags] = useState(initialTags);
@@ -63,12 +64,12 @@ export default function WriteClient({
 
   // 按钮文案跟着可见性走，一眼能看出这次保存会得到什么状态
   const saveLabel =
-    visibility === "draft" ? "保存草稿" : visibility === "private" ? "保存为私有" : "发布";
+    visibility === "draft" ? t("保存草稿") : visibility === "private" ? t("保存为私有") : t("发布");
 
   const handleSave = async () => {
     if (saving) return;
     setSaving(true);
-    setHint("保存中…");
+    setHint(t("保存中…"));
     const result = await savePost({
       slug,
       title,
@@ -89,9 +90,9 @@ export default function WriteClient({
   const handleDelete = async () => {
     if (!slug || deleting) return;
     // 删除不可撤销，必须先明确确认
-    if (!window.confirm("确定删除这篇文章？删除后无法恢复。")) return;
+    if (!window.confirm(t("确定删除这篇文章？删除后无法恢复。"))) return;
     setDeleting(true);
-    setHint("删除中…");
+    setHint(t("删除中…"));
     const result = await deletePostAction(slug);
     if (!result.ok) {
       setDeleting(false);
@@ -105,8 +106,8 @@ export default function WriteClient({
   return (
     <>
       <div className="write-bar">
-        <a href={slug ? `/posts/${slug}` : "/"}>← 返回</a>
-        <span className="notice">{slug ? "编辑文章" : "新建文章"}</span>
+        <a href={slug ? `/posts/${slug}` : "/"}>{t("← 返回")}</a>
+        <span className="notice">{slug ? t("编辑文章") : t("新建文章")}</span>
         <span className="write-save-hint">{hint}</span>
       </div>
 
@@ -115,8 +116,8 @@ export default function WriteClient({
         type="text"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        placeholder="文章标题"
-        aria-label="文章标题"
+        placeholder={t("文章标题")}
+        aria-label={t("文章标题")}
       />
 
       <div className="write-tags">
@@ -145,11 +146,12 @@ export default function WriteClient({
                 addTag();
               }
             }}
-            placeholder="新建标签后回车"
-            aria-label="新建标签"
+            placeholder={t("新建标签后回车")}
+            aria-label={t("新建标签")}
           />
           <button className="btn btn-outline-light btn-plain" type="button" onClick={addTag}>
-            添加
+            
+            {t("添加")}
           </button>
         </div>
       </div>
@@ -166,7 +168,7 @@ export default function WriteClient({
       {/* 先选可见性，按钮在它下面（都靠左），按钮文案跟着可见性变 */}
       <div className="write-actions">
         <div className="write-meta">
-          <span className="write-meta-label">可见性</span>
+          <span className="write-meta-label">{t("可见性")}</span>
           {VISIBILITY_OPTIONS.map((option) => (
             <button
               key={option.value}
@@ -196,7 +198,8 @@ export default function WriteClient({
             disabled={saving || deleting}
             onClick={handleDelete}
           >
-            删除这篇文章
+            
+            {t("删除这篇文章")}
           </button>
         )}
       </div>

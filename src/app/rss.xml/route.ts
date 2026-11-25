@@ -1,4 +1,5 @@
 // RSS 2.0：只输出 public 文章，最多 20 篇
+import { currentLocale } from "@/lib/i18n";
 import { listPosts } from "@/lib/posts";
 import { getSettings } from "@/lib/settings";
 import { siteOrigin } from "@/lib/site-url";
@@ -36,7 +37,7 @@ export async function GET() {
     <title>${xmlEscape(title)}</title>
     <link>${xmlEscape(origin)}</link>
     <description>${xmlEscape(description)}</description>
-    <language>zh-CN</language>
+    <language>${currentLocale()}</language>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
 ${itemsXml}
   </channel>

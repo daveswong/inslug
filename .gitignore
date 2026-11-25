@@ -38,3 +38,6 @@ TODO.md
 
 # 备份导出（含文章数据）
 /backups/
+
+# 界面语言开关（本地）
+config/locale.json

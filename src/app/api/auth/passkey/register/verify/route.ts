@@ -7,19 +7,21 @@ import { addPasskey, listPasskeys, rpConfig, toBase64Url } from "@/lib/passkey";
 import { isLoggedIn } from "@/lib/auth";
 import { clearPasskeyAddAuthorization, passkeyAddAllowed } from "@/lib/credentials";
 import { CHALLENGE_COOKIE } from "@/lib/session";
+import { getT } from "@/lib/i18n";
 
 export async function POST(req: Request) {
+  const t = await getT();
   if (!(await isLoggedIn())) {
-    return NextResponse.json({ error: "请先登录" }, { status: 401 });
+    return NextResponse.json({ error: t("请先登录") }, { status: 401 });
   }
   if (!(await passkeyAddAllowed())) {
-    return NextResponse.json({ error: "授权已过期，请重新申请" }, { status: 403 });
+    return NextResponse.json({ error: t("授权已过期，请重新申请") }, { status: 403 });
   }
 
   const jar = await cookies();
   const expectedChallenge = jar.get(CHALLENGE_COOKIE)?.value;
   if (!expectedChallenge) {
-    return NextResponse.json({ error: "验证已过期，请重试" }, { status: 400 });
+    return NextResponse.json({ error: t("验证已过期，请重试") }, { status: 400 });
   }
 
   const body = (await req.json().catch(() => ({}))) as {
@@ -27,7 +29,7 @@ export async function POST(req: Request) {
     name?: string;
   };
   if (!body.response) {
-    return NextResponse.json({ error: "缺少注册数据" }, { status: 400 });
+    return NextResponse.json({ error: t("缺少注册数据") }, { status: 400 });
   }
 
   const { rpID, origin } = rpConfig(req);
@@ -41,7 +43,7 @@ export async function POST(req: Request) {
     });
 
     if (!verification.verified || !verification.registrationInfo) {
-      return NextResponse.json({ error: "注册失败" }, { status: 400 });
+      return NextResponse.json({ error: t("注册失败") }, { status: 400 });
     }
 
     const { credential } = verification.registrationInfo;
@@ -56,6 +58,6 @@ export async function POST(req: Request) {
     await clearPasskeyAddAuthorization();
     return NextResponse.json({ ok: true, count: (await listPasskeys()).length });
   } catch {
-    return NextResponse.json({ error: "注册失败，请重试" }, { status: 400 });
+    return NextResponse.json({ error: t("注册失败，请重试") }, { status: 400 });
   }
 }

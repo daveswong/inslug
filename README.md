@@ -100,6 +100,17 @@ scripts/
 - **密钥类变量不在网页里填**：`MONGODB_URI`、`AUTH_SECRET`、`RECOVERY_TOKEN`、Resend key 都只能配在 Vercel 服务端。网页里填这些等于直接公开，且 Vercel 环境变量本来也无法由运行时写入。
 - 完全丢失凭据的兜底：删 `auth` 集合的 `admin` 文档解绑验证器，删 `passkeys` 集合清空 Passkey，然后从 `/setup` 重来。
 
+## 界面语言
+
+界面文案（按钮、提示、错误）支持中文 / 英文，**文章内容不翻译**。语言包在 `locales/zh-CN.json` 与 `locales/en.json`，键就是中文原文；缺翻译时自动回退到中文。
+
+切换只改一个开关：
+
+- 本地：`cp config/locale.example.json config/locale.json`，把 `locale` 改成 `"en"` 或 `"zh-CN"`
+- Vercel：加环境变量 `UI_LANGUAGE=en`（**优先级高于本地文件**）
+
+改完重新构建 / 部署生效。想加新语言就复制一份 `locales/en.json` 改成对应语言，再把开关指向新文件名（同时要在 `SUPPORTED_LOCALES` 里登记）。
+
 ## 环境变量与部署
 
 本地需要的配置都在 `config/database.json` 和 `.env.local`（两者都不提交），详见 `.env.example`。
@@ -116,6 +127,7 @@ Vercel 部署需要在 Project → Settings → Environment Variables 配置：
 | `BLOB_READ_WRITE_TOKEN` | Vercel Blob 读写令牌；store 必须是 **Public**（创建后不可改），否则正文图片读者看不到 |
 | `RESEND_API_KEY` | Resend 的 API key，用于发送「更换 / 解绑验证器」的确认邮件 |
 | `RESEND_FROM` | 发件人，形如 `inslog <no-reply@你的域名>`；域名需先在 Resend 验证（加 SPF/DKIM 记录） |
+| `UI_LANGUAGE` | 界面语言，`zh-CN` 或 `en`；不填走本地 `config/locale.json`，再不填默认中文 |
 
 > **换绑 / 解绑验证器**：登录后到 `/settings` 的「登录」一节，提交后会往「通知邮箱」发一封确认信，点开链接再确认一次才生效。生效后所有设备都需要重新登录。
 > 邮件相关的三个条件（`RESEND_API_KEY`、`RESEND_FROM`、设置页的通知邮箱）缺任一，这两个操作就会被禁用（首次绑定不受影响）。

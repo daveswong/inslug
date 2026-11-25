@@ -15,10 +15,12 @@ import { sealValue } from "@/lib/secret-box";
 import { verifyCode } from "@/lib/totp";
 import { clientKey } from "@/lib/rate-limit";
 import { mailReady, requestTotpChange } from "@/lib/change-request";
+import { getT } from "@/lib/i18n";
 
 export async function POST(req: Request) {
+  const t = await getT();
   if (!(await isLoggedIn())) {
-    return NextResponse.json({ error: "请先登录" }, { status: 401 });
+    return NextResponse.json({ error: t("请先登录") }, { status: 401 });
   }
 
   const body = (await req.json().catch(() => ({}))) as {
@@ -30,18 +32,18 @@ export async function POST(req: Request) {
 
   // secret 是 base32，长度太短说明不是我们发出去的
   if (!/^[A-Z2-7]{16,64}$/.test(secret)) {
-    return NextResponse.json({ error: "密钥格式不对，请重新生成" }, { status: 400 });
+    return NextResponse.json({ error: t("密钥格式不对，请重新生成") }, { status: 400 });
   }
 
   if (!verifyCode(secret, code, null).ok) {
-    return NextResponse.json({ error: "验证码不对，确认手机时间和内容后再试" }, { status: 401 });
+    return NextResponse.json({ error: t("验证码不对，确认手机时间和内容后再试") }, { status: 401 });
   }
 
   let auth;
   try {
     auth = await getAuth();
   } catch {
-    return NextResponse.json({ error: "数据库暂时不可用，稍后再试" }, { status: 503 });
+    return NextResponse.json({ error: t("数据库暂时不可用，稍后再试") }, { status: 503 });
   }
 
   const sealed = sealValue(secret);
@@ -56,7 +58,7 @@ export async function POST(req: Request) {
   // 换绑：先发确认信
   if (!(await mailReady())) {
     return NextResponse.json(
-      { error: "还没配好邮件确认，暂时不能更换验证器" },
+      { error: t("还没配好邮件确认，暂时不能更换验证器") },
       { status: 503 }
     );
   }

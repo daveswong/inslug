@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { I18nProvider } from "@/components/i18n-provider";
 import WriteFab from "@/components/WriteFab";
 import { isLoggedIn } from "@/lib/auth";
+import { getI18n } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
 import "./globals.css";
 
@@ -40,10 +42,10 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const loggedIn = await isLoggedIn();
+  const [loggedIn, i18n] = await Promise.all([isLoggedIn(), getI18n()]);
 
   return (
-    <html lang="zh-CN">
+    <html lang={i18n.locale}>
       <head>
         {/* 手动外观要在首次绘制前生效，避免深浅色闪一下 */}
         <script
@@ -53,8 +55,10 @@ export default async function RootLayout({
         />
       </head>
       <body>
-        <WriteFab visible={loggedIn} />
-        {children}
+        <I18nProvider dict={i18n.dict}>
+          <WriteFab visible={loggedIn} />
+          {children}
+        </I18nProvider>
       </body>
     </html>
   );

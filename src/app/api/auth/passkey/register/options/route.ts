@@ -6,15 +6,17 @@ import { listPasskeys, rpConfig } from "@/lib/passkey";
 import { isLoggedIn } from "@/lib/auth";
 import { passkeyAddAllowed } from "@/lib/credentials";
 import { CHALLENGE_COOKIE, COOKIE_OPTIONS } from "@/lib/session";
+import { getT } from "@/lib/i18n";
 
 export async function POST(req: Request) {
+  const t = await getT();
   if (!(await isLoggedIn())) {
-    return NextResponse.json({ error: "请先登录" }, { status: 401 });
+    return NextResponse.json({ error: t("请先登录") }, { status: 401 });
   }
   // 新增 Passkey 要过邮件确认：确认页开一个 10 分钟窗口，这里检查它
   if (!(await passkeyAddAllowed())) {
     return NextResponse.json(
-      { error: "请先到设置页申请绑定，点确认邮件里的链接后再回来完成" },
+      { error: t("请先到设置页申请绑定，点确认邮件里的链接后再回来完成") },
       { status: 403 }
     );
   }
@@ -26,7 +28,7 @@ export async function POST(req: Request) {
     rpName: "inslog",
     rpID,
     userName: "owner",
-    userDisplayName: "站长",
+    userDisplayName: t("站长"),
     attestationType: "none",
     excludeCredentials: passkeys.map((p) => ({ id: p.credentialId })),
     authenticatorSelection: {
