@@ -321,6 +321,55 @@ a:hover {
   margin-top: 1rem;
 }
 
+.image-field-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.image-field-row input {
+  flex: 1 1 220px;
+  min-width: 180px;
+}
+
+.image-field-row .btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.field-hint {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.image-preview {
+  margin-top: 0.5rem;
+  border: 1px solid var(--line);
+  padding: 6px;
+  display: inline-block;
+  background: var(--surface);
+}
+
+.image-preview img {
+  display: block;
+  height: auto;
+}
+
+.image-preview-square img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+
+.image-preview-wide img {
+  width: 200px;
+  aspect-ratio: 1200 / 630;
+  object-fit: cover;
+}
+
 .totp-qr {
   width: 160px;
   height: 160px;

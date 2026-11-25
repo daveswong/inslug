@@ -4,6 +4,7 @@
 import { useActionState } from "react";
 import type { SettingsDoc } from "@/lib/types";
 import { saveSiteSettings, type SettingsState } from "./actions";
+import ImageField from "./image-field";
 import { useT } from "@/components/i18n-provider";
 
 const initialState: SettingsState = { status: "idle", message: "" };
@@ -32,22 +33,22 @@ export default function SiteForm({ settings }: { settings: SettingsDoc }) {
         <span className="field-label">{t("作者")}</span>
         <input name="author" defaultValue={settings.author} />
       </label>
-      <label className="field">
-        <span className="field-label">favicon</span>
-        <input
-          name="favicon"
-          defaultValue={settings.favicon}
-          placeholder={t("图片地址，留空用默认")}
-        />
-      </label>
-      <label className="field">
-        <span className="field-label">{t("分享图")}</span>
-        <input
-          name="ogImage"
-          defaultValue={settings.ogImage}
-          placeholder={t("链接分享时显示的图，留空不显示")}
-        />
-      </label>
+      <ImageField
+        name="favicon"
+        label="favicon"
+        value={settings.favicon}
+        ratio="square"
+        placeholder={t("图片地址，留空用默认")}
+        hint={t("Safari 不认 SVG 图标，用 PNG 或 ICO 更稳")}
+      />
+      <ImageField
+        name="ogImage"
+        label={t("分享图")}
+        value={settings.ogImage}
+        ratio="wide"
+        placeholder={t("图片地址，留空用默认渐变图标")}
+        hint={t("链接分享时显示的图，推荐 1200 × 630")}
+      />
 
       <h3 className="form-group">{t("列表与页脚")}</h3>
       <label className="field">

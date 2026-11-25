@@ -25,23 +25,35 @@ export async function generateMetadata(): Promise<Metadata> {
     ? [s.ogImage]
     : [new URL("/icon-color.png", siteUrl).toString()];
 
+  // 设置页填了就用填的，没填用仓库里的默认图标：
+  // 白底黑字做标签栏图标，黑底白字给 iOS，渐变彩色留给分享卡片
+  const faviconIsPng = /\.png(\?|$)/i.test(s.favicon);
+  const icons = s.favicon
+    ? {
+        icon: [{ url: s.favicon }],
+        // iOS 只认 PNG/JPEG 当主屏图标；其它格式回退到默认的黑底白字
+        apple: [
+          {
+            url: faviconIsPng ? s.favicon : "/apple-touch-icon.png",
+            sizes: "180x180",
+          },
+        ],
+      }
+    : {
+        icon: [
+          { url: "/favicon.ico", sizes: "16x16 24x24 32x32 48x48 64x64 128x128 256x256" },
+          { url: "/icon.svg", type: "image/svg+xml" },
+        ],
+        apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
+      };
+
   return {
     metadataBase: new URL(siteUrl),
     title: { default: title, template: `%s · ${s.siteName}` },
     description,
     keywords,
     authors: s.author ? [{ name: s.author }] : undefined,
-    // 设置页填了就用填的，没填用仓库里的默认图标：
-    // 白底黑字做标签栏图标，黑底白字给 iOS，渐变彩色留给分享卡片
-    icons: s.favicon
-      ? { icon: s.favicon }
-      : {
-          icon: [
-            { url: "/favicon.ico", sizes: "16x16 24x24 32x32 48x48 64x64 128x128 256x256" },
-            { url: "/icon.svg", type: "image/svg+xml" },
-          ],
-          apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
-        },
+    icons,
     openGraph: { title, description, type: "website", images },
     twitter: {
       card: images ? "summary_large_image" : "summary",
