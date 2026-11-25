@@ -8,6 +8,7 @@ import { getSettings } from "@/lib/settings";
 import { mailReady } from "@/lib/change-request";
 import PasskeyManager from "./passkey-manager";
 import TotpManager from "./totp-manager";
+import LanguageSelect from "./language-select";
 import SiteForm from "./site-form";
 import ThemeToggle from "./theme-toggle";
 import { getT } from "@/lib/i18n";
@@ -59,6 +60,10 @@ export default async function SettingsPage() {
         <h2 className="section-title">{t("外观")}</h2>
         <p className="notice">{t("默认跟随系统；想固定浅色或深色就在这里选。")}</p>
         <ThemeToggle />
+
+        <h3 className="form-group">{t("界面语言")}</h3>
+        <p className="notice">{t("只影响界面文字，文章内容不翻译。")}</p>
+        <LanguageSelect value={settings.uiLanguage ?? ""} />
       </section>
 
       <section className="section">

@@ -119,10 +119,14 @@ scripts/
 
 界面文案（按钮、提示、错误）支持中文 / 英文，**文章内容不翻译**。语言包在 `locales/zh-CN.json` 与 `locales/en.json`，键就是中文原文；缺翻译时自动回退到中文。
 
-切换只改一个开关：
+**日常切换：在站点设置 →「外观」→「界面语言」里点「中文 / English」，立刻生效**，不用改环境变量、不用重新部署。语言是站点级的，所有人看到的都是这个语言。
+
+下面两处只在部署时定默认值，平时用不到：
 
 - 本地：`cp config/locale.example.json config/locale.json`，把 `locale` 改成 `"en"` 或 `"zh-CN"`
-- Vercel：加环境变量 `UI_LANGUAGE=en`（**优先级高于本地文件**）
+- Vercel：加环境变量 `UI_LANGUAGE=en`
+
+取值只有 `zh-CN`（中文）和 `en`（英文）两个，界面上直接显示「中文 / English」，不用记代码。
 
 改完重新构建 / 部署生效。想加新语言就复制一份 `locales/en.json` 改成对应语言，再把开关指向新文件名（同时要在 `SUPPORTED_LOCALES` 里登记）。
 

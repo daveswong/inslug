@@ -37,7 +37,7 @@ export async function GET() {
     <title>${xmlEscape(title)}</title>
     <link>${xmlEscape(origin)}</link>
     <description>${xmlEscape(description)}</description>
-    <language>${currentLocale()}</language>
+    <language>${await currentLocale()}</language>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
 ${itemsXml}
   </channel>
