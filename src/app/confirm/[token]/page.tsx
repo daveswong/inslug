@@ -14,6 +14,7 @@ import { deletePasskey, listPasskeys } from "@/lib/passkey";
 import { openValue } from "@/lib/secret-box";
 import { formatDateTime } from "@/lib/time";
 import { getT } from "@/lib/i18n";
+import { resetEnvKeys } from "@/lib/env-config";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,16 @@ async function applyChange(formData: FormData) {
     await setTotpSecret(sealed);
   } else if (doc.purpose === "totp-disable") {
     await setTotpSecret(null);
+  } else if (doc.purpose === "config-reset") {
+    // 只清 .env 里的配置项；站点设置在数据库里，不动
+    const result = resetEnvKeys([
+      "MONGODB_URI",
+      "AUTH_SECRET",
+      "RECOVERY_TOKEN",
+      "RP_ID",
+      "ORIGIN",
+    ]);
+    if (!result.ok) redirect(`/confirm/${token}?state=failed`);
   } else if (doc.purpose === "passkey-add") {
     // 不给攻击者「偷到邮件链接就直接绑一把钥匙」的能力：
     // 这里只开一个 10 分钟窗口，真正的绑定还得本人在设备上做 WebAuthn。
@@ -144,7 +155,9 @@ export default async function ConfirmPage({
                 ? t("解绑登录验证器。")
                 : doc.purpose === "totp-set"
                   ? t("把登录验证器换成新的一个。")
-                  : doc.purpose === "passkey-add"
+                  : doc.purpose === "config-reset"
+                    ? "清空 .env 里的身份验证与启动配置（站点设置和文章不受影响）。"
+                    : doc.purpose === "passkey-add"
                     ? t("授权 10 分钟内绑定一把新的 Passkey（还要本人在设备上确认）。")
                     : t("删除一把 Passkey。")}
             </p>

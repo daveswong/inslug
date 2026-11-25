@@ -29,10 +29,6 @@ export async function currentLocale(): Promise<Locale> {
     // 数据库读不到就往下走，不因为这个把整站卡住
   }
 
-  const fromEnv = process.env.UI_LANGUAGE?.trim();
-  if (fromEnv && SUPPORTED_LOCALES.includes(fromEnv as Locale)) {
-    return fromEnv as Locale;
-  }
   try {
     const cfg = JSON.parse(
       readFileSync(join(process.cwd(), "config", "locale.json"), "utf8")

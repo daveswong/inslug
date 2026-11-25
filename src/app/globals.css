@@ -206,8 +206,20 @@ a:hover {
 .login-form {
   display: flex;
   gap: 0.5rem;
-  max-width: 320px;
+  max-width: 420px;
   margin-top: 0.75rem;
+}
+
+/* 输入框让出位置给按钮，按钮文字保持一行 */
+.login-form input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* 按钮文字不要被输入框挤成两行 */
+.login-form .btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .form-error {
@@ -448,6 +460,65 @@ a:hover {
   align-items: center;
   gap: 0.75rem;
   margin-top: 1.5rem;
+}
+
+.config-fields {
+  margin-top: 0.5rem;
+}
+
+.config-item {
+  margin-bottom: 0.9rem;
+}
+
+.config-item-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.config-item-label {
+  font-size: 0.9rem;
+}
+
+.config-item-key {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.config-item-state {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.config-item-missing {
+  color: var(--ink);
+}
+
+.config-checklist {
+  list-style: none;
+  margin: 0.5rem 0;
+  padding: 0;
+}
+
+.config-checklist li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.9rem;
+}
+
+.config-ok {
+  color: var(--muted);
+}
+
+.config-missing {
+  color: var(--ink);
 }
 
 .reset-steps {

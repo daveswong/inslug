@@ -18,6 +18,7 @@ import { getT } from "@/lib/i18n";
 export type ChangePurpose =
   | "totp-set"
   | "totp-disable"
+  | "config-reset"
   | "passkey-add"
   | "passkey-remove";
 

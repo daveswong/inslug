@@ -9,9 +9,12 @@ import { mailReady } from "@/lib/change-request";
 import PasskeyManager from "./passkey-manager";
 import TotpManager from "./totp-manager";
 import LanguageSelect from "./language-select";
+import ServiceConfig from "./service-config";
 import SiteForm from "./site-form";
 import ThemeToggle from "./theme-toggle";
 import { getT } from "@/lib/i18n";
+import { getServiceValues } from "@/lib/service-config";
+import { SERVICE_KEYS } from "@/lib/config-keys";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +32,14 @@ export default async function SettingsPage() {
     bound = false;
   }
   const canMail = await mailReady().catch(() => false);
+  const serviceValues = await getServiceValues();
+  const serviceItems = SERVICE_KEYS.map((item) => ({
+    key: item.key,
+    label: t(item.label),
+    hint: t(item.hint),
+    secret: item.secret,
+    configured: Boolean(serviceValues[item.key] || process.env[item.key]),
+  }));
   const [keyDocs, authorized] = await Promise.all([
     listPasskeys().catch(() => []),
     passkeyAddAllowed().catch(() => false),
@@ -60,6 +71,9 @@ export default async function SettingsPage() {
         <h2 className="section-title">{t("外观")}</h2>
         <p className="notice">{t("默认跟随系统；想固定浅色或深色就在这里选。")}</p>
         <ThemeToggle />
+
+        <h3 className="form-group">{t("邮件与图片存储")}</h3>
+        <ServiceConfig items={serviceItems} />
 
         <h3 className="form-group">{t("界面语言")}</h3>
         <p className="notice">{t("只影响界面文字，文章内容不翻译；切换后立即生效，全站一起变。")}</p>

@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import PasskeyManager, { type PasskeyView } from "@/app/settings/passkey-manager";
 import TotpManager from "@/app/settings/totp-manager";
+import ConfigFields, { type ConfigField } from "@/components/config-fields";
+import { saveAuthConfig, saveServiceConfig } from "./config-actions";
 import { useT } from "@/components/i18n-provider";
 
 type SiteValues = {
@@ -21,6 +23,14 @@ type Props = {
   hasTotp: boolean;
   mailReady: boolean;
   completed: boolean;
+  /** 身份验证与启动必需的变量 */
+  authItems: ConfigField[];
+  /** 邮件与图片存储的变量 */
+  serviceItems: ConfigField[];
+  /** 能不能写 .env 文件（Vercel 上不行） */
+  envWritable: boolean;
+  onVercel: boolean;
+  loggedIn: boolean;
 };
 
 export default function SetupWizard({
@@ -31,10 +41,21 @@ export default function SetupWizard({
   hasTotp,
   mailReady,
   completed,
+  authItems,
+  serviceItems,
+  envWritable,
+  onVercel,
+  loggedIn,
 }: Props) {
   const t = useT();
-  const STEPS = [t("站点信息"), "Passkey", t("验证器"), t("完成")];
-  const LABELS = [t("已保存"), t("已绑定"), t("已绑定"), ""];
+  const STEPS = [
+    t("服务器配置"),
+    t("站点信息"),
+    "Passkey",
+    t("验证器"),
+    t("完成"),
+  ];
+  const LABELS = [t("已写入"), t("已保存"), t("已绑定"), t("已绑定"), ""];
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [values, setValues] = useState<SiteValues>(initial);
@@ -42,7 +63,7 @@ export default function SetupWizard({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  const done = [siteSaved, passkeyCount > 0, hasTotp, false];
+  const done = [true, siteSaved, passkeyCount > 0, hasTotp, false];
 
   const saveSite = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -94,6 +115,54 @@ export default function SetupWizard({
       </ol>
 
       {step === 0 && (
+        <>
+          <h2 className="section-title">{t("身份验证与启动配置")}</h2>
+          {onVercel ? (
+            <p className="notice">
+              {t(
+                "当前跑在 Vercel 上，文件系统是只读的，写不了 .env。下面这些值要填到项目的环境变量里（Vercel → 项目 → Settings → Environment Variables）。"
+              )}
+            </p>
+          ) : (
+            <p className="notice">
+              {t(
+                "下面这些值会写进项目根目录的 .env 文件。这个文件不在 Git 里，部署时生成。"
+              )}
+            </p>
+          )}
+          {envWritable ? (
+            <ConfigFields
+              items={authItems}
+              onSave={saveAuthConfig}
+              successHint={t("已写入 .env，刷新后生效。")}
+            />
+          ) : (
+            <ul className="config-checklist">
+              {authItems.map((item) => (
+                <li key={item.key}>
+                  <code>{item.key}</code>
+                  <span>{item.label}</span>
+                  <span className={item.configured ? "config-ok" : "config-missing"}>
+                    {item.configured ? t("已配置") : t("未配置")}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <h2 className="section-title">{t("邮件与图片存储")}</h2>
+          <p className="notice">
+            {t("这两项存在数据库里，部署之后随时可以在这里改，不用重新部署。")}
+          </p>
+          <ConfigFields
+            items={serviceItems}
+            onSave={saveServiceConfig}
+            successHint={t("已保存，立刻生效。")}
+          />
+        </>
+      )}
+
+      {step === 1 && (
         <>
           <h2 className="section-title">{t("站点信息")}</h2>
           <p className="notice">
@@ -163,7 +232,7 @@ export default function SetupWizard({
         </>
       )}
 
-      {step === 1 && (
+      {step === 2 && (
         <>
           <h2 className="section-title">{t("绑定 Passkey")}</h2>
           <p className="notice">
@@ -180,7 +249,7 @@ export default function SetupWizard({
         </>
       )}
 
-      {step === 2 && (
+      {step === 3 && (
         <>
           <h2 className="section-title">{t("绑定手机验证器")}</h2>
           <p className="notice">
@@ -196,7 +265,7 @@ export default function SetupWizard({
         </>
       )}
 
-      {step === 3 && (
+      {step === 4 && (
         <>
           <h2 className="section-title">{t("完成")}</h2>
           <p className="notice">
@@ -205,7 +274,7 @@ export default function SetupWizard({
               : t("两把钥匙都配好之后就可以开写了。以后在站点设置里随时能改。")}
           </p>
           {!hasTotp && (
-            <p className="notice">{t("验证器还没绑：建议回到第 3 步，别只留 Passkey 一把钥匙。")}</p>
+            <p className="notice">{t("验证器还没绑：建议回到第 4 步，别只留 Passkey 一把钥匙。")}</p>
           )}
           <button
             className="btn btn-outline-light btn-plain"
@@ -232,7 +301,7 @@ export default function SetupWizard({
             {t("上一步")}
           </button>
         )}
-        {step < 3 && (
+        {step < 4 && (
           <button
             className="btn btn-outline-light btn-plain"
             type="button"

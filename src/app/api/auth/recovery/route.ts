@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { timingSafeEqual } from "node:crypto";
 import { startSession } from "@/lib/auth";
 import { clientKey, rateLimit, resetRateLimit } from "@/lib/rate-limit";
+import { getEnvValue } from "@/lib/env-config";
 import { getT } from "@/lib/i18n";
 
 function same(a: string, b: string): boolean {
@@ -14,7 +15,7 @@ function same(a: string, b: string): boolean {
 
 export async function POST(req: Request) {
   const t = await getT();
-  const expected = process.env.RECOVERY_TOKEN;
+  const expected = getEnvValue("RECOVERY_TOKEN");
   // 没设、或者设得太短（随手写的几个字符不算密钥），就当这个入口不存在
   if (!expected || expected.length < 16) {
     return NextResponse.json({ error: t("没有配置紧急入口") }, { status: 404 });

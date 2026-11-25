@@ -10,17 +10,21 @@ import { getT } from "@/lib/i18n";
  * 没配置时 mailConfig() 返回 null，上层据此禁用「更换 / 解绑验证器」。
  */
 
+import { getServiceValue } from "./service-config";
+
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
 
-export function mailConfig(): { apiKey: string; from: string } | null {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.RESEND_FROM;
+export async function mailConfig(): Promise<{ apiKey: string; from: string } | null> {
+  const [apiKey, from] = await Promise.all([
+    getServiceValue("RESEND_API_KEY"),
+    getServiceValue("RESEND_FROM"),
+  ]);
   if (!apiKey || !from) return null;
   return { apiKey, from };
 }
 
-export function isMailConfigured(): boolean {
-  return mailConfig() !== null;
+export async function isMailConfigured(): Promise<boolean> {
+  return (await mailConfig()) !== null;
 }
 
 export async function sendMail(input: {
@@ -30,7 +34,7 @@ export async function sendMail(input: {
   html: string;
 }): Promise<void> {
   const t = await getT();
-  const cfg = mailConfig();
+  const cfg = await mailConfig();
   if (!cfg) throw new Error(t("未配置发信服务（RESEND_API_KEY / RESEND_FROM）"));
 
   const res = await fetch(RESEND_ENDPOINT, {

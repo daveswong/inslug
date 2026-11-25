@@ -11,7 +11,7 @@ import { formatDateTime } from "./time";
 
 /** 邮件确认可用的前提：服务端配了发信能力，且设置里填了收件邮箱 */
 export async function mailReady(): Promise<boolean> {
-  if (!isMailConfigured()) return false;
+  if (!(await isMailConfigured())) return false;
   const settings = await getSettings();
   return settings.notifyEmail.trim().length > 0;
 }
@@ -123,3 +123,21 @@ export async function requestPasskeyChange(input: {
     ua: input.ua,
   });
 }
+
+export function requestConfigReset(input: {
+  linkOrigin: string;
+  ip: string;
+  ua: string;
+}): Promise<{ ok: true } | { error: string }> {
+  return sendConfirmMail({
+    purpose: "config-reset",
+    payload: {},
+    actionText: "重置身份验证与启动配置",
+    consequence:
+      "确认后会从 .env 里删掉数据库地址、会话密钥、紧急密钥这些配置项。站点设置和文章都在数据库里，不受影响。",
+    linkOrigin: input.linkOrigin,
+    ip: input.ip,
+    ua: input.ua,
+  });
+}
+

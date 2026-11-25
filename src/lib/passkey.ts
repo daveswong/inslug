@@ -1,4 +1,5 @@
 import { getDb } from "./mongodb";
+import { getEnvValue } from "./env-config";
 
 /** Passkey 凭据：公钥和计数器存库，私钥永远在用户设备的钥匙串里 */
 export type PasskeyDoc = {
@@ -54,8 +55,11 @@ export async function touchPasskey(
 export function rpConfig(req: Request): { rpID: string; origin: string } {
   const url = new URL(req.url);
   return {
-    rpID: process.env.RP_ID || url.hostname,
-    origin: process.env.ORIGIN || process.env.NEXT_PUBLIC_SITE_URL || url.origin,
+    rpID: getEnvValue("RP_ID") || url.hostname,
+    origin:
+      getEnvValue("ORIGIN") ||
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      url.origin,
   };
 }
 

@@ -1,13 +1,18 @@
 import { SignJWT, jwtVerify } from "jose";
+import { getEnvValue } from "./env-config";
 
-// 会话与 Passkey 挑战用的 cookie 名（中间件和 Node 运行时共用这个文件，不要引 next/headers）
-export const SESSION_COOKIE = "inslug_session";
-export const CHALLENGE_COOKIE = "inslug_challenge";
-export const SESSION_MAX_AGE = 60 * 60 * 24 * 30; // 30 天
+// 会话与 Passkey 挑战用的 cookie 名。常量放在 session-constants.ts，
+// Edge 中间件也能引用，而不必把读 .env 的 node:fs 拖进 Edge 运行时。
+import {
+  CHALLENGE_COOKIE,
+  SESSION_COOKIE,
+  SESSION_MAX_AGE,
+} from "./session-constants";
+export { CHALLENGE_COOKIE, SESSION_COOKIE, SESSION_MAX_AGE };
 
 function secretKey(): Uint8Array {
-  const raw = process.env.AUTH_SECRET;
-  if (!raw) throw new Error("缺少 AUTH_SECRET 环境变量");
+  const raw = getEnvValue("AUTH_SECRET");
+  if (!raw) throw new Error("缺少 AUTH_SECRET 配置");
   return new TextEncoder().encode(raw);
 }
 
