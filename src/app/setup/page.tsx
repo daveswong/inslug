@@ -6,7 +6,7 @@ import { getAuth, passkeyAddAllowed } from "@/lib/credentials";
 import { getSettings } from "@/lib/settings";
 import { listPasskeys } from "@/lib/passkey";
 import { mailReady } from "@/lib/change-request";
-import { isDbConfigured } from "@/lib/mongodb";
+import { ensureDatabase, isDbConfigured, type DatabaseStatus } from "@/lib/mongodb";
 import { canWriteEnvFile, getEnvValue, isVercel } from "@/lib/env-config";
 import { buildServiceFeatures } from "@/lib/service-features";
 import { AUTH_KEYS } from "@/lib/config-keys";
@@ -24,6 +24,15 @@ export default async function SetupPage() {
   // 新部署可能连数据库都还没配，这时候除了这一步没有别的入口。
   const dbOk = await isDbConfigured();
   const hasAny = dbOk ? await hasCredentials() : false;
+  // 库名对应的库：存在就接着用，不存在就建一个（初始化时该做的事）
+  let dbStatus: DatabaseStatus | null = null;
+  if (dbOk) {
+    try {
+      dbStatus = await ensureDatabase();
+    } catch {
+      dbStatus = null;
+    }
+  }
   const configStepOpen = !hasAny;
 
   if (!loggedIn && !configStepOpen) {
@@ -89,6 +98,7 @@ export default async function SetupPage() {
         onVercel={isVercel()}
         loggedIn={loggedIn}
         dbOk={dbOk}
+        dbStatus={dbStatus}
       />
 
       <SiteFooter />

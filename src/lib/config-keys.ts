@@ -41,6 +41,13 @@ export const CONFIG_KEYS: ConfigKey[] = [
     secret: true,
   },
   {
+    key: "MONGODB_DB_NAME",
+    group: "auth",
+    label: "库名",
+    hint: "同一个 MongoDB 集群里可以跑多个站点，用不同的库名区分。留空用 inslug；填一个还不存在的库名，安装时会自动建出来。",
+    secret: false,
+  },
+  {
     key: "AUTH_SECRET",
     group: "auth",
     label: "会话密钥",

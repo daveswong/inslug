@@ -406,5 +406,9 @@
   "还没配发信服务": "No mail service configured",
   "这些存在数据库里，部署之后随时可以在这里改，不用重新部署。": "These live in the database. You can change them here at any time after deploying, no redeploy needed.",
   "置顶": "Pin",
-  "置顶的文章排在列表最前面": "Pinned posts come first in the list"
+  "置顶的文章排在列表最前面": "Pinned posts come first in the list",
+  "库名": "Database name",
+  "同一个 MongoDB 集群里可以跑多个站点，用不同的库名区分。留空用 inslug；填一个还不存在的库名，安装时会自动建出来。": "One MongoDB cluster can host several sites; give each its own database name. Blank means inslug; a name that doesn't exist yet is created during setup.",
+  "数据库 {name} 已创建": "Database {name} created",
+  "数据库 {name} 已存在，里面有 {n} 篇文章": "Database {name} already exists and holds {n} post(s)"
 }

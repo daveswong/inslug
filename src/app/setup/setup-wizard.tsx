@@ -6,6 +6,7 @@ import PasskeyManager, { type PasskeyView } from "@/app/settings/passkey-manager
 import TotpManager from "@/app/settings/totp-manager";
 import ConfigFields, { type ConfigField } from "@/components/config-fields";
 import { saveAuthConfig, saveServiceConfig } from "./config-actions";
+import type { DatabaseStatus } from "@/lib/mongodb";
 import { useT } from "@/components/i18n-provider";
 import ServiceConfigFields, { type ServiceFeature } from "@/components/service-config-fields";
 
@@ -34,6 +35,8 @@ type Props = {
   loggedIn: boolean;
   /** 数据库现在连得上吗。服务类配置存在数据库里，连不上就存不了 */
   dbOk: boolean;
+  /** 当前库的状态：存在还是刚建的 */
+  dbStatus: DatabaseStatus | null;
 };
 
 export default function SetupWizard({
@@ -50,6 +53,7 @@ export default function SetupWizard({
   onVercel,
   loggedIn,
   dbOk,
+  dbStatus,
 }: Props) {
   const t = useT();
   const STEPS = [
@@ -137,7 +141,11 @@ export default function SetupWizard({
           {envWritable ? (
             <ConfigFields
               items={authItems}
-              onSave={saveAuthConfig}
+              onSave={async (values) => {
+                const result = await saveAuthConfig(values);
+                if (result.ok) router.refresh();
+                return result;
+              }}
               successHint={t("已写入 .env，刷新后生效。")}
             />
           ) : (
@@ -152,6 +160,17 @@ export default function SetupWizard({
                 </li>
               ))}
             </ul>
+          )}
+
+          {dbStatus && (
+            <p className="notice">
+              {dbStatus.created
+                ? t("数据库 {name} 已创建", { name: dbStatus.dbName })
+                : t("数据库 {name} 已存在，里面有 {n} 篇文章", {
+                    name: dbStatus.dbName,
+                    n: String(dbStatus.postCount),
+                  })}
+            </p>
           )}
 
           <h2 className="section-title">{t("邮件与图片存储")}</h2>

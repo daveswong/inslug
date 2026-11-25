@@ -21,9 +21,10 @@ import { setServiceValues } from "@/lib/service-config";
 import { listPasskeys } from "@/lib/passkey";
 import { getSettings } from "@/lib/settings";
 import { getT } from "@/lib/i18n";
+import { ensureDatabase, type DatabaseStatus } from "@/lib/mongodb";
 
 export type ConfigSaveResult =
-  | { ok: true; written: string[] }
+  | { ok: true; written: string[]; db?: DatabaseStatus }
   | { ok: false; error: string };
 
 /** 站点上是否已经存在任何登录凭据 */
@@ -83,7 +84,15 @@ export async function saveAuthConfig(
   if (!result.ok) {
     return { ok: false, error: result.error };
   }
-  return { ok: true, written };
+
+  // 地址写好了就去看一眼这个库：已经存在就接着用，不存在就建一个出来
+  let db: DatabaseStatus | undefined;
+  try {
+    db = await ensureDatabase();
+  } catch {
+    // 连不上不算保存失败——地址已经写进去了，部署时会再连一次
+  }
+  return { ok: true, written, db };
 }
 
 /** 邮件与图片存储的变量：存数据库，部署后随时可改 */
