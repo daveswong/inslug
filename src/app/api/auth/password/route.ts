@@ -1,7 +1,7 @@
 // 后备登录方式：密码（Passkey 丢了的时候用）
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { startSession, passwordHash } from "@/lib/auth";
+import { startSession, getPasswordHash } from "@/lib/auth";
 
 const WINDOW_MS = 10 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
   }
 
   const body = (await req.json().catch(() => ({}))) as { password?: string };
-  const hash = passwordHash();
+  const hash = await getPasswordHash();
   if (!hash) {
     return NextResponse.json(
       { error: "服务端还没配置后备密码（config/auth.json 或 ADMIN_PASSWORD_HASH）" },

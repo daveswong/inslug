@@ -62,12 +62,12 @@ export default async function SearchPage({ searchParams }: Props) {
                     {formatDate(postDisplayDate(post))}
                   </time>
                   <span className="post-title">
+                    <a href={`/posts/${post.slug}`}>{post.title}</a>
                     {postFlags(post).map((flag) => (
                       <span className="badge post-badge" key={flag}>
                         {flag}
                       </span>
                     ))}
-                    <a href={`/posts/${post.slug}`}>{post.title}</a>
                   </span>
                 </li>
               ))}

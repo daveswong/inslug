@@ -94,6 +94,17 @@ export default function SiteForm({ settings }: { settings: SettingsDoc }) {
         />
       </label>
 
+      <h3 className="form-group">通知</h3>
+      <label className="field">
+        <span className="field-label">通知邮箱</span>
+        <input
+          name="notifyEmail"
+          type="email"
+          defaultValue={settings.notifyEmail ?? ""}
+          placeholder="改密码的确认信发到这里"
+        />
+      </label>
+
       <h3 className="form-group">社交链接</h3>
       <label className="field">
         <span className="field-label">GitHub</span>

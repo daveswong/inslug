@@ -8,7 +8,10 @@ export async function getSettings(): Promise<SettingsDoc> {
   const doc = await db
     .collection<SettingsCollection>("settings")
     .findOne({ _id: "site" });
-  if (doc) return doc as SettingsDoc;
+  // 合并默认值：老文档缺新增字段（如 notifyEmail）时不至于读成 undefined
+  if (doc) {
+    return { ...DEFAULT_SETTINGS, ...doc, updatedAt: doc.updatedAt } as SettingsDoc;
+  }
   // 未初始化时返回默认值（不写入，保持只读）
   return { ...DEFAULT_SETTINGS, updatedAt: new Date(0) };
 }
