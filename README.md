@@ -6,7 +6,9 @@
 
 ## 当前状态
 
-前台（首页 / 详情 / 搜索 / 写作）已经接数据库，读写闭环可用。登录已接入：Passkey（WebAuthn）+ 后备密码，中间件保护写文章与站点设置。设置页仍是占位。
+读写闭环可用：首页 / 详情 / 搜索 / 写作全部读数据库，文章可在编辑器里写并保存。登录用 Passkey（WebAuthn）+ 后备密码，中间件保护写文章与站点设置。站点设置（基本信息 / SEO / 社交 / 分页 / 页脚）、图片直传 Vercel Blob、SEO 元信息都已完成。
+
+尚未做：凭据修改（改密码 / 改 Passkey）的邮件二次确认、自定义 404、RSS。
 
 ## 本地运行
 
@@ -24,6 +26,11 @@ cp .env.example .env.local
 # 3. 后备密码
 npm run hash-password -- 你的密码
 # 把输出的哈希粘进 config/auth.json 的 passwordHash（见 config/auth.example.json）
+
+# 4. 图片上传（可选，不配也能写文章，只是不能插图）
+# 在 .env.local 加 BLOB_READ_WRITE_TOKEN="vercel_blob_rw_..."
+# token 来自 Vercel → Storage → 新建 Blob store（必须是 Public）时勾选
+# "Add a read-write token env var to this connection"
 
 npm run dev
 ```
@@ -43,7 +50,7 @@ node scripts/test-connection.mjs       # ping + 列出集合
 演示数据（与项目本身相关的几篇文章，可重复执行重灌）：
 
 ```bash
-node scripts/_seed-test.mjs
+node scripts/seed-demo.mjs
 ```
 
 ## 目录结构
@@ -56,9 +63,9 @@ src/
     search/             # 站内搜索
     write/              # 写作页（server action 保存到库）
     login/              # 登录（Passkey / 密码）
-    settings/           # 站点设置（占位）
+    settings/           # 站点设置：站点信息表单 + Passkey 管理
     api/auth/           # 登录、Passkey、退出的接口
-  components/           # BlockEditor（编辑）、PostBody（只读正文）、WriteFab
+  components/           # BlockEditor（编辑）、PostBody（只读正文）、WriteFab、SiteFooter
   lib/                  # mongodb / posts / settings / auth / session / passkey / post-utils
   middleware.ts         # 保护 /write 与 /settings
 config/
@@ -69,7 +76,7 @@ config/
 scripts/
   test-connection.mjs   # 只读连通测试
   hash-password.mjs     # 生成后备密码的 bcrypt 哈希
-  _seed-test.mjs        # 演示数据
+  seed-demo.mjs         # 演示数据
 ```
 
 ## 技术方案（已确认）
@@ -98,6 +105,7 @@ Vercel 部署需要在 Project → Settings → Environment Variables 配置：
 | `ADMIN_PASSWORD_HASH` | 后备密码哈希，`npm run hash-password -- 你的密码` 的输出（Vercel 里直接粘原文，不需要转义） |
 | `RP_ID` | Passkey 依赖的域名主体，如 `inslug.example.com`（**必须与正式域名一致**，改域名会导致已绑定的 Passkey 失效） |
 | `ORIGIN` | 站点地址，如 `https://inslug.example.com` |
+| `BLOB_READ_WRITE_TOKEN` | Vercel Blob 读写令牌；store 必须是 **Public**（创建后不可改），否则正文图片读者看不到 |
 
 > 忘记后备密码：重新跑一次 `npm run hash-password`，替换 `ADMIN_PASSWORD_HASH` 后重新部署即可；已绑定的 Passkey 不受影响。
 
@@ -109,11 +117,11 @@ Vercel 部署需要在 Project → Settings → Environment Variables 配置：
 2. Vercel 导入该仓库，框架自动识别为 Next.js
 3. 配好上表中的环境变量
 4. 部署完成后绑定域名；域名 DNS 托管在 Vercel 时，HTTPS 证书自动签发
-5. 首次登录：用密码登录 → 到 `/login` 点「绑定这台设备的 Passkey」，之后就能用 Face ID / 指纹登录
+5. 首次登录：用密码登录 → 到 `/settings` 的「登录」一节绑定这台设备的 Passkey，之后就能用 Face ID / 指纹登录
 6. 未来部署演示站：把 `MONGODB_URI` 换成演示库连接串
 
 ## 开源协议
 
 本项目采用 [MIT License](./LICENSE)，并附加一条要求：**任何公开部署都必须保留指向本项目源码仓库的可见链接**，让更多人能找到并使用它。该链接位于页脚，独立于站点自己的内容与社媒链接，也不在站点设置中修改。
 
-> 部署前请把页脚里指向源码仓库的链接（当前是 `#` 占位）换成你自己的仓库地址。页脚在首页、详情、搜索、写作页各有一处，改的时候四处都要动。
+> 链接位置在 `src/components/SiteFooter.tsx`，全站共用，改一处即可。
