@@ -17,6 +17,7 @@ export async function savePost(input: {
   blocks: Block[];
   tags: string[];
   visibility: Visibility;
+  pinned: boolean;
 }): Promise<SaveResult> {
   const t = await getT();
   if (!(await isLoggedIn())) {
@@ -31,6 +32,7 @@ export async function savePost(input: {
     blocks: input.blocks,
     tags: input.tags,
     visibility: input.visibility,
+    pinned: input.pinned,
   };
 
   try {

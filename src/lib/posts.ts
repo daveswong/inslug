@@ -44,6 +44,7 @@ export async function createPost(input: {
   blocks: unknown[];
   tags: string[];
   visibility: Visibility;
+  pinned?: boolean;
 }): Promise<PostDoc> {
   const db = await getDb();
   const posts = db.collection<PostDoc>("posts");
@@ -62,6 +63,7 @@ export async function createPost(input: {
     plainText: blocksToPlainText(input.blocks),
     tags: input.tags,
     visibility: input.visibility,
+    pinned: input.pinned ?? false,
     publishedAt: publishedAtFor(input.visibility, null, now),
     createdAt: now,
     updatedAt: now,
@@ -78,6 +80,7 @@ export async function updatePost(
     blocks: unknown[];
     tags: string[];
     visibility: Visibility;
+    pinned?: boolean;
   }
 ): Promise<PostDoc | null> {
   const db = await getDb();
@@ -100,6 +103,7 @@ export async function updatePost(
         plainText: blocksToPlainText(input.blocks),
         tags: input.tags,
         visibility: input.visibility,
+        pinned: input.pinned ?? false,
         publishedAt,
         updatedAt: now,
       },
@@ -164,11 +168,19 @@ export async function listPosts(opts: {
   const items = await collection
     .aggregate<PostDoc>([
       { $match: filter },
-      { $addFields: { sortDate: { $ifNull: ["$publishedAt", "$createdAt"] } } },
-      { $sort: { sortDate: -1, _id: -1 } },
+      // 置顶的排在最前面，其余按显示日期倒序。
+      // 用 $ifNull 把老文章缺字段的情况补成 false——否则 MongoDB 会把缺字段排成 null，
+      // 布尔值和 null 混排会让顺序错乱。
+      {
+        $addFields: {
+          sortDate: { $ifNull: ["$publishedAt", "$createdAt"] },
+          isPinned: { $ifNull: ["$pinned", false] },
+        },
+      },
+      { $sort: { isPinned: -1, sortDate: -1, _id: -1 } },
       { $skip: (page - 1) * limit },
       { $limit: limit },
-      { $unset: "sortDate" },
+      { $unset: ["sortDate", "isPinned"] },
     ])
     .toArray();
   return { items, total };

@@ -36,6 +36,7 @@ export default async function WritePage({ searchParams }: Props) {
         initialTags={post?.tags ?? []}
         initialBlocks={post?.blocks ?? []}
         initialVisibility={post?.visibility ?? "draft"}
+        initialPinned={post?.pinned ?? false}
         availableTags={tags}
         storageProvider={storageProvider}
       />

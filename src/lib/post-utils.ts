@@ -16,7 +16,8 @@ export function isNew(publishedAt: Date | null, now: Date = new Date()): boolean
  * - draft：未写完自己看（登录后可见）
  * - private：写完但访客看不到（登录后可见）
  * - new：公开且发布时间不超过 6 个月
- * 三者互斥，一篇文章最多一个标签。
+ *
+ * 置顶不在这里标记：位置本身就是信号，列表里加个标签反而画蛇添足。
  */
 export function postFlags(
   post: { visibility: Visibility; publishedAt: Date | null },
