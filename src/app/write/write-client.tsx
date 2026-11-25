@@ -22,6 +22,7 @@ type Props = {
   initialTags: string[];
   initialBlocks: Block[];
   initialVisibility: Visibility;
+  initialPinned: boolean;
   availableTags: string[];
   storageProvider: ClientStorageProvider;
 };
@@ -32,6 +33,7 @@ export default function WriteClient({
   initialTags,
   initialBlocks,
   initialVisibility,
+  initialPinned,
   availableTags,
   storageProvider,
 }: Props) {
@@ -47,6 +49,7 @@ export default function WriteClient({
   const [tagOptions, setTagOptions] = useState(availableTags);
   const [newTag, setNewTag] = useState("");
   const [visibility, setVisibility] = useState<Visibility>(initialVisibility);
+  const [pinned, setPinned] = useState(initialPinned);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [hint, setHint] = useState("");
@@ -80,6 +83,7 @@ export default function WriteClient({
       blocks: blocksRef.current,
       tags,
       visibility,
+      pinned,
     });
     if (!result.ok) {
       setSaving(false);
@@ -187,6 +191,17 @@ export default function WriteClient({
               {option.label}
             </button>
           ))}
+        </div>
+        <div className="write-meta">
+          <label className="pin-toggle">
+            <input
+              type="checkbox"
+              checked={pinned}
+              onChange={(e) => setPinned(e.target.checked)}
+            />
+            <span>{t("置顶")}</span>
+          </label>
+          <span className="write-meta-hint">{t("置顶的文章排在列表最前面")}</span>
         </div>
         <button
           className="btn btn-outline-light btn-plain"

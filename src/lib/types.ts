@@ -10,6 +10,8 @@ export interface PostDoc {
   plainText: string;
   tags: string[];
   visibility: Visibility;
+  /** 置顶：排在这条时间线的最前面，方便别人找到 */
+  pinned: boolean;
   publishedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
