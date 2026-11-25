@@ -79,3 +79,17 @@ export async function isDbConfigured(): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * 连不上时返回 null 而不是抛错。
+ *
+ * 全新部署的第一件事就是「还没有数据库地址」——那会儿首页、文章页都得能打开，
+ * 给出「去安装向导」的提示，而不是甩一个 500 给用户看。
+ */
+export async function getDbOrNull(): Promise<Db | null> {
+  try {
+    return await getDb();
+  } catch {
+    return null;
+  }
+}

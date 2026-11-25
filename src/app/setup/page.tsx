@@ -95,6 +95,7 @@ export default async function SetupPage() {
         envWritable={canWriteEnvFile()}
         onVercel={isVercel()}
         loggedIn={loggedIn}
+        dbOk={dbOk}
       />
 
       <SiteFooter />
