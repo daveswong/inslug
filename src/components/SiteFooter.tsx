@@ -6,7 +6,8 @@ export default async function SiteFooter() {
 
   return (
     <footer className="site-foot">
-      <a href="/">首页</a> · © 2026 <a href="#">inslog on GitHub</a>
+      <a href="/">首页</a> · © 2026{" "}
+      <a href="https://github.com/daveswong/inslog">inslog on GitHub</a>
       {loggedIn ? (
         <>
           {" · "}
