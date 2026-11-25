@@ -3,6 +3,8 @@ import { listPosts, listTags } from "@/lib/posts";
 import { getSettings } from "@/lib/settings";
 import { isLoggedIn } from "@/lib/auth";
 import SiteFooter from "@/components/SiteFooter";
+import InstallHint from "@/components/install-hint";
+import { isDbConfigured } from "@/lib/mongodb";
 import { formatDate, postDisplayDate, postFlags } from "@/lib/post-utils";
 import { getT } from "@/lib/i18n";
 
@@ -19,6 +21,9 @@ export default async function Home({ searchParams }: Props) {
   const settings = await getSettings();
   const loggedIn = await isLoggedIn();
   const page = Math.max(1, Number(pageParam) || 1);
+
+  // 数据库还没配好（全新部署的第一步）时，给安装入口而不是 500
+  if (!(await isDbConfigured())) return <InstallHint />;
 
   // 访客只看 public；登录后 private / draft 也出现在同一条时间线里，靠标题前的标签区分
   const [{ items, total }, tags] = await Promise.all([

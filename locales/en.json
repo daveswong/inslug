@@ -356,5 +356,9 @@
   "有未配置的项": "Some items are not set",
   "主题": "Theme",
   "保存失败：未知的分组": "Save failed: unknown group",
-  "清空下面这些配置项的值（站点设置、文章、已绑定的 Passkey 和验证器都不动）。": "Clear the values of these settings (site settings, posts, and your bound Passkeys and authenticator are not touched)."
+  "清空下面这些配置项的值（站点设置、文章、已绑定的 Passkey 和验证器都不动）。": "Clear the values of these settings (site settings, posts, and your bound Passkeys and authenticator are not touched).",
+  "站点还没配置好": "The site is not configured yet",
+  "数据库连不上，所以没有内容可以显示。": "The database can't be reached, so there is nothing to show.",
+  "第一步填数据库地址就行，填完刷新页面。": "Just fill in the database address in step 1, then refresh.",
+  "这两项存在数据库里，得等数据库连上之后才能保存。先把上面的数据库地址配好，再回到这一步。": "These two live in the database, so they can only be saved once the database is reachable. Configure the database address above first, then come back to this step."
 }

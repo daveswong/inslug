@@ -2,6 +2,8 @@
 import { isLoggedIn } from "@/lib/auth";
 import { listPosts } from "@/lib/posts";
 import SiteFooter from "@/components/SiteFooter";
+import InstallHint from "@/components/install-hint";
+import { isDbConfigured } from "@/lib/mongodb";
 import { formatDate, postDisplayDate, postFlags } from "@/lib/post-utils";
 import { getT } from "@/lib/i18n";
 
@@ -18,6 +20,8 @@ export default async function SearchPage({ searchParams }: Props) {
   const { q } = await searchParams;
   const query = (q ?? "").trim();
   const loggedIn = await isLoggedIn();
+  // 数据库还没配好时给安装入口
+  if (!(await isDbConfigured())) return <InstallHint />;
   const { items, total } = query
     ? await listPosts({ query, limit: MAX_RESULTS, includeHidden: loggedIn })
     : { items: [], total: 0 };

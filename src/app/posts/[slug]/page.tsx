@@ -3,9 +3,12 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import PostBody from "@/components/PostBody";
 import SiteFooter from "@/components/SiteFooter";
+import InstallHint from "@/components/install-hint";
 import { getPostBySlug } from "@/lib/posts";
+import { isDbConfigured } from "@/lib/mongodb";
 import { isLoggedIn } from "@/lib/auth";
 import { formatDate, postDisplayDate } from "@/lib/post-utils";
+import type { PostDoc } from "@/lib/types";
 import { getT } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +21,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const t = await getT();
   const { slug } = await params;
   // 与页面一致：私有/草稿对访客当作不存在，别把标题漏进 meta
-  const post = await getPostBySlug(slug, await isLoggedIn());
+  // 数据库还没配好时（新部署）也别报错，标题给个默认的
+  let post: PostDoc | null = null;
+  try {
+    post = await getPostBySlug(slug, await isLoggedIn());
+  } catch {
+    post = null;
+  }
   if (!post) return { title: t("文章不存在") };
 
   const excerpt = post.plainText.replace(/\s+/g, " ").trim();
@@ -47,6 +56,8 @@ export default async function PostPage({ params }: Props) {
   const { slug } = await params;
   // 登录后私有/草稿也能打开；访客只认 public
   const loggedIn = await isLoggedIn();
+  // 数据库还没配好时给安装入口
+  if (!(await isDbConfigured())) return <InstallHint />;
   const post = await getPostBySlug(slug, loggedIn);
   if (!post) notFound();
 

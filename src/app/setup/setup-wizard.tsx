@@ -31,6 +31,8 @@ type Props = {
   envWritable: boolean;
   onVercel: boolean;
   loggedIn: boolean;
+  /** 数据库现在连得上吗。服务类配置存在数据库里，连不上就存不了 */
+  dbOk: boolean;
 };
 
 export default function SetupWizard({
@@ -46,6 +48,7 @@ export default function SetupWizard({
   envWritable,
   onVercel,
   loggedIn,
+  dbOk,
 }: Props) {
   const t = useT();
   const STEPS = [
@@ -151,14 +154,24 @@ export default function SetupWizard({
           )}
 
           <h2 className="section-title">{t("邮件与图片存储")}</h2>
-          <p className="notice">
-            {t("这两项存在数据库里，部署之后随时可以在这里改，不用重新部署。")}
-          </p>
-          <ConfigFields
-            items={serviceItems}
-            onSave={saveServiceConfig}
-            successHint={t("已保存，立刻生效。")}
-          />
+          {dbOk ? (
+            <>
+              <p className="notice">
+                {t("这两项存在数据库里，部署之后随时可以在这里改，不用重新部署。")}
+              </p>
+              <ConfigFields
+                items={serviceItems}
+                onSave={saveServiceConfig}
+                successHint={t("已保存，立刻生效。")}
+              />
+            </>
+          ) : (
+            <p className="notice">
+              {t(
+                "这两项存在数据库里，得等数据库连上之后才能保存。先把上面的数据库地址配好，再回到这一步。"
+              )}
+            </p>
+          )}
         </>
       )}
 
