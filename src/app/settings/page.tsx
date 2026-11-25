@@ -62,7 +62,7 @@ export default async function SettingsPage() {
         <ThemeToggle />
 
         <h3 className="form-group">{t("界面语言")}</h3>
-        <p className="notice">{t("只影响界面文字，文章内容不翻译。")}</p>
+        <p className="notice">{t("只影响界面文字，文章内容不翻译；切换后立即生效，全站一起变。")}</p>
         <LanguageSelect value={settings.uiLanguage ?? ""} />
       </section>
 

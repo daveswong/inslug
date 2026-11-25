@@ -294,7 +294,6 @@
   "链接分享时显示的图，推荐 1200 × 630": "Shown when the link is shared. 1200 × 630 recommended",
   "Safari 不认 SVG 图标，用 PNG 或 ICO 更稳": "Safari does not support SVG icons; PNG or ICO is safer",
   "界面语言": "Interface language",
-  "只影响界面文字，文章内容不翻译。": "Only the interface text changes; posts are not translated.",
-  "切换后立即生效，全站一起变。": "Takes effect immediately, for the whole site.",
-  "不支持的语言": "Unsupported language"
+  "不支持的语言": "Unsupported language",
+  "只影响界面文字，文章内容不翻译；切换后立即生效，全站一起变。": "Only the interface text changes; posts are not translated. Switching takes effect immediately, for the whole site."
 }

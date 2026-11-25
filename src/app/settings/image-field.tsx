@@ -78,47 +78,50 @@ export default function ImageField({
   return (
     <div className="field image-field">
       <span className="field-label">{label}</span>
-      <div className="image-field-row">
-        <input
-          name={name}
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder={placeholder}
-        />
-        <button
-          className="btn btn-outline-light btn-plain"
-          type="button"
-          disabled={busy}
-          onClick={() => fileRef.current?.click()}
-        >
-          {busy ? t("上传中…") : t("上传图片")}
-        </button>
-        {url && (
+      {/* 右列容器：控件、说明、预览从上到下排，避免被栅格拆到左边去 */}
+      <div className="image-field-body">
+        <div className="image-field-row">
+          <input
+            name={name}
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder={placeholder}
+          />
           <button
             className="btn btn-outline-light btn-plain"
             type="button"
             disabled={busy}
-            onClick={() => setUrl("")}
+            onClick={() => fileRef.current?.click()}
           >
-            {t("清除")}
+            {busy ? t("上传中…") : t("上传图片")}
           </button>
-        )}
-      </div>
-      <input
-        ref={fileRef}
-        type="file"
-        accept="image/*"
-        hidden
-        onChange={onFile}
-      />
-      {hint && <span className="field-hint">{hint}</span>}
-      {url && (
-        <div className={`image-preview image-preview-${ratio}`}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={url} alt="" />
+          {url && (
+            <button
+              className="btn btn-outline-light btn-plain"
+              type="button"
+              disabled={busy}
+              onClick={() => setUrl("")}
+            >
+              {t("清除")}
+            </button>
+          )}
         </div>
-      )}
-      {error && <span className="form-error">{error}</span>}
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={onFile}
+        />
+        {hint && <span className="field-hint">{hint}</span>}
+        {url && (
+          <div className={`image-preview image-preview-${ratio}`}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={url} alt="" />
+          </div>
+        )}
+        {error && <span className="form-error">{error}</span>}
+      </div>
     </div>
   );
 }
