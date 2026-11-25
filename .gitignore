@@ -17,13 +17,24 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
+# ─────────────────────────────────────────────
+# 本地环境变量：可以创建，但绝不提交
+# （里面有数据库地址、密钥、令牌）
+# ─────────────────────────────────────────────
 .env
 .env*.local
 
-# 本机配置与凭据（绝不提交）
-config/database.json
-config/auth.json
+# ─────────────────────────────────────────────
+# 需要使用者自己创建 / 上传的文件：全部忽略，
+# 只提交 .example.json 模板
+# ─────────────────────────────────────────────
+config/*.json
+!config/*.example.json
+
+# 本地文件存储的图片（自部署时用）
+/uploads/
+/public/uploads/
+/data/
 
 # 内部资料：工作记忆里有本地测试密码，待办清单是私人记录
 .workbuddy/
@@ -38,6 +49,3 @@ TODO.md
 
 # 备份导出（含文章数据）
 /backups/
-
-# 界面语言开关（本地）
-config/locale.json

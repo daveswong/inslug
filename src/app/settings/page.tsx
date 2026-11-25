@@ -20,8 +20,7 @@ import {
 } from "./site-form";
 import ThemeToggle from "./theme-toggle";
 import { getT } from "@/lib/i18n";
-import { getServiceValues } from "@/lib/service-config";
-import { SERVICE_KEYS } from "@/lib/config-keys";
+import { buildServiceFeatures } from "@/lib/service-features";
 
 export const dynamic = "force-dynamic";
 
@@ -39,14 +38,7 @@ export default async function SettingsPage() {
     bound = false;
   }
   const canMail = await mailReady().catch(() => false);
-  const serviceValues = await getServiceValues();
-  const serviceItems = SERVICE_KEYS.map((item) => ({
-    key: item.key,
-    label: t(item.label),
-    hint: t(item.hint),
-    secret: item.secret,
-    configured: Boolean(serviceValues[item.key] || process.env[item.key]),
-  }));
+  const serviceFeatures = await buildServiceFeatures(t);
   const [keyDocs, authorized] = await Promise.all([
     listPasskeys().catch(() => []),
     passkeyAddAllowed().catch(() => false),
@@ -126,7 +118,9 @@ export default async function SettingsPage() {
           {
             id: "service",
             title: t("邮件与图片存储"),
-            summary: serviceItems.every((item) => item.configured)
+            summary: serviceFeatures
+              .flatMap((feature) => feature.fields)
+              .every((field) => field.configured)
               ? t("都已配置")
               : t("有未配置的项"),
             children: (
@@ -136,7 +130,7 @@ export default async function SettingsPage() {
                     "这两项存在数据库里，部署之后随时可以在这里改，不用重新部署。"
                   )}
                 </p>
-                <ServiceConfig items={serviceItems} />
+                <ServiceConfig features={serviceFeatures} />
               </>
             ),
           },

@@ -1,26 +1,71 @@
+import nodemailer from "nodemailer";
 import { getT } from "@/lib/i18n";
-/**
- * 发信：直接用 Resend 的 HTTP 接口，一个 fetch 就够，不引 SMTP 库。
- *
- * 需要两个环境变量：
- * - RESEND_API_KEY：Resend 后台创建的 API key
- * - RESEND_FROM：发件人，形如 `inslog <no-reply@insapp.tech>`
- *   域名必须先在 Resend 里验证过（加 SPF/DKIM 记录），否则只能发给自己账号的邮箱。
- *
- * 没配置时 mailConfig() 返回 null，上层据此禁用「更换 / 解绑验证器」。
- */
-
 import { getServiceValue } from "./service-config";
+
+/**
+ * 发信：两种通道，按 MAIL_PROVIDER 选。
+ *
+ * - resend：走 Resend 的 HTTP 接口，一个 fetch 就够
+ * - smtp：任何 SMTP 服务器（QQ / Gmail / 阿里云邮件推送 / 自建 Postfix）
+ *
+ * 没配置时 mailConfig() 返回 null，上层据此禁用「更换 / 解绑验证器」——
+ * 那两个操作需要邮件确认来兜底，没有发信能力就不能开。
+ */
 
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
 
-export async function mailConfig(): Promise<{ apiKey: string; from: string } | null> {
+export type MailProvider = "resend" | "smtp";
+
+export type MailConfig =
+  | { provider: "resend"; apiKey: string; from: string }
+  | {
+      provider: "smtp";
+      host: string;
+      port: number;
+      user?: string;
+      password?: string;
+      from: string;
+      secure: boolean;
+    };
+
+export async function getMailProvider(): Promise<MailProvider> {
+  const raw = (await getServiceValue("MAIL_PROVIDER"))?.trim().toLowerCase();
+  return raw === "smtp" ? "smtp" : "resend";
+}
+
+export async function mailConfig(): Promise<MailConfig | null> {
+  const provider = await getMailProvider();
+
+  if (provider === "smtp") {
+    const [host, port, user, password, from, secure] = await Promise.all([
+      getServiceValue("SMTP_HOST"),
+      getServiceValue("SMTP_PORT"),
+      getServiceValue("SMTP_USER"),
+      getServiceValue("SMTP_PASSWORD"),
+      getServiceValue("SMTP_FROM"),
+      getServiceValue("SMTP_SECURE"),
+    ]);
+    if (!host || !from) return null;
+    const portNum = Number(port);
+    return {
+      provider: "smtp",
+      host: host.trim(),
+      port: Number.isFinite(portNum) && portNum > 0 ? portNum : 587,
+      user: user?.trim() || undefined,
+      password: password || undefined,
+      from: from.trim(),
+      // 填 1 表示端口 465 那种直连加密；587 一般走 STARTTLS
+      secure:
+        secure?.trim() === "1" || secure?.trim().toLowerCase() === "true",
+    };
+  }
+
   const [apiKey, from] = await Promise.all([
     getServiceValue("RESEND_API_KEY"),
     getServiceValue("RESEND_FROM"),
   ]);
   if (!apiKey || !from) return null;
-  return { apiKey, from };
+  return { provider: "resend", apiKey, from };
 }
 
 export async function isMailConfigured(): Promise<boolean> {
@@ -35,7 +80,24 @@ export async function sendMail(input: {
 }): Promise<void> {
   const t = await getT();
   const cfg = await mailConfig();
-  if (!cfg) throw new Error(t("未配置发信服务（RESEND_API_KEY / RESEND_FROM）"));
+  if (!cfg) throw new Error(t("还没配发信服务"));
+
+  if (cfg.provider === "smtp") {
+    const transport = nodemailer.createTransport({
+      host: cfg.host,
+      port: cfg.port,
+      secure: cfg.secure,
+      auth: cfg.user ? { user: cfg.user, pass: cfg.password ?? "" } : undefined,
+    });
+    await transport.sendMail({
+      from: cfg.from,
+      to: input.to,
+      subject: input.subject,
+      text: input.text,
+      html: input.html,
+    });
+    return;
+  }
 
   const res = await fetch(RESEND_ENDPOINT, {
     method: "POST",

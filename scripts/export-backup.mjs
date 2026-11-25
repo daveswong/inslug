@@ -1,19 +1,11 @@
 // 整站备份：导出文章 JSON + 每篇 Markdown + 站点设置 / 标签。
 // 刻意不导出 auth / passkeys / pending_changes —— 那是凭据，不该出现在备份文件里。
-import { readFileSync, mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { MongoClient } from "mongodb";
+import { resolveDb } from "./_db.mjs";
 
-let uri;
-let dbName;
-if (process.env.MONGODB_URI) {
-  uri = process.env.MONGODB_URI;
-  dbName = process.env.MONGODB_DB_NAME || "inslog";
-} else {
-  const cfg = JSON.parse(readFileSync("config/database.json", "utf8"));
-  uri = cfg.uri;
-  dbName = process.env.MONGODB_DB_NAME || cfg.dbName || "inslog";
-}
+const { uri, dbName } = resolveDb();
 
 const client = new MongoClient(uri);
 await client.connect();

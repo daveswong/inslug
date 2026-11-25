@@ -515,6 +515,20 @@ a:hover {
   max-width: 55%;
 }
 
+/* provider 分组：先选方案，再显示这个方案的字段 */
+.provider-block {
+  margin: 0 0 1.5rem;
+  padding: 0;
+  border: 0;
+}
+
+.provider-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  padding: 0;
+}
+
 .config-fields {
   margin-top: 0.5rem;
 }

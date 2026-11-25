@@ -1,12 +1,12 @@
 // 演示数据：为 inslog 演示站灌入几篇与项目本身相关的文章
 // 用法：node scripts/_seed-test.mjs（重复执行会先清空旧的演示数据）
 import { MongoClient } from "mongodb";
-import { readFileSync } from "node:fs";
+import { resolveDb } from "./_db.mjs";
 
-const cfg = JSON.parse(readFileSync("config/database.json", "utf8"));
-const client = new MongoClient(cfg.uri);
+const { uri, dbName } = resolveDb();
+const client = new MongoClient(uri);
 await client.connect();
-const db = client.db(cfg.dbName || "inslog");
+const db = client.db(dbName);
 
 const text = (t) => ({ type: "text", text: t, styles: {} });
 const p = (t) => ({ type: "paragraph", content: [text(t)], children: [] });
