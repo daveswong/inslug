@@ -12,12 +12,14 @@ import { join } from "node:path";
 type DbConfig = { uri: string; dbName: string };
 
 function resolveConfig(): DbConfig {
+  // 显式的库名环境变量优先于任何配置文件
+  const envDbName = process.env.MONGODB_DB_NAME;
   // 生产/部署优先用环境变量
   const envUri = process.env.MONGODB_URI;
   if (envUri) {
     return {
       uri: envUri,
-      dbName: process.env.MONGODB_DB_NAME || "inslog",
+      dbName: envDbName || "inslog",
     };
   }
 
@@ -29,7 +31,7 @@ function resolveConfig(): DbConfig {
     );
     const cfg = JSON.parse(raw);
     if (!cfg.uri) throw new Error("database.json 缺少 uri");
-    return { uri: cfg.uri, dbName: cfg.dbName || "inslog" };
+    return { uri: cfg.uri, dbName: envDbName || cfg.dbName || "inslog" };
   } catch {
     throw new Error(
       "未找到数据库配置：请设置 MONGODB_URI 环境变量，或填写 config/database.json"

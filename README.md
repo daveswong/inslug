@@ -106,8 +106,13 @@ Vercel 部署需要在 Project → Settings → Environment Variables 配置：
 | `RP_ID` | Passkey 依赖的域名主体，如 `inslog.example.com`（**必须与正式域名一致**，改域名会导致已绑定的 Passkey 失效） |
 | `ORIGIN` | 站点地址，如 `https://inslog.example.com` |
 | `BLOB_READ_WRITE_TOKEN` | Vercel Blob 读写令牌；store 必须是 **Public**（创建后不可改），否则正文图片读者看不到 |
+| `RESEND_API_KEY` | Resend 的 API key，用于发送「修改密码」确认邮件 |
+| `RESEND_FROM` | 发件人，形如 `inslog <no-reply@你的域名>`；域名需先在 Resend 验证（加 SPF/DKIM 记录） |
 
-> 忘记后备密码：重新跑一次 `npm run hash-password`，替换 `ADMIN_PASSWORD_HASH` 后重新部署即可；已绑定的 Passkey 不受影响。
+> **改密码**：登录后到 `/settings` 的「修改密码」，提交后会往「通知邮箱」发一封确认信，点开链接再确认一次才生效。生效后所有设备都需要重新登录。
+> 邮件相关的三个条件（`RESEND_API_KEY`、`RESEND_FROM`、设置页的通知邮箱）缺任一，「修改密码」入口就会自动隐藏。
+>
+> **忘记后备密码**（进不去设置页时的救急）：改 `ADMIN_PASSWORD_HASH` 后重新部署，或删掉数据库 `auth` 集合里那条文档让它回落到种子哈希。已绑定的 Passkey 不受影响。
 
 **前端不提供任何数据库或密码配置入口**（连接串和哈希放前端会泄露）。
 

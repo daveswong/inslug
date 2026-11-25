@@ -1,5 +1,7 @@
 // 写作页：新建（无参数）或编辑（?slug=xxx），内容与标签都从数据库读
+import { redirect } from "next/navigation";
 import SiteFooter from "@/components/SiteFooter";
+import { isLoggedIn } from "@/lib/auth";
 import { getPostBySlug, listTags } from "@/lib/posts";
 import WriteClient from "./write-client";
 
@@ -11,6 +13,13 @@ type Props = {
 
 export default async function WritePage({ searchParams }: Props) {
   const { slug } = await searchParams;
+
+  // middleware 只验签名，会话版本失效（改过密码）的旧 cookie 要在这里挡掉
+  if (!(await isLoggedIn())) {
+    const next = slug ? `/write?slug=${encodeURIComponent(slug)}` : "/write";
+    redirect(`/login?next=${encodeURIComponent(next)}`);
+  }
+
   // 这个路由只对登录者开放，取文章时一并包含私有和草稿
   const [post, tags] = await Promise.all([
     slug ? getPostBySlug(slug, true) : Promise.resolve(null),

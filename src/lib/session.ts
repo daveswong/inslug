@@ -11,20 +11,29 @@ function secretKey(): Uint8Array {
   return new TextEncoder().encode(raw);
 }
 
-export async function signSessionToken(): Promise<string> {
-  return new SignJWT({ role: "owner" })
+export async function signSessionToken(
+  sessionVersion: number
+): Promise<string> {
+  return new SignJWT({ role: "owner", sv: sessionVersion })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(`${SESSION_MAX_AGE}s`)
     .sign(secretKey());
 }
 
-export async function verifySessionToken(token: string): Promise<boolean> {
+/**
+ * 只验签名与过期，返回 token 里的会话版本号。
+ * 版本号是否仍然等于库里的值，由 Node 侧的 isLoggedIn() 判断——
+ * middleware 跑在 Edge 上连不了数据库，那里只能做这层粗筛。
+ */
+export async function verifySessionToken(
+  token: string
+): Promise<{ sv: number } | null> {
   try {
-    await jwtVerify(token, secretKey());
-    return true;
+    const { payload } = await jwtVerify(token, secretKey());
+    return { sv: typeof payload.sv === "number" ? payload.sv : 0 };
   } catch {
-    return false;
+    return null;
   }
 }
 
