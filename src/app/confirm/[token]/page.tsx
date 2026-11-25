@@ -14,7 +14,7 @@ import { deletePasskey, listPasskeys } from "@/lib/passkey";
 import { openValue } from "@/lib/secret-box";
 import { formatDateTime } from "@/lib/time";
 import { getT } from "@/lib/i18n";
-import { resetEnvKeys } from "@/lib/env-config";
+import { performConfigReset } from "@/lib/config-reset";
 
 export const dynamic = "force-dynamic";
 
@@ -33,15 +33,13 @@ async function applyChange(formData: FormData) {
   } else if (doc.purpose === "totp-disable") {
     await setTotpSecret(null);
   } else if (doc.purpose === "config-reset") {
-    // 只清 .env 里的配置项；站点设置在数据库里，不动
-    const result = resetEnvKeys([
-      "MONGODB_URI",
-      "AUTH_SECRET",
-      "RECOVERY_TOKEN",
-      "RP_ID",
-      "ORIGIN",
-    ]);
-    if (!result.ok) redirect(`/confirm/${token}?state=failed`);
+    // 只清配置项的值；站点设置、文章、已绑定的钥匙都不动。
+    // 结果通过 query 参数回传给完成页，让用户看清哪些自动清了、哪些要手动删。
+    const outcome = await performConfigReset();
+    const params = new URLSearchParams({ state: "done" });
+    if (outcome.cleared.length) params.set("cleared", outcome.cleared.join(","));
+    if (outcome.manual.length) params.set("manual", outcome.manual.join(","));
+    redirect(`/confirm/${token}?${params.toString()}`);
   } else if (doc.purpose === "passkey-add") {
     // 不给攻击者「偷到邮件链接就直接绑一把钥匙」的能力：
     // 这里只开一个 10 分钟窗口，真正的绑定还得本人在设备上做 WebAuthn。
@@ -74,15 +72,17 @@ export default async function ConfirmPage({
   searchParams,
 }: {
   params: Promise<{ token: string }>;
-  searchParams: Promise<{ state?: string }>;
+  searchParams: Promise<{ state?: string; cleared?: string; manual?: string }>;
 }) {
   const t = await getT();
   const { token } = await params;
-  const { state: result } = await searchParams;
+  const { state: result, cleared, manual } = await searchParams;
   const { state, doc } = await readPendingChange(token);
 
   const isDone = result === "done";
   const isFailed = result === "failed";
+  const clearedKeys = cleared ? cleared.split(",").filter(Boolean) : [];
+  const manualKeys = manual ? manual.split(",").filter(Boolean) : [];
 
   return (
     <main className="site">
@@ -94,7 +94,51 @@ export default async function ConfirmPage({
         {isDone && (
           <>
             <p className="notice">{t("变更已生效。")}</p>
-            {doc?.purpose === "passkey-add" ? (
+            {doc?.purpose === "config-reset" ? (
+              <>
+                {clearedKeys.length > 0 && (
+                  <>
+                    <p className="notice">{t("下面这些已经清掉了：")}</p>
+                    <ul className="config-checklist">
+                      {clearedKeys.map((key) => (
+                        <li key={key}>
+                          <code>{key}</code>
+                          <span className="config-ok">{t("已清空")}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+                {manualKeys.length > 0 && (
+                  <>
+                    <p className="notice">
+                      {t(
+                        "下面这些应用改不了（配置在平台的环境变量里），需要你手动删除："
+                      )}
+                    </p>
+                    <ul className="config-checklist">
+                      {manualKeys.map((key) => (
+                        <li key={key}>
+                          <code>{key}</code>
+                          <span className="config-missing">{t("请手动删除")}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="notice">
+                      {t(
+                        "去平台的项目设置里删掉这些环境变量。站点设置、文章、已绑定的 Passkey 和验证器都没动。"
+                      )}
+                    </p>
+                  </>
+                )}
+                {clearedKeys.length === 0 && manualKeys.length === 0 && (
+                  <p className="notice">{t("没有可清空的配置项。")}</p>
+                )}
+                <p>
+                  <a href="/setup">{t("去安装向导")}</a>
+                </p>
+              </>
+            ) : doc?.purpose === "passkey-add" ? (
               <>
                 <p className="notice">
                   
@@ -156,7 +200,9 @@ export default async function ConfirmPage({
                 : doc.purpose === "totp-set"
                   ? t("把登录验证器换成新的一个。")
                   : doc.purpose === "config-reset"
-                    ? "清空 .env 里的身份验证与启动配置（站点设置和文章不受影响）。"
+                    ? t(
+                        "清空下面这些配置项的值（站点设置、文章、已绑定的 Passkey 和验证器都不动）。"
+                      )
                     : doc.purpose === "passkey-add"
                     ? t("授权 10 分钟内绑定一把新的 Passkey（还要本人在设备上确认）。")
                     : t("删除一把 Passkey。")}

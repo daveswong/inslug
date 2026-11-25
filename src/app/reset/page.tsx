@@ -6,7 +6,8 @@ import { getAuth } from "@/lib/credentials";
 import { getSettings } from "@/lib/settings";
 import { listPasskeys } from "@/lib/passkey";
 import { mailReady } from "@/lib/change-request";
-import { canWriteEnvFile } from "@/lib/env-config";
+import { canWriteEnvFile, getEnvValue } from "@/lib/env-config";
+import { CONFIG_KEYS } from "@/lib/config-keys";
 import { getT } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
@@ -66,7 +67,7 @@ export default async function ResetPage() {
   }
   const canMail = await mailReady().catch(() => false);
   const canWriteEnv = canWriteEnvFile();
-  const token = process.env.RECOVERY_TOKEN ?? "";
+  const token = getEnvValue("RECOVERY_TOKEN") ?? "";
   const hasRecovery = token.length >= 16;
 
   return (
@@ -94,10 +95,25 @@ export default async function ResetPage() {
         <h2 className="section-title">{t("重置配置")}</h2>
         <p className="notice">
           {t(
-            "需要把身份验证与启动配置推倒重来时用这个：会从 .env 里删掉数据库地址、会话密钥、紧急密钥这些配置项。站点设置和文章都在数据库里，不受影响。"
+            "需要把配置推倒重来时用这个：会清掉下面这些配置项的值。站点设置、文章、已绑定的 Passkey 和验证器都不动。"
           )}
         </p>
-        <ResetConfigButton available={canWriteEnv} />
+        <ul className="config-checklist">
+          {CONFIG_KEYS.map((item) => (
+            <li key={item.key}>
+              <code>{item.key}</code>
+              <span>{t(item.label)}</span>
+              <span className="config-item-state">
+                {item.group === "auth"
+                  ? canWriteEnv
+                    ? t(".env 文件")
+                    : t("环境变量")
+                  : t("数据库")}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <ResetConfigButton envWritable={canWriteEnv} />
 
         <h2 className="section-title">{t("接下来做什么")}</h2>
         {passkeyCount === 0 && !hasTotp && (

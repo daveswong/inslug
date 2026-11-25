@@ -132,9 +132,9 @@ export function requestConfigReset(input: {
   return sendConfirmMail({
     purpose: "config-reset",
     payload: {},
-    actionText: "重置身份验证与启动配置",
+    actionText: "重置配置",
     consequence:
-      "确认后会从 .env 里删掉数据库地址、会话密钥、紧急密钥这些配置项。站点设置和文章都在数据库里，不受影响。",
+      "确认后会清掉数据库地址、会话密钥、紧急密钥、Passkey 域名、站点地址、发信密钥、图片存储令牌这些配置项的值。站点设置、文章、已绑定的 Passkey 和验证器都不动。",
     linkOrigin: input.linkOrigin,
     ip: input.ip,
     ua: input.ua,
