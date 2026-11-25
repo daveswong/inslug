@@ -35,10 +35,21 @@ export function postDisplayDate(post: {
   return post.publishedAt ?? post.createdAt;
 }
 
-/** 统一显示成 YYYY-MM-DD */
+/**
+ * 统一显示成 YYYY-MM-DD。
+ * 固定按东八区格式化：Vercel 运行时是 UTC，直接用 getFullYear/getMonth
+ * 会让 UTC 00:00–07:59 发布的文章显示成前一天。
+ */
+const DATE_FMT = new Intl.DateTimeFormat("en-US", {
+  timeZone: "Asia/Shanghai",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
 export function formatDate(date: Date): string {
-  const d = new Date(date);
-  const month = `${d.getMonth() + 1}`.padStart(2, "0");
-  const day = `${d.getDate()}`.padStart(2, "0");
-  return `${d.getFullYear()}-${month}-${day}`;
+  const parts = DATE_FMT.formatToParts(new Date(date));
+  const pick = (type: "year" | "month" | "day") =>
+    parts.find((p) => p.type === type)?.value ?? "";
+  return `${pick("year")}-${pick("month")}-${pick("day")}`;
 }
