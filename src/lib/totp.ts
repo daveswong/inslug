@@ -40,7 +40,7 @@ export async function qrSvg(uri: string): Promise<string> {
   return QRCode.toString(uri, {
     type: "svg",
     margin: 1,
-    width: 200,
+    width: 160,
     errorCorrectionLevel: "M",
   });
 }

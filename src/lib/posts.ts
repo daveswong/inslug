@@ -1,5 +1,6 @@
 import { ObjectId } from "mongodb";
 import { getDb } from "./mongodb";
+import { makeSlug } from "./slug";
 import type { PostDoc, Visibility } from "./types";
 
 /** 从 BlockNote 块里提取纯文本，供搜索使用 */
@@ -30,11 +31,6 @@ function blocksToPlainText(blocks: unknown[]): string {
   return parts.join(" ");
 }
 
-/** 生成短 ID 作为 slug（自动短 ID 方案） */
-function newSlug(): string {
-  return new ObjectId().toString("hex").slice(0, 12);
-}
-
 /** 定稿时间：public 和 private 都算定稿，draft 为 null */
 function publishedAtFor(v: Visibility, existing: Date | null, now: Date): Date | null {
   if (v === "draft") return null;
@@ -50,9 +46,17 @@ export async function createPost(input: {
   visibility: Visibility;
 }): Promise<PostDoc> {
   const db = await getDb();
+  const posts = db.collection<PostDoc>("posts");
   const now = new Date();
+
+  // 随机后缀碰撞概率极低，但重名标题仍然检查一遍，绝不让两篇文章共用一个地址
+  let slug = makeSlug(input.title);
+  for (let i = 0; i < 5 && (await posts.findOne({ slug })); i++) {
+    slug = makeSlug(input.title);
+  }
+
   const doc: PostDoc = {
-    slug: newSlug(),
+    slug,
     title: input.title,
     blocks: input.blocks as PostDoc["blocks"],
     plainText: blocksToPlainText(input.blocks),
@@ -62,7 +66,7 @@ export async function createPost(input: {
     createdAt: now,
     updatedAt: now,
   };
-  await db.collection<PostDoc>("posts").insertOne(doc as PostDoc & { _id: ObjectId });
+  await posts.insertOne(doc as PostDoc & { _id: ObjectId });
   await syncTags(db, input.tags);
   return doc;
 }
@@ -200,8 +204,17 @@ async function syncTags(
   }
 }
 
-export async function listTags(): Promise<string[]> {
+/**
+ * tag 目录。公开页面只列被 public 文章用过的标签，避免从目录推断出草稿内容。
+ * 写作页传 includeHidden，才能把自己草稿/私有文章上的标签也选到。
+ */
+export async function listTags(opts: { includeHidden?: boolean } = {}): Promise<string[]> {
   const db = await getDb();
   const docs = await db.collection("tags").find({}).sort({ name: 1 }).toArray();
-  return docs.map((d) => d.name as string);
+  const names = docs.map((d) => d.name as string);
+  if (opts.includeHidden) return names;
+  const used = (await db
+    .collection<PostDoc>("posts")
+    .distinct("tags", { visibility: "public" })) as string[];
+  return names.filter((name) => used.includes(name));
 }

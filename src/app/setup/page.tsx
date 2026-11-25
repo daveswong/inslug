@@ -2,7 +2,7 @@
 import { redirect } from "next/navigation";
 import SiteFooter from "@/components/SiteFooter";
 import { isLoggedIn } from "@/lib/auth";
-import { getAuth } from "@/lib/credentials";
+import { getAuth, passkeyAddAllowed } from "@/lib/credentials";
 import { getSettings } from "@/lib/settings";
 import { listPasskeys } from "@/lib/passkey";
 import { mailReady } from "@/lib/change-request";
@@ -14,7 +14,17 @@ export default async function SetupPage() {
   if (!(await isLoggedIn())) redirect("/login?next=%2Fsetup");
 
   const settings = await getSettings();
-  const passkeyCount = (await listPasskeys()).length;
+  const [keyDocs, authorized] = await Promise.all([
+    listPasskeys().catch(() => []),
+    passkeyAddAllowed().catch(() => false),
+  ]);
+  const passkeyCount = keyDocs.length;
+  const passkeys = keyDocs.map((key) => ({
+    credentialId: key.credentialId,
+    createdAt: key.createdAt.toISOString(),
+    lastUsedAt: key.lastUsedAt?.toISOString() ?? null,
+    transports: key.transports ?? [],
+  }));
 
   let hasTotp = false;
   try {
@@ -41,6 +51,8 @@ export default async function SetupPage() {
           postsPerPage: settings.postsPerPage,
         }}
         passkeyCount={passkeyCount}
+        passkeys={passkeys}
+        authorized={authorized}
         hasTotp={hasTotp}
         mailReady={canMail}
         completed={settings.setupCompleted}

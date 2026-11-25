@@ -4,7 +4,13 @@
 import { redirect } from "next/navigation";
 import SiteFooter from "@/components/SiteFooter";
 import { consumePendingChange, readPendingChange } from "@/lib/pending";
-import { setTotpSecret } from "@/lib/credentials";
+import {
+  authorizePasskeyAdd,
+  bumpSessionVersion,
+  getAuth,
+  setTotpSecret,
+} from "@/lib/credentials";
+import { deletePasskey, listPasskeys } from "@/lib/passkey";
 import { openValue } from "@/lib/secret-box";
 import { formatDateTime } from "@/lib/time";
 
@@ -24,6 +30,25 @@ async function applyChange(formData: FormData) {
     await setTotpSecret(sealed);
   } else if (doc.purpose === "totp-disable") {
     await setTotpSecret(null);
+  } else if (doc.purpose === "passkey-add") {
+    // 不给攻击者「偷到邮件链接就直接绑一把钥匙」的能力：
+    // 这里只开一个 10 分钟窗口，真正的绑定还得本人在设备上做 WebAuthn。
+    await authorizePasskeyAdd();
+  } else if (doc.purpose === "passkey-remove") {
+    const credentialId = String(doc.payload.credentialId ?? "");
+    if (!credentialId) redirect(`/confirm/${token}?state=failed`);
+    const [keys, auth] = await Promise.all([
+      listPasskeys(),
+      getAuth().catch(() => null),
+    ]);
+    // 绝不能把最后一把钥匙删掉，否则连自己都进不去
+    if (keys.length <= 1 && !auth?.totpSecret) {
+      redirect(`/confirm/${token}?state=failed`);
+    }
+    if (!(await deletePasskey(credentialId))) {
+      redirect(`/confirm/${token}?state=failed`);
+    }
+    await bumpSessionVersion();
   } else {
     redirect(`/confirm/${token}?state=failed`);
   }
@@ -56,12 +81,25 @@ export default async function ConfirmPage({
         {isDone && (
           <>
             <p className="notice">变更已生效。</p>
-            <p className="notice">
-              所有设备上的登录状态都已失效，包括当前这台。请用 Passkey 或验证器重新登录。
-            </p>
-            <p>
-              <a href="/login">去登录</a>
-            </p>
+            {doc?.purpose === "passkey-add" ? (
+              <>
+                <p className="notice">
+                  现在回设置页，在 10 分钟内用设备完成绑定（Touch ID / 指纹）。过期需要重新申请。
+                </p>
+                <p>
+                  <a href="/settings">去设置页</a>
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="notice">
+                  所有设备上的登录状态都已失效，包括当前这台。请用 Passkey 或验证器重新登录。
+                </p>
+                <p>
+                  <a href="/login">去登录</a>
+                </p>
+              </>
+            )}
           </>
         )}
 
@@ -96,7 +134,13 @@ export default async function ConfirmPage({
           <>
             <p className="notice">
               即将执行：
-              {doc.purpose === "totp-disable" ? "解绑登录验证器。" : "把登录验证器换成新的一个。"}
+              {doc.purpose === "totp-disable"
+                ? "解绑登录验证器。"
+                : doc.purpose === "totp-set"
+                  ? "把登录验证器换成新的一个。"
+                  : doc.purpose === "passkey-add"
+                    ? "授权 10 分钟内绑定一把新的 Passkey（还要本人在设备上确认）。"
+                    : "删除一把 Passkey。"}
             </p>
 
             <dl className="confirm-meta">

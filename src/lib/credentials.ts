@@ -21,6 +21,8 @@ interface AuthDoc {
   totpSecret?: string;
   /** 最近一次验证成功的时间步，同一个步长的码不能用第二次 */
   totpLastStep?: number;
+  /** 邮件确认后开启的「可以绑新 Passkey」窗口，10 分钟 */
+  passkeyAddUntil?: Date;
   sessionVersion: number;
   updatedAt: Date;
 }
@@ -111,4 +113,35 @@ export async function bumpSessionVersion(): Promise<number> {
     );
   }
   return sessionVersion;
+}
+
+/** 邮件确认通过后，开一个 10 分钟的窗口允许绑定新 Passkey */
+export async function authorizePasskeyAdd(): Promise<void> {
+  const col = (await getDb()).collection<AuthDoc>("auth");
+  await col.updateOne(
+    { _id: AUTH_ID },
+    {
+      $set: {
+        passkeyAddUntil: new Date(Date.now() + 10 * 60 * 1000),
+        updatedAt: new Date(),
+      },
+    },
+    { upsert: true }
+  );
+}
+
+/** 绑定窗口是否还有效（读操作，不消耗） */
+export async function passkeyAddAllowed(): Promise<boolean> {
+  const col = (await getDb()).collection<AuthDoc>("auth");
+  const doc = await col.findOne({ _id: AUTH_ID });
+  return !!doc?.passkeyAddUntil && doc.passkeyAddUntil.getTime() > Date.now();
+}
+
+/** 绑定成功后关掉窗口，避免一次授权绑很多把 */
+export async function clearPasskeyAddAuthorization(): Promise<void> {
+  const col = (await getDb()).collection<AuthDoc>("auth");
+  await col.updateOne(
+    { _id: AUTH_ID },
+    { $unset: { passkeyAddUntil: "" }, $set: { updatedAt: new Date() } }
+  );
 }

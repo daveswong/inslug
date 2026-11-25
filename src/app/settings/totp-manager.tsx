@@ -112,7 +112,7 @@ export default function TotpManager({
           扫不了就把这串密钥手输进去：<code className="totp-secret">{setup.grouped}</code>
         </p>
 
-        <form className="login-form" onSubmit={confirmBind}>
+        <form className="login-form totp-form" onSubmit={confirmBind}>
           <input
             className="search-input"
             type="text"

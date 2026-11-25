@@ -14,7 +14,11 @@ import { getDb } from "./mongodb";
  * - 10 分钟内最多发 3 封，避免被当成发信器
  */
 
-export type ChangePurpose = "totp-set" | "totp-disable";
+export type ChangePurpose =
+  | "totp-set"
+  | "totp-disable"
+  | "passkey-add"
+  | "passkey-remove";
 
 export interface PendingDoc {
   _id?: unknown;

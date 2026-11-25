@@ -1,49 +1,59 @@
+import { getDb } from "./mongodb";
+
 /**
- * 进程内限速。serverless 下内存会随实例回收，所以它只能挡住「同一实例上的高速重试」，
- * 不是硬防线——真正的防线是 6 位码本身只有 100 万种组合 + 30 秒就换。
- * 单用户场景这个强度够了，真要严格得落库。
+ * 落库限速。原来的进程内 Map 在 Vercel 上每个实例各算各的、重启就清零，
+ * 等于形同虚设。这里改用 rate_limits 集合，所有实例共享同一份计数。
+ *
+ * 仍是「软」限速：6 位码本身 100 万种组合 + 30 秒轮换，才是真正的防线。
  */
 
-interface Bucket {
+interface LimitDoc {
+  _id: string;
   count: number;
   resetAt: number;
 }
-
-const buckets = new Map<string, Bucket>();
 
 export type RateResult =
   | { allowed: true }
   | { allowed: false; minutes: number };
 
-export function rateLimit(
+export async function rateLimit(
   key: string,
   max = 5,
   windowMs = 10 * 60 * 1000
-): RateResult {
+): Promise<RateResult> {
+  const col = (await getDb()).collection<LimitDoc>("rate_limits");
   const now = Date.now();
-  const record = buckets.get(key);
-  const withinWindow = record && record.resetAt > now;
+  const doc = await col.findOne({ _id: key });
+  const withinWindow = doc && doc.resetAt > now;
 
-  if (withinWindow && record.count >= max) {
+  if (withinWindow && doc.count >= max) {
     return {
       allowed: false,
-      minutes: Math.max(1, Math.ceil((record.resetAt - now) / 60000)),
+      minutes: Math.max(1, Math.ceil((doc.resetAt - now) / 60000)),
     };
   }
 
-  buckets.set(key, {
-    count: withinWindow ? record.count + 1 : 1,
-    resetAt: withinWindow ? record.resetAt : now + windowMs,
-  });
+  await col.updateOne(
+    { _id: key },
+    {
+      $set: {
+        count: withinWindow ? doc.count + 1 : 1,
+        resetAt: withinWindow ? doc.resetAt : now + windowMs,
+      },
+    },
+    { upsert: true }
+  );
   return { allowed: true };
 }
 
-/** 成功之后清零，避免正常的连续登录把自己锁住 */
-export function resetRateLimit(key: string): void {
-  buckets.delete(key);
+/** 验证成功后清零，避免正常的连续登录把自己锁住 */
+export async function resetRateLimit(key: string): Promise<void> {
+  const col = (await getDb()).collection<LimitDoc>("rate_limits");
+  await col.deleteOne({ _id: key });
 }
 
-/** 取来源 IP：Vercel 会把真实 IP 放在 x-forwarded-for 的第一段 */
+/** Vercel 会把真实 IP 放在 x-forwarded-for 的第一段 */
 export function clientKey(req: Request): string {
   const forwarded = req.headers.get("x-forwarded-for");
   return forwarded?.split(",")[0]?.trim() || "local";

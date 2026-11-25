@@ -1,4 +1,5 @@
 // 站内搜索：标题、正文、标签都匹配（数据层 listPosts 的 query）
+import { isLoggedIn } from "@/lib/auth";
 import { listPosts } from "@/lib/posts";
 import SiteFooter from "@/components/SiteFooter";
 import { formatDate, postDisplayDate, postFlags } from "@/lib/post-utils";
@@ -14,8 +15,9 @@ type Props = {
 export default async function SearchPage({ searchParams }: Props) {
   const { q } = await searchParams;
   const query = (q ?? "").trim();
+  const loggedIn = await isLoggedIn();
   const { items, total } = query
-    ? await listPosts({ query, limit: MAX_RESULTS })
+    ? await listPosts({ query, limit: MAX_RESULTS, includeHidden: loggedIn })
     : { items: [], total: 0 };
 
   return (

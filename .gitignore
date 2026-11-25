@@ -35,3 +35,6 @@ TODO.md
 
 # typescript
 *.tsbuildinfo
+
+# 备份导出（含文章数据）
+/backups/

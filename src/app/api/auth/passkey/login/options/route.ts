@@ -24,6 +24,8 @@ export async function GET(req: Request) {
       transports: p.transports as AuthenticatorTransportFuture[] | undefined,
     })),
     userVerification: "preferred",
+    // 默认 60 秒对「找一下钥匙串 / 拿手机碰一下」偏紧，放宽到 2 分钟
+    timeout: 120000,
   });
 
   // 挑战 5 分钟内有效，存在 httpOnly cookie 里

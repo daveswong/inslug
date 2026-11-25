@@ -7,7 +7,7 @@ import { clientKey, rateLimit, resetRateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
   const key = `totp-login:${clientKey(req)}`;
-  const gate = rateLimit(key, 5);
+  const gate = await rateLimit(key, 5);
   if (!gate.allowed) {
     return NextResponse.json(
       { error: `尝试次数过多，请 ${gate.minutes} 分钟后再试` },
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
 
   // 先记时间步再发会话：万一写库失败，宁可让用户重试，也不要留下可复用的码
   await recordTotpStep(result.step);
-  resetRateLimit(key);
+  await resetRateLimit(key);
   await startSession();
   return NextResponse.json({ ok: true });
 }

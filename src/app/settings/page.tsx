@@ -2,12 +2,14 @@
 import { redirect } from "next/navigation";
 import SiteFooter from "@/components/SiteFooter";
 import { isLoggedIn } from "@/lib/auth";
-import { getAuth } from "@/lib/credentials";
+import { getAuth, passkeyAddAllowed } from "@/lib/credentials";
+import { listPasskeys } from "@/lib/passkey";
 import { getSettings } from "@/lib/settings";
 import { mailReady } from "@/lib/change-request";
 import PasskeyManager from "./passkey-manager";
 import TotpManager from "./totp-manager";
 import SiteForm from "./site-form";
+import ThemeToggle from "./theme-toggle";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +26,16 @@ export default async function SettingsPage() {
     bound = false;
   }
   const canMail = await mailReady().catch(() => false);
+  const [keyDocs, authorized] = await Promise.all([
+    listPasskeys().catch(() => []),
+    passkeyAddAllowed().catch(() => false),
+  ]);
+  const passkeys = keyDocs.map((key) => ({
+    credentialId: key.credentialId,
+    createdAt: key.createdAt.toISOString(),
+    lastUsedAt: key.lastUsedAt?.toISOString() ?? null,
+    transports: key.transports ?? [],
+  }));
 
   return (
     <main className="site">
@@ -42,12 +54,22 @@ export default async function SettingsPage() {
       </section>
 
       <section className="section">
+        <h2 className="section-title">外观</h2>
+        <p className="notice">默认跟随系统；想固定浅色或深色就在这里选。</p>
+        <ThemeToggle />
+      </section>
+
+      <section className="section">
         <h2 className="section-title">登录</h2>
         <p className="notice">
           Passkey 绑好之后，登录不用输任何东西，用 Touch ID / 指纹一按就行。
           换设备重新绑一把即可。
         </p>
-        <PasskeyManager />
+        <PasskeyManager
+          passkeys={passkeys}
+          authorized={authorized}
+          mailReady={canMail}
+        />
 
         <h3 className="form-group">手机验证器</h3>
         <p className="notice">
