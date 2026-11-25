@@ -44,6 +44,8 @@ export interface SettingsDoc {
   notifyEmail: string;
   /** 首次安装向导是否走完。老文档缺字段时按 false 处理 */
   setupCompleted: boolean;
+  /** 界面语言：zh-CN / en；空字符串表示用默认（环境变量或本地配置） */
+  uiLanguage: string;
   updatedAt: Date;
 }
 
@@ -62,4 +64,5 @@ export const DEFAULT_SETTINGS: Omit<SettingsDoc, "updatedAt"> = {
   postsPerPage: 20,
   notifyEmail: "",
   setupCompleted: false,
+  uiLanguage: "",
 };

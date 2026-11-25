@@ -9,14 +9,26 @@ import {
   type Locale,
   type Translate,
 } from "./i18n-core";
+import { getSettings } from "./settings";
 
 /**
- * 界面语言：环境变量优先，其次本地 config/locale.json，都没有就是中文。
+ * 界面语言，从三处取，优先级从高到低：
  *
- * 环境变量 UI_LANGUAGE 用于 Vercel（只读文件系统改不了本地文件）；
- * config/locale.json 方便本机改一个值就切语言，已在 .gitignore 里。
+ * 1. 设置页里选的（存数据库 settings.uiLanguage）——最常用，改完立刻生效
+ * 2. 环境变量 UI_LANGUAGE —— 部署时定的默认值
+ * 3. 本地 config/locale.json —— 本机开发时改
+ * 4. 都没有就是中文
  */
-export function currentLocale(): Locale {
+export async function currentLocale(): Promise<Locale> {
+  try {
+    const saved = (await getSettings()).uiLanguage?.trim();
+    if (saved && SUPPORTED_LOCALES.includes(saved as Locale)) {
+      return saved as Locale;
+    }
+  } catch {
+    // 数据库读不到就往下走，不因为这个把整站卡住
+  }
+
   const fromEnv = process.env.UI_LANGUAGE?.trim();
   if (fromEnv && SUPPORTED_LOCALES.includes(fromEnv as Locale)) {
     return fromEnv as Locale;
@@ -39,7 +51,7 @@ export async function getI18n(): Promise<{
   dict: Dictionary;
   t: Translate;
 }> {
-  const locale = currentLocale();
+  const locale = await currentLocale();
   let dict: Dictionary = {};
   try {
     dict = JSON.parse(

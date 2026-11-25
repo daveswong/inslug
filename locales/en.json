@@ -284,5 +284,17 @@
   "确认后所有设备都需要重新登录。不是你发起的就关掉这页，什么都不会变。": "After confirmation all devices must sign in again. If you did not request this, close the page — nothing will change.",
   "确认执行": "Confirm",
   "文章不存在": "Post not found",
-  "编辑": "Edit"
+  "编辑": "Edit",
+  "上传图片": "Upload image",
+  "上传中…": "Uploading…",
+  "清除": "Clear",
+  "只支持图片文件": "Only image files are supported",
+  "图片过大，请压缩后再传": "Image is too large. Please compress it first.",
+  "图片地址，留空用默认渐变图标": "Image URL, leave blank for the default gradient icon",
+  "链接分享时显示的图，推荐 1200 × 630": "Shown when the link is shared. 1200 × 630 recommended",
+  "Safari 不认 SVG 图标，用 PNG 或 ICO 更稳": "Safari does not support SVG icons; PNG or ICO is safer",
+  "界面语言": "Interface language",
+  "只影响界面文字，文章内容不翻译。": "Only the interface text changes; posts are not translated.",
+  "切换后立即生效，全站一起变。": "Takes effect immediately, for the whole site.",
+  "不支持的语言": "Unsupported language"
 }
