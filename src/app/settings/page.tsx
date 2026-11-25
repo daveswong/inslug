@@ -45,6 +45,7 @@ export default async function SettingsPage() {
             <p className="notice">
               提交后会往通知邮箱发一封确认信，点开链接再确认一次才生效。
               确认之后所有设备都需要重新登录。
+              没收到的话看一眼垃圾邮件，链接 10 分钟内有效。
             </p>
             <PasswordForm />
           </>
