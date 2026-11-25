@@ -30,6 +30,8 @@ export type ConfigKey = {
   provider?: string;
   /** 标记它是 provider 的下拉选择器本身 */
   isProviderChoice?: boolean;
+  /** 由程序生成，不用手填 */
+  generated?: boolean;
 };
 
 export const CONFIG_KEYS: ConfigKey[] = [
@@ -53,13 +55,15 @@ export const CONFIG_KEYS: ConfigKey[] = [
     label: "会话密钥",
     hint: "用来签名登录状态。改了之后所有设备都要重新登录，已绑定的验证器也要重新绑定。",
     secret: true,
+    generated: true,
   },
   {
     key: "RECOVERY_TOKEN",
     group: "auth",
     label: "紧急密钥",
-    hint: "两把钥匙都丢了时的救急入口。设了要记住，用完可以删掉。",
+    hint: "两把钥匙都丢了时的救急入口。程序生成，请立刻保存下来。",
     secret: true,
+    generated: true,
   },
   {
     key: "RP_ID",

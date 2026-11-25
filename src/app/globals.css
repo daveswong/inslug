@@ -529,6 +529,46 @@ a:hover {
   padding: 0;
 }
 
+/* 密钥生成器：生成后把值摆出来让人复制或下载 */
+.secret-generator {
+  margin-top: 0.5rem;
+}
+
+.secret-list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+}
+
+.secret-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.secret-label {
+  font-size: 0.9rem;
+  min-width: 7rem;
+}
+
+.secret-key {
+  flex: 1 1 100%;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+  color: var(--ink);
+  word-break: break-all;
+}
+
+.secret-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
 .config-fields {
   margin-top: 0.5rem;
 }

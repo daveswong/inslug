@@ -133,7 +133,7 @@ scripts/
 
 | 组 | 内容 | 存哪 | 什么时候能改 |
 | --- | --- | --- | --- |
-| 身份验证与启动 | `MONGODB_URI`、`MONGODB_DB_NAME`、`AUTH_SECRET`、`RECOVERY_TOKEN`、`RP_ID`、`ORIGIN` | 非 Vercel：项目根目录的 `.env` 文件（部署时生成，不在 Git 里）；Vercel：项目环境变量 | 只在**安装 / 重置引导**里改 |
+| 身份验证与启动 | `MONGODB_URI`、`MONGODB_DB_NAME`、`RP_ID`、`ORIGIN`（手填）+ `AUTH_SECRET`、`RECOVERY_TOKEN`（**程序生成**） | `.env` 文件（部署时生成，不在 Git 里）；Vercel 上是下载同一个文件再导入 | 只在**安装 / 重置引导**里改 |
 | 服务类 | 图片存储（`STORAGE_PROVIDER` + 各方案字段）、发信（`MAIL_PROVIDER` + 各方案字段） | 数据库 | 部署之后在设置页随时改，不用重新部署 |
 
 服务类这两项是**可插拔的**：先选方案（vercel-blob / s3 / local，resend / smtp），再只填这个方案要的字段。
@@ -154,12 +154,18 @@ scripts/
 
 平台改不掉的（Vercel 的环境变量）会在确认后的页面上**逐个列出来**，由你手动去控制台删除。
 
-平台差异：
+平台差异（表单是同一套，只有最后一步不同）：
 
-- **Vercel**：文件系统只读，写不了 `.env`。引导页会列出需要填的变量清单，你自己到项目环境变量里填。
 - **自有服务器 / Docker**：引导页直接写 `.env` 文件，写完刷新即生效，不用重启。
+- **Vercel**：文件系统只读写不了文件。引导页会**打包成一个 `.env` 文件让你下载**，
+  再把它导入到 Vercel 的环境变量里（Vercel → 项目 → Settings → Environment Variables → 上传），然后重新部署。
+
+`AUTH_SECRET` 和 `RECOVERY_TOKEN` 由程序生成（32 字节随机数），不用手写：
+密码里的特殊字符不用自己转义，也不会出现人为的弱口令。生成后请存到密码管理器——
+**紧急密钥是唯一能进门的路**。
 
 > `AUTH_SECRET` 改了会让所有设备掉线、已绑定的验证器也要重新绑；`MONGODB_URI` 改了会立刻重连数据库，页面可能短暂打不开。
+> 重新生成密钥就等于改了 `AUTH_SECRET`：所有设备掉线，验证器要重新扫码绑定。
 
 ## 界面语言
 

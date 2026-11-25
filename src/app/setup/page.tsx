@@ -68,7 +68,12 @@ export default async function SetupPage() {
     hint: t(item.hint),
     secret: item.secret,
     configured: Boolean(getEnvValue(item.key)),
+    generated: Boolean(item.generated),
   }));
+  // 手填的：数据库地址、库名、域名这些
+  const manualAuthItems = authItems.filter((item) => !item.generated);
+  // 程序生成的：会话密钥、紧急密钥
+  const generatedAuthItems = authItems.filter((item) => item.generated);
 
   return (
     <main className="site">
@@ -92,7 +97,8 @@ export default async function SetupPage() {
         hasTotp={hasTotp}
         mailReady={canMail}
         completed={settings.setupCompleted}
-        authItems={authItems}
+        authItems={manualAuthItems}
+        generatedAuthItems={generatedAuthItems}
         serviceFeatures={serviceFeatures}
         envWritable={canWriteEnvFile()}
         onVercel={isVercel()}
