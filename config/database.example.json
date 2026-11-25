@@ -1,0 +1,5 @@
+{
+  "uri": "mongodb+srv://<用户名>:<密码>@<集群地址>/?retryWrites=true&w=majority",
+  "dbName": "inslog",
+  "_comment": "本地开发用：把本文件复制为 database.json，再把 uri 换成你的 MongoDB Atlas 连接串。database.json 已被 gitignore，不会提交。"
+}
