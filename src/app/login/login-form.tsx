@@ -167,8 +167,13 @@ export default function LoginForm({
         <>
           <h2 className="section-title">{t("紧急登录")}</h2>
           <p className="notice">
-            
-            {t("两把钥匙都不在手上的时候用这个：填环境变量 RECOVERY_TOKEN 的值。 进来之后立刻重新绑定验证器，然后去 Vercel 把这个变量删掉。")}
+            {needsSetup
+              ? t(
+                  "第一次安装还没有任何钥匙，用这个进门：填安装向导生成的 .env 里的 RECOVERY_TOKEN。进去之后立刻绑定 Passkey 和验证器。"
+                )
+              : t(
+                  "两把钥匙都不在手上的时候用这个：填环境变量 RECOVERY_TOKEN 的值。 进来之后立刻重新绑定验证器，然后去 Vercel 把这个变量删掉。"
+                )}
           </p>
           <form className="login-form" onSubmit={loginWithRecoveryKey}>
             <input

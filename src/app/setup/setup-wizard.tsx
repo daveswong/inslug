@@ -40,6 +40,8 @@ type Props = {
   dbOk: boolean;
   /** 当前库的状态：存在还是刚建的 */
   dbStatus: DatabaseStatus | null;
+  /** 服务器上有没有生效的 RECOVERY_TOKEN（Vercel 上要导入 .env 并重新部署之后才有） */
+  recoveryReady: boolean;
 };
 
 export default function SetupWizard({
@@ -58,6 +60,7 @@ export default function SetupWizard({
   loggedIn,
   dbOk,
   dbStatus,
+  recoveryReady,
 }: Props) {
   const t = useT();
   const STEPS = [
@@ -126,6 +129,19 @@ export default function SetupWizard({
         ))}
       </ol>
 
+      {step > 0 && !loggedIn && (
+        <p className="notice">
+          {t("这一步要先进来才能保存。")}
+          {!recoveryReady
+            ? t(
+                "服务器上还没有生效的 RECOVERY_TOKEN——先把第 1 步的 .env 导入 Vercel 并重新部署，紧急入口才会开。"
+              )
+            : t("站点上还没有任何钥匙时，用 .env 里的 RECOVERY_TOKEN 从紧急登录入口进。")}
+          {" "}
+          <a href="/login?recovery=1&next=%2Fsetup">{t("去登录")}</a>
+        </p>
+      )}
+
       {step === 0 && (
         <>
           <h2 className="section-title">{t("身份验证与启动配置")}</h2>
@@ -138,11 +154,39 @@ export default function SetupWizard({
                   "下面这些值会写进项目根目录的 .env 文件。这个文件不在 Git 里，部署时生成。"
                 )}
           </p>
+          <p className="notice">
+            {t(
+              "配完之后后面几步都要先进来。站点上还没有任何钥匙时，用 .env 里的 RECOVERY_TOKEN 从紧急登录入口进。"
+            )}
+          </p>
           <AuthConfigPanel
             manualItems={authItems}
             generatedItems={generatedAuthItems}
             envWritable={envWritable}
           />
+
+          {!recoveryReady && (
+            <p className="notice">
+              {t(
+                "上面的值现在还没进到服务器里。Vercel 上要等 .env 导入环境变量并重新部署之后才生效；服务器读到 RECOVERY_TOKEN 之前，紧急登录入口是关着的。"
+              )}
+            </p>
+          )}
+
+          {onVercel && (
+            <ol className="reset-steps">
+              <li>{t("填好上面的值，点「生成 .env 文件」下载它。")}</li>
+              <li>
+                {t(
+                  "到 Vercel 项目 → Settings → Environment Variables，上传这个 .env 文件。"
+                )}
+              </li>
+              <li>{t("重新部署一次，等它跑完。")}</li>
+              <li>
+                {t("回来用 .env 里的 RECOVERY_TOKEN 从紧急登录入口进门，然后接着走第 2 步。")}
+              </li>
+            </ol>
+          )}
 
           {dbStatus && (
             <p className="notice">
