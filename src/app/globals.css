@@ -321,6 +321,10 @@ a:hover {
   margin-top: 1rem;
 }
 
+.image-field-body {
+  min-width: 0;
+}
+
 .image-field-row {
   display: flex;
   flex-wrap: wrap;
@@ -343,6 +347,7 @@ a:hover {
   margin-top: 0.35rem;
   color: var(--muted);
   font-size: 0.8rem;
+  line-height: 1.5;
 }
 
 .image-preview {

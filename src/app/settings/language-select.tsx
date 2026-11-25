@@ -49,9 +49,7 @@ export default function LanguageSelect({ value }: { value: string }) {
           </button>
         ))}
       </div>
-      <span className="notice">
-        {pending ? t("保存中…") : t("切换后立即生效，全站一起变。")}
-      </span>
+      {pending && <span className="notice">{t("保存中…")}</span>}
       {error && <span className="form-error">{error}</span>}
     </div>
   );
