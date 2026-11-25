@@ -4,7 +4,9 @@
 import { useState } from "react";
 import { startRegistration } from "@simplewebauthn/browser";
 
-export default function PasskeyManager() {
+export default function PasskeyManager({
+  onBound,
+}: { onBound?: () => void } = {}) {
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
@@ -37,6 +39,7 @@ export default function PasskeyManager() {
       if (!verifyRes.ok) throw new Error(data.error ?? "绑定失败");
 
       setStatus(`已绑定，这台设备以后可以直接用 Passkey 登录（共 ${data.count} 把）`);
+      onBound?.();
     } catch (e) {
       setStatus("");
       const name = e instanceof Error ? e.name : "";

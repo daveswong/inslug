@@ -29,6 +29,11 @@ export default async function SettingsPage() {
     <main className="site">
       <header className="site-head">
         <h1 className="site-title">站点设置</h1>
+        {!settings.setupCompleted && (
+          <p className="notice">
+            <a href="/setup">初始化还没走完，去安装向导</a>
+          </p>
+        )}
       </header>
 
       <section className="section">
@@ -50,6 +55,8 @@ export default async function SettingsPage() {
           iOS 密码 App 都行，扫个码绑上，以后输 6 位数字就能登录。
         </p>
         <TotpManager bound={bound} mailReady={canMail} />
+
+        <p className="notice"><a href="/reset">两把钥匙都丢了？看恢复指引</a></p>
       </section>
 
       <SiteFooter />

@@ -17,9 +17,16 @@ type Props = {
   next: string;
   /** 带 ?recovery=1 时才显示紧急入口，平时不占版面 */
   recovery: boolean;
+  /** 初始化没走完时，从首页登录直接送去安装向导 */
+  needsSetup: boolean;
 };
 
-export default function LoginForm({ loggedIn, next, recovery }: Props) {
+export default function LoginForm({
+  loggedIn,
+  next,
+  recovery,
+  needsSetup,
+}: Props) {
   const router = useRouter();
   const [code, setCode] = useState("");
   const [recoveryKey, setRecoveryKey] = useState("");
@@ -27,7 +34,9 @@ export default function LoginForm({ loggedIn, next, recovery }: Props) {
   const [error, setError] = useState("");
 
   const go = () => {
-    router.replace(next);
+    // 只有目标是首页时才改道；从中间件跳来的 ?next=/settings 保持原样
+    const target = needsSetup && (next === "/" || next === "") ? "/setup" : next;
+    router.replace(target);
     router.refresh();
   };
 

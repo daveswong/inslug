@@ -42,6 +42,8 @@ export interface SettingsDoc {
   postsPerPage: number;
   /** 接收「更换 / 解绑验证器」确认邮件的地址；为空则这类操作整体禁用 */
   notifyEmail: string;
+  /** 首次安装向导是否走完。老文档缺字段时按 false 处理 */
+  setupCompleted: boolean;
   updatedAt: Date;
 }
 
@@ -59,4 +61,5 @@ export const DEFAULT_SETTINGS: Omit<SettingsDoc, "updatedAt"> = {
   footerText: "",
   postsPerPage: 20,
   notifyEmail: "",
+  setupCompleted: false,
 };
