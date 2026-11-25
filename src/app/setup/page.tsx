@@ -60,6 +60,10 @@ export default async function SetupPage() {
   }
   const canMail = await mailReady().catch(() => false);
 
+  // 服务器上有没有 RECOVERY_TOKEN：紧急登录入口开不开，全看这个。
+  // Vercel 上 .env 是下载到本地的，导入环境变量并重新部署之后这里才会变成 true。
+  const recoveryReady = (getEnvValue("RECOVERY_TOKEN") ?? "").length >= 16;
+
   const serviceFeatures = await buildServiceFeatures(t);
 
   const authItems = AUTH_KEYS.map((item) => ({
@@ -105,6 +109,7 @@ export default async function SetupPage() {
         loggedIn={loggedIn}
         dbOk={dbOk}
         dbStatus={dbStatus}
+        recoveryReady={recoveryReady}
       />
 
       <SiteFooter />

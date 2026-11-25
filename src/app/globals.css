@@ -137,6 +137,11 @@ a:hover {
   border-bottom: 1px solid var(--line);
 }
 
+/* 小标题跟在别的内容后面时往上让一让，别贴着上面的按钮，容易读错归属 */
+.section-title:not(:first-child) {
+  margin-top: 2rem;
+}
+
 .post-list {
   list-style: none;
   margin: 0;
@@ -577,6 +582,11 @@ a:hover {
   margin-bottom: 0.9rem;
 }
 
+/* 配置项的输入框铺满整行：连接串、密钥这类长文本要能看全 */
+.config-item input {
+  width: 100%;
+}
+
 .config-item-head {
   display: flex;
   flex-wrap: wrap;
@@ -665,7 +675,8 @@ a:hover {
 }
 
 .field input,
-.field textarea {
+.field textarea,
+.field select {
   width: 100%;
   padding: 0.45rem 0.7rem;
   font-family: inherit;
@@ -679,7 +690,8 @@ a:hover {
 }
 
 .field input:focus,
-.field textarea:focus {
+.field textarea:focus,
+.field select:focus {
   border-color: var(--muted);
 }
 

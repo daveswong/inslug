@@ -30,7 +30,7 @@ export default async function LoginPage({ searchParams }: Props) {
       <LoginForm
         loggedIn={loggedIn}
         next={next ?? "/"}
-        recovery={recovery === "1"}
+        recovery={recovery === "1" || !settings.setupCompleted}
         needsSetup={!settings.setupCompleted}
       />
 

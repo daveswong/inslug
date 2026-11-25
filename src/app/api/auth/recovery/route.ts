@@ -18,7 +18,14 @@ export async function POST(req: Request) {
   const expected = getEnvValue("RECOVERY_TOKEN");
   // 没设、或者设得太短（随手写的几个字符不算密钥），就当这个入口不存在
   if (!expected || expected.length < 16) {
-    return NextResponse.json({ error: t("没有配置紧急入口") }, { status: 404 });
+    return NextResponse.json(
+      {
+        error: t(
+          "服务器上没有 RECOVERY_TOKEN。刚在安装向导生成的 .env 要先导入到环境变量并重新部署才生效。"
+        ),
+      },
+      { status: 404 }
+    );
   }
 
   const key = `recovery:${clientKey(req)}`;
