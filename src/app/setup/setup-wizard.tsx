@@ -4,11 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import PasskeyManager, { type PasskeyView } from "@/app/settings/passkey-manager";
 import TotpManager from "@/app/settings/totp-manager";
-import ConfigFields, { type ConfigField } from "@/components/config-fields";
-import { saveAuthConfig, saveServiceConfig } from "./config-actions";
+import type { ConfigField } from "@/components/config-fields";
+import { saveServiceConfig } from "./config-actions";
 import type { DatabaseStatus } from "@/lib/mongodb";
 import { useT } from "@/components/i18n-provider";
 import ServiceConfigFields, { type ServiceFeature } from "@/components/service-config-fields";
+import AuthConfigPanel, { type GeneratedItem } from "./auth-config-panel";
 
 type SiteValues = {
   siteName: string;
@@ -25,8 +26,10 @@ type Props = {
   hasTotp: boolean;
   mailReady: boolean;
   completed: boolean;
-  /** 身份验证与启动必需的变量 */
+  /** 身份验证与启动必需的变量（手填的那些） */
   authItems: ConfigField[];
+  /** 由程序生成的密钥 */
+  generatedAuthItems: GeneratedItem[];
   /** 邮件与图片存储的配置（按方案分组） */
   serviceFeatures: ServiceFeature[];
   /** 能不能写 .env 文件（Vercel 上不行） */
@@ -48,6 +51,7 @@ export default function SetupWizard({
   mailReady,
   completed,
   authItems,
+  generatedAuthItems,
   serviceFeatures,
   envWritable,
   onVercel,
@@ -125,42 +129,20 @@ export default function SetupWizard({
       {step === 0 && (
         <>
           <h2 className="section-title">{t("身份验证与启动配置")}</h2>
-          {onVercel ? (
-            <p className="notice">
-              {t(
-                "当前跑在 Vercel 上，文件系统是只读的，写不了 .env。下面这些值要填到项目的环境变量里（Vercel → 项目 → Settings → Environment Variables）。"
-              )}
-            </p>
-          ) : (
-            <p className="notice">
-              {t(
-                "下面这些值会写进项目根目录的 .env 文件。这个文件不在 Git 里，部署时生成。"
-              )}
-            </p>
-          )}
-          {envWritable ? (
-            <ConfigFields
-              items={authItems}
-              onSave={async (values) => {
-                const result = await saveAuthConfig(values);
-                if (result.ok) router.refresh();
-                return result;
-              }}
-              successHint={t("已写入 .env，刷新后生效。")}
-            />
-          ) : (
-            <ul className="config-checklist">
-              {authItems.map((item) => (
-                <li key={item.key}>
-                  <code>{item.key}</code>
-                  <span>{item.label}</span>
-                  <span className={item.configured ? "config-ok" : "config-missing"}>
-                    {item.configured ? t("已配置") : t("未配置")}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
+          <p className="notice">
+            {onVercel
+              ? t(
+                  "当前跑在 Vercel 上，文件系统是只读的。填完点「生成 .env 文件」，下载后导入到 Vercel 的环境变量里，再重新部署。"
+                )
+              : t(
+                  "下面这些值会写进项目根目录的 .env 文件。这个文件不在 Git 里，部署时生成。"
+                )}
+          </p>
+          <AuthConfigPanel
+            manualItems={authItems}
+            generatedItems={generatedAuthItems}
+            envWritable={envWritable}
+          />
 
           {dbStatus && (
             <p className="notice">

@@ -127,28 +127,50 @@ function applyToFile(
   const remaining = new Set(Object.keys(updates));
   const out: string[] = [];
 
-  for (const line of lines) {
+  // 取出一行里的键名
+  const keyOf = (line: string): string => {
     const trimmed = line.trim();
     const withoutExport = trimmed.startsWith("export ")
       ? trimmed.slice(7).trim()
       : trimmed;
     const eq = withoutExport.indexOf("=");
-    const key = eq > 0 ? withoutExport.slice(0, eq).trim() : "";
+    return eq > 0 ? withoutExport.slice(0, eq).trim() : "";
+  };
 
-    if (key && remaining.has(key)) {
+  // 同一个键如果出现了多次，只保留最后一次——解析时也是「后者覆盖前者」，
+  // 留着一个旧的重复行会让实际生效的值和刚写进去的值对不上。
+  const lastAt = new Map<string, number>();
+  lines.forEach((line, index) => {
+    const key = keyOf(line);
+    if (key) lastAt.set(key, index);
+  });
+
+  lines.forEach((line, index) => {
+    const key = keyOf(line);
+    if (!key) {
+      out.push(line);
+      return;
+    }
+    // 靠前的重复行丢掉
+    if (lastAt.get(key) !== index) return;
+
+    if (remaining.has(key)) {
       remaining.delete(key);
       const value = updates[key];
       // 删除：整行丢掉，保留原来的注释行
-      if (value === null) continue;
+      if (value === null) return;
       out.push(`${key}=${formatValue(value)}`);
-      continue;
+      return;
     }
     out.push(line);
-  }
+  });
 
-  // 剩下的是新增的键
+  // 剩下的是文件里原本没有、需要新增的键。
+  // 注意只追加 remaining 里的——文件里已经更新过的键不能再追加一遍，
+  // 否则每次写入都会多出一份重复的键。
   for (const [key, value] of Object.entries(updates)) {
     if (value === null) continue;
+    if (!remaining.has(key)) continue;
     out.push(`${key}=${formatValue(value)}`);
   }
 
