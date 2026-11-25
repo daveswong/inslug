@@ -6,24 +6,26 @@ import type { AuthenticationResponseJSON, AuthenticatorTransportFuture } from "@
 import { findPasskey, fromBase64Url, rpConfig, touchPasskey } from "@/lib/passkey";
 import { startSession } from "@/lib/auth";
 import { CHALLENGE_COOKIE } from "@/lib/session";
+import { getT } from "@/lib/i18n";
 
 export async function POST(req: Request) {
+  const t = await getT();
   const jar = await cookies();
   const expectedChallenge = jar.get(CHALLENGE_COOKIE)?.value;
   if (!expectedChallenge) {
-    return NextResponse.json({ error: "验证已过期，请重新登录" }, { status: 400 });
+    return NextResponse.json({ error: t("验证已过期，请重新登录") }, { status: 400 });
   }
 
   const body = (await req.json().catch(() => ({}))) as {
     response?: AuthenticationResponseJSON;
   };
   if (!body.response) {
-    return NextResponse.json({ error: "缺少认证数据" }, { status: 400 });
+    return NextResponse.json({ error: t("缺少认证数据") }, { status: 400 });
   }
 
   const passkey = await findPasskey(body.response.id);
   if (!passkey) {
-    return NextResponse.json({ error: "没有找到这把 Passkey" }, { status: 404 });
+    return NextResponse.json({ error: t("没有找到这把 Passkey") }, { status: 404 });
   }
 
   const { rpID, origin } = rpConfig(req);
@@ -43,7 +45,7 @@ export async function POST(req: Request) {
     });
 
     if (!verification.verified) {
-      return NextResponse.json({ error: "验证失败" }, { status: 401 });
+      return NextResponse.json({ error: t("验证失败") }, { status: 401 });
     }
 
     await touchPasskey(passkey.credentialId, verification.authenticationInfo.newCounter);
@@ -51,6 +53,6 @@ export async function POST(req: Request) {
     await startSession();
     return NextResponse.json({ ok: true });
   } catch {
-    return NextResponse.json({ error: "验证失败，请重试" }, { status: 400 });
+    return NextResponse.json({ error: t("验证失败，请重试") }, { status: 400 });
   }
 }

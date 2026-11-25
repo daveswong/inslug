@@ -13,6 +13,7 @@ import {
 import { deletePasskey, listPasskeys } from "@/lib/passkey";
 import { openValue } from "@/lib/secret-box";
 import { formatDateTime } from "@/lib/time";
+import { getT } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +65,7 @@ export default async function ConfirmPage({
   params: Promise<{ token: string }>;
   searchParams: Promise<{ state?: string }>;
 }) {
+  const t = await getT();
   const { token } = await params;
   const { state: result } = await searchParams;
   const { state, doc } = await readPendingChange(token);
@@ -74,29 +76,31 @@ export default async function ConfirmPage({
   return (
     <main className="site">
       <header className="site-head">
-        <h1 className="site-title">{isDone ? "已完成" : "确认变更"}</h1>
+        <h1 className="site-title">{isDone ? t("已完成") : t("确认变更")}</h1>
       </header>
 
       <section className="section">
         {isDone && (
           <>
-            <p className="notice">变更已生效。</p>
+            <p className="notice">{t("变更已生效。")}</p>
             {doc?.purpose === "passkey-add" ? (
               <>
                 <p className="notice">
-                  现在回设置页，在 10 分钟内用设备完成绑定（Touch ID / 指纹）。过期需要重新申请。
+                  
+                  {t("现在回设置页，在 10 分钟内用设备完成绑定（Touch ID / 指纹）。过期需要重新申请。")}
                 </p>
                 <p>
-                  <a href="/settings">去设置页</a>
+                  <a href="/settings">{t("去设置页")}</a>
                 </p>
               </>
             ) : (
               <>
                 <p className="notice">
-                  所有设备上的登录状态都已失效，包括当前这台。请用 Passkey 或验证器重新登录。
+                  
+                  {t("所有设备上的登录状态都已失效，包括当前这台。请用 Passkey 或验证器重新登录。")}
                 </p>
                 <p>
-                  <a href="/login">去登录</a>
+                  <a href="/login">{t("去登录")}</a>
                 </p>
               </>
             )}
@@ -105,62 +109,66 @@ export default async function ConfirmPage({
 
         {!isDone && isFailed && (
           <>
-            <p className="notice">这个链接已经失效：可能已被使用，或超过 10 分钟。</p>
-            <p className="notice">到设置页重新发起一次即可。</p>
+            <p className="notice">{t("这个链接已经失效：可能已被使用，或超过 10 分钟。")}</p>
+            <p className="notice">{t("到设置页重新发起一次即可。")}</p>
           </>
         )}
 
         {!isDone && !isFailed && state === "missing" && (
-          <p className="notice">链接不对，或者这条记录已经被清理掉了。</p>
+          <p className="notice">{t("链接不对，或者这条记录已经被清理掉了。")}</p>
         )}
 
         {!isDone && !isFailed && state === "used" && (
           <>
-            <p className="notice">这个链接已经用过了，不能重复使用。</p>
+            <p className="notice">{t("这个链接已经用过了，不能重复使用。")}</p>
             <p className="notice">
-              如果刚才确实是你确认的，变更已经生效，请用 Passkey 或验证器重新登录。
+              
+              {t("如果刚才确实是你确认的，变更已经生效，请用 Passkey 或验证器重新登录。")}
             </p>
           </>
         )}
 
         {!isDone && !isFailed && state === "expired" && (
           <>
-            <p className="notice">链接超过 10 分钟，已失效。</p>
-            <p className="notice">回到设置页重新发起一次即可。</p>
+            <p className="notice">{t("链接超过 10 分钟，已失效。")}</p>
+            <p className="notice">{t("回到设置页重新发起一次即可。")}</p>
           </>
         )}
 
         {!isDone && !isFailed && state === "ok" && doc && (
           <>
             <p className="notice">
-              即将执行：
+              
+              {t("即将执行：")}
               {doc.purpose === "totp-disable"
-                ? "解绑登录验证器。"
+                ? t("解绑登录验证器。")
                 : doc.purpose === "totp-set"
-                  ? "把登录验证器换成新的一个。"
+                  ? t("把登录验证器换成新的一个。")
                   : doc.purpose === "passkey-add"
-                    ? "授权 10 分钟内绑定一把新的 Passkey（还要本人在设备上确认）。"
-                    : "删除一把 Passkey。"}
+                    ? t("授权 10 分钟内绑定一把新的 Passkey（还要本人在设备上确认）。")
+                    : t("删除一把 Passkey。")}
             </p>
 
             <dl className="confirm-meta">
-              <dt>申请时间</dt>
+              <dt>{t("申请时间")}</dt>
               <dd>{formatDateTime(doc.createdAt)}</dd>
-              <dt>来源 IP</dt>
+              <dt>{t("来源 IP")}</dt>
               <dd>{doc.ip}</dd>
-              <dt>设备</dt>
-              <dd>{doc.ua.slice(0, 120) || "未知"}</dd>
+              <dt>{t("设备")}</dt>
+              <dd>{doc.ua.slice(0, 120) || t("未知")}</dd>
             </dl>
 
             <p className="notice">
-              确认后所有设备都需要重新登录。不是你发起的就关掉这页，什么都不会变。
+              
+              {t("确认后所有设备都需要重新登录。不是你发起的就关掉这页，什么都不会变。")}
             </p>
             <form action={applyChange} className="form-actions">
               <input type="hidden" name="token" value={token} />
               <button className="btn btn-outline-light btn-plain" type="submit">
-                确认执行
+                
+                {t("确认执行")}
               </button>
-              <a href="/">取消</a>
+              <a href="/">{t("取消")}</a>
             </form>
           </>
         )}

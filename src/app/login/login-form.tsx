@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { startAuthentication } from "@simplewebauthn/browser";
+import { useT } from "@/components/i18n-provider";
 
 /**
  * 登录：Passkey 与验证器二选一。
@@ -27,6 +28,7 @@ export default function LoginForm({
   recovery,
   needsSetup,
 }: Props) {
+  const t = useT();
   const router = useRouter();
   const [code, setCode] = useState("");
   const [recoveryKey, setRecoveryKey] = useState("");
@@ -46,7 +48,7 @@ export default function LoginForm({
     try {
       const optionsRes = await fetch("/api/auth/passkey/login/options");
       const options = await optionsRes.json();
-      if (!optionsRes.ok) throw new Error(options.error ?? "无法开始 Passkey 登录");
+      if (!optionsRes.ok) throw new Error(options.error ?? t("无法开始 Passkey 登录"));
 
       const assertion = await startAuthentication({ optionsJSON: options });
 
@@ -56,15 +58,15 @@ export default function LoginForm({
         body: JSON.stringify({ response: assertion }),
       });
       const data = await verifyRes.json();
-      if (!verifyRes.ok) throw new Error(data.error ?? "验证失败");
+      if (!verifyRes.ok) throw new Error(data.error ?? t("验证失败"));
       go();
     } catch (e) {
       if (e instanceof Error && e.name === "NotAllowedError") {
         setError(
-          "浏览器这次没放行 Passkey：再点一次按钮试试；反复不行就换独立标签页打开本站。如果还是不行，用下面的 6 位验证码登录。"
+          t("浏览器这次没放行 Passkey：再点一次按钮试试；反复不行就换独立标签页打开本站。如果还是不行，用下面的 6 位验证码登录。")
         );
       } else {
-        setError(e instanceof Error ? e.message : "登录失败");
+        setError(e instanceof Error ? e.message : t("登录失败"));
       }
     } finally {
       setBusy(false);
@@ -82,10 +84,10 @@ export default function LoginForm({
         body: JSON.stringify({ code }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "登录失败");
+      if (!res.ok) throw new Error(data.error ?? t("登录失败"));
       go();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "登录失败");
+      setError(e instanceof Error ? e.message : t("登录失败"));
     } finally {
       setBusy(false);
     }
@@ -102,10 +104,10 @@ export default function LoginForm({
         body: JSON.stringify({ key: recoveryKey }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "登录失败");
+      if (!res.ok) throw new Error(data.error ?? t("登录失败"));
       go();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "登录失败");
+      setError(e instanceof Error ? e.message : t("登录失败"));
     } finally {
       setBusy(false);
     }
@@ -114,11 +116,11 @@ export default function LoginForm({
   if (loggedIn) {
     return (
       <section className="section">
-        <p className="notice">已经登录了。</p>
+        <p className="notice">{t("已经登录了。")}</p>
         <div className="tag-list">
-          <a href="/">返回首页</a>
-          <a href="/write">写文章</a>
-          <a href="/settings">站点设置</a>
+          <a href="/">{t("返回首页")}</a>
+          <a href="/write">{t("写文章")}</a>
+          <a href="/settings">{t("站点设置")}</a>
         </div>
       </section>
     );
@@ -132,10 +134,11 @@ export default function LoginForm({
         disabled={busy}
         onClick={loginWithPasskey}
       >
-        用 Passkey 登录
+        
+        {t("用 Passkey 登录")}
       </button>
 
-      <p className="notice">或者用手机验证器里的 6 位码。</p>
+      <p className="notice">{t("或者用手机验证器里的 6 位码。")}</p>
       <form className="login-form" onSubmit={loginWithCode}>
         <input
           className="search-input"
@@ -145,15 +148,16 @@ export default function LoginForm({
           maxLength={6}
           value={code}
           onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-          placeholder="6 位验证码"
-          aria-label="6 位验证码"
+          placeholder={t("6 位验证码")}
+          aria-label={t("6 位验证码")}
         />
         <button
           className="btn btn-outline-light btn-plain"
           type="submit"
           disabled={busy || code.length !== 6}
         >
-          用验证码登录
+          
+          {t("用验证码登录")}
         </button>
       </form>
 
@@ -161,10 +165,10 @@ export default function LoginForm({
 
       {recovery && (
         <>
-          <h2 className="section-title">紧急登录</h2>
+          <h2 className="section-title">{t("紧急登录")}</h2>
           <p className="notice">
-            两把钥匙都不在手上的时候用这个：填环境变量 RECOVERY_TOKEN 的值。
-            进来之后立刻重新绑定验证器，然后去 Vercel 把这个变量删掉。
+            
+            {t("两把钥匙都不在手上的时候用这个：填环境变量 RECOVERY_TOKEN 的值。 进来之后立刻重新绑定验证器，然后去 Vercel 把这个变量删掉。")}
           </p>
           <form className="login-form" onSubmit={loginWithRecoveryKey}>
             <input
@@ -172,8 +176,8 @@ export default function LoginForm({
               type="password"
               value={recoveryKey}
               onChange={(e) => setRecoveryKey(e.target.value)}
-              placeholder="紧急密钥"
-              aria-label="紧急密钥"
+              placeholder={t("紧急密钥")}
+              aria-label={t("紧急密钥")}
               autoComplete="off"
             />
             <button
@@ -181,7 +185,8 @@ export default function LoginForm({
               type="submit"
               disabled={busy || recoveryKey.length === 0}
             >
-              进入
+              
+              {t("进入")}
             </button>
           </form>
         </>

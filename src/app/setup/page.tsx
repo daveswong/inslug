@@ -7,10 +7,12 @@ import { getSettings } from "@/lib/settings";
 import { listPasskeys } from "@/lib/passkey";
 import { mailReady } from "@/lib/change-request";
 import SetupWizard from "./setup-wizard";
+import { getT } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
 export default async function SetupPage() {
+  const t = await getT();
   if (!(await isLoggedIn())) redirect("/login?next=%2Fsetup");
 
   const settings = await getSettings();
@@ -37,9 +39,10 @@ export default async function SetupPage() {
   return (
     <main className="site">
       <header className="site-head">
-        <h1 className="site-title">首次安装</h1>
+        <h1 className="site-title">{t("首次安装")}</h1>
         <p className="site-desc">
-          分四步把站点和登录方式配好。这里改的都是站点设置与登录凭据，不涉及数据库密钥。
+          
+          {t("分四步把站点和登录方式配好。这里改的都是站点设置与登录凭据，不涉及数据库密钥。")}
         </p>
       </header>
 

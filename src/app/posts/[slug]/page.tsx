@@ -6,6 +6,7 @@ import SiteFooter from "@/components/SiteFooter";
 import { getPostBySlug } from "@/lib/posts";
 import { isLoggedIn } from "@/lib/auth";
 import { formatDate, postDisplayDate } from "@/lib/post-utils";
+import { getT } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -14,10 +15,11 @@ type Props = {
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const t = await getT();
   const { slug } = await params;
   // 与页面一致：私有/草稿对访客当作不存在，别把标题漏进 meta
   const post = await getPostBySlug(slug, await isLoggedIn());
-  if (!post) return { title: "文章不存在" };
+  if (!post) return { title: t("文章不存在") };
 
   const excerpt = post.plainText.replace(/\s+/g, " ").trim();
   const description =
@@ -41,6 +43,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function PostPage({ params }: Props) {
+  const t = await getT();
   const { slug } = await params;
   // 登录后私有/草稿也能打开；访客只认 public
   const loggedIn = await isLoggedIn();
@@ -59,11 +62,11 @@ export default async function PostPage({ params }: Props) {
               {date}
             </time>
             <span className="post-meta-links">
-              <a href="/">返回首页</a>
+              <a href="/">{t("返回首页")}</a>
               {post.visibility !== "public" && (
                 <span className="post-state">{post.visibility}</span>
               )}
-              {loggedIn && <a href={`/write?slug=${post.slug}`}>编辑</a>}
+              {loggedIn && <a href={`/write?slug=${post.slug}`}>{t("编辑")}</a>}
             </span>
           </div>
           {post.tags.length > 0 && (

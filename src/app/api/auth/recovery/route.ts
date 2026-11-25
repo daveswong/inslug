@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { timingSafeEqual } from "node:crypto";
 import { startSession } from "@/lib/auth";
 import { clientKey, rateLimit, resetRateLimit } from "@/lib/rate-limit";
+import { getT } from "@/lib/i18n";
 
 function same(a: string, b: string): boolean {
   const left = Buffer.from(a);
@@ -12,10 +13,11 @@ function same(a: string, b: string): boolean {
 }
 
 export async function POST(req: Request) {
+  const t = await getT();
   const expected = process.env.RECOVERY_TOKEN;
   // 没设、或者设得太短（随手写的几个字符不算密钥），就当这个入口不存在
   if (!expected || expected.length < 16) {
-    return NextResponse.json({ error: "没有配置紧急入口" }, { status: 404 });
+    return NextResponse.json({ error: t("没有配置紧急入口") }, { status: 404 });
   }
 
   const key = `recovery:${clientKey(req)}`;
@@ -29,14 +31,14 @@ export async function POST(req: Request) {
 
   const body = (await req.json().catch(() => ({}))) as { key?: string };
   if (!body.key || !same(body.key.trim(), expected)) {
-    return NextResponse.json({ error: "密钥不对" }, { status: 401 });
+    return NextResponse.json({ error: t("密钥不对") }, { status: 401 });
   }
 
   await resetRateLimit(key);
   try {
     await startSession();
   } catch {
-    return NextResponse.json({ error: "数据库暂时不可用，稍后再试" }, { status: 503 });
+    return NextResponse.json({ error: t("数据库暂时不可用，稍后再试") }, { status: 503 });
   }
   return NextResponse.json({ ok: true });
 }

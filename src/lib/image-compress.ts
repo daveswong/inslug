@@ -11,10 +11,10 @@ const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/av
 
 export async function prepareImage(file: File): Promise<File> {
   if (!ALLOWED.includes(file.type)) {
-    throw new Error("只支持 jpg / png / webp / gif / avif / svg 图片");
+    throw new Error("IMAGE_TYPE_NOT_ALLOWED");
   }
   if (file.size > MAX_BYTES) {
-    throw new Error("图片超过 10MB，请先压缩");
+    throw new Error("IMAGE_TOO_LARGE_CLIENT");
   }
   if (
     file.type === "image/gif" ||

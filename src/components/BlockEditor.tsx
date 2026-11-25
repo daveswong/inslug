@@ -9,6 +9,7 @@ import type { Block, PartialBlock } from "@blocknote/core";
 import { prepareImage } from "@/lib/image-compress";
 import "@blocknote/core/fonts/inter.css";
 import "@blocknote/mantine/style.css";
+import { useT } from "@/components/i18n-provider";
 
 type Props = {
   initialBlocks: Block[];
@@ -25,6 +26,7 @@ const editorSchema = BlockNoteSchema.create({ blockSpecs });
 
 // BlockNote 编辑器：内容一变就把当前块数组交给父组件，什么时候写库由父组件决定
 export default function BlockEditor({ initialBlocks, onChange }: Props) {
+  const t = useT();
   const [dark, setDark] = useState(false);
   // 注意：BlockNote 要求 initialContent 是非空数组，新建文章传 [] 会直接抛错。
   // 传 undefined 时它自己会生成一个空段落。
@@ -44,10 +46,12 @@ export default function BlockEditor({ initialBlocks, onChange }: Props) {
         return blob.url;
       } catch (err) {
         const msg = err instanceof Error ? err.message : "";
-        if (msg.includes("登录")) throw new Error("登录已过期，请重新登录后再上传");
-        if (msg.includes("content type")) throw new Error("只支持图片文件（jpg/png/webp/gif）");
-        if (msg.includes("too large")) throw new Error("图片超过 10MB，请压缩后再传");
-        throw new Error(msg || "图片上传失败，请重试");
+        if (msg === "IMAGE_TYPE_NOT_ALLOWED") throw new Error(t("只支持 jpg / png / webp / gif / avif / svg 图片"));
+        if (msg === "IMAGE_TOO_LARGE_CLIENT") throw new Error(t("图片超过 10MB，请先压缩"));
+        if (msg.includes(t("登录"))) throw new Error(t("登录已过期，请重新登录后再上传"));
+        if (msg.includes("content type")) throw new Error(t("只支持图片文件（jpg/png/webp/gif）"));
+        if (msg.includes("too large")) throw new Error(t("图片超过 10MB，请压缩后再传"));
+        throw new Error(msg || t("图片上传失败，请重试"));
       }
     },
   });
@@ -86,10 +90,10 @@ export default function BlockEditor({ initialBlocks, onChange }: Props) {
       data-bs-theme={dark ? "dark" : "light"}
     >
       <div className="bn-align">
-        <span>对齐</span>
-        <button type="button" onClick={() => applyAlign("left")}>左</button>
-        <button type="button" onClick={() => applyAlign("center")}>中</button>
-        <button type="button" onClick={() => applyAlign("right")}>右</button>
+        <span>{t("对齐")}</span>
+        <button type="button" onClick={() => applyAlign("left")}>{t("左")}</button>
+        <button type="button" onClick={() => applyAlign("center")}>{t("中")}</button>
+        <button type="button" onClick={() => applyAlign("right")}>{t("右")}</button>
       </div>
       <BlockNoteView
         editor={editor}

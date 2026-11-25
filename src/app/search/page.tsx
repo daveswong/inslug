@@ -3,6 +3,7 @@ import { isLoggedIn } from "@/lib/auth";
 import { listPosts } from "@/lib/posts";
 import SiteFooter from "@/components/SiteFooter";
 import { formatDate, postDisplayDate, postFlags } from "@/lib/post-utils";
+import { getT } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,7 @@ type Props = {
 };
 
 export default async function SearchPage({ searchParams }: Props) {
+  const t = await getT();
   const { q } = await searchParams;
   const query = (q ?? "").trim();
   const loggedIn = await isLoggedIn();
@@ -24,7 +26,7 @@ export default async function SearchPage({ searchParams }: Props) {
     <main className="site">
       <header className="site-head">
         <h1 className="site-title">
-          <a href="/">搜索</a>
+          <a href="/">{t("搜索")}</a>
         </h1>
       </header>
 
@@ -35,23 +37,24 @@ export default async function SearchPage({ searchParams }: Props) {
             type="search"
             name="q"
             defaultValue={query}
-            placeholder="搜索文章"
-            aria-label="搜索文章"
+            placeholder={t("搜索文章")}
+            aria-label={t("搜索文章")}
           />
           <button className="btn btn-outline-light btn-plain" type="submit">
-            搜索
+            
+            {t("搜索")}
           </button>
         </form>
       </section>
 
       <section className="section">
         <h2 className="section-title">
-          {query ? `“${query}” 的结果` : "输入关键词"}
+          {query ? `“${query}” 的结果` : t("输入关键词")}
         </h2>
         {!query ? (
-          <p className="notice">搜标题、正文或标签都可以。</p>
+          <p className="notice">{t("搜标题、正文或标签都可以。")}</p>
         ) : items.length === 0 ? (
-          <p className="notice">没有匹配的文章。</p>
+          <p className="notice">{t("没有匹配的文章。")}</p>
         ) : (
           <>
             <ul className="post-list">
@@ -75,7 +78,7 @@ export default async function SearchPage({ searchParams }: Props) {
               ))}
             </ul>
             {total > MAX_RESULTS && (
-              <p className="notice">共 {total} 篇，只显示前 {MAX_RESULTS} 篇。</p>
+              <p className="notice">{t("共")} {total}  {t("篇，只显示前")} {MAX_RESULTS}  {t("篇。")}</p>
             )}
           </>
         )}

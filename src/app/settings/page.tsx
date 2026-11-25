@@ -10,10 +10,12 @@ import PasskeyManager from "./passkey-manager";
 import TotpManager from "./totp-manager";
 import SiteForm from "./site-form";
 import ThemeToggle from "./theme-toggle";
+import { getT } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
+  const t = await getT();
   // middleware 只验签名，会话版本失效（换过验证器）的旧 cookie 要在这里挡掉
   if (!(await isLoggedIn())) redirect("/login?next=%2Fsettings");
 
@@ -40,30 +42,30 @@ export default async function SettingsPage() {
   return (
     <main className="site">
       <header className="site-head">
-        <h1 className="site-title">站点设置</h1>
+        <h1 className="site-title">{t("站点设置")}</h1>
         {!settings.setupCompleted && (
           <p className="notice">
-            <a href="/setup">初始化还没走完，去安装向导</a>
+            <a href="/setup">{t("初始化还没走完，去安装向导")}</a>
           </p>
         )}
       </header>
 
       <section className="section">
-        <h2 className="section-title">站点信息</h2>
+        <h2 className="section-title">{t("站点信息")}</h2>
         <SiteForm settings={settings} />
       </section>
 
       <section className="section">
-        <h2 className="section-title">外观</h2>
-        <p className="notice">默认跟随系统；想固定浅色或深色就在这里选。</p>
+        <h2 className="section-title">{t("外观")}</h2>
+        <p className="notice">{t("默认跟随系统；想固定浅色或深色就在这里选。")}</p>
         <ThemeToggle />
       </section>
 
       <section className="section">
-        <h2 className="section-title">登录</h2>
+        <h2 className="section-title">{t("登录")}</h2>
         <p className="notice">
-          Passkey 绑好之后，登录不用输任何东西，用 Touch ID / 指纹一按就行。
-          换设备重新绑一把即可。
+          
+          {t("Passkey 绑好之后，登录不用输任何东西，用 Touch ID / 指纹一按就行。 换设备重新绑一把即可。")}
         </p>
         <PasskeyManager
           passkeys={passkeys}
@@ -71,14 +73,14 @@ export default async function SettingsPage() {
           mailReady={canMail}
         />
 
-        <h3 className="form-group">手机验证器</h3>
+        <h3 className="form-group">{t("手机验证器")}</h3>
         <p className="notice">
-          验证器是 Passkey 之外的另一把钥匙：手机上的 1Password、Google Authenticator、
-          iOS 密码 App 都行，扫个码绑上，以后输 6 位数字就能登录。
+          
+          {t("验证器是 Passkey 之外的另一把钥匙：手机上的 1Password、Google Authenticator、 iOS 密码 App 都行，扫个码绑上，以后输 6 位数字就能登录。")}
         </p>
         <TotpManager bound={bound} mailReady={canMail} />
 
-        <p className="notice"><a href="/reset">两把钥匙都丢了？看恢复指引</a></p>
+        <p className="notice"><a href="/reset">{t("两把钥匙都丢了？看恢复指引")}</a></p>
       </section>
 
       <SiteFooter />

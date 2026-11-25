@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import PasskeyManager, { type PasskeyView } from "@/app/settings/passkey-manager";
 import TotpManager from "@/app/settings/totp-manager";
+import { useT } from "@/components/i18n-provider";
 
 type SiteValues = {
   siteName: string;
@@ -22,9 +23,6 @@ type Props = {
   completed: boolean;
 };
 
-const STEPS = ["站点信息", "Passkey", "验证器", "完成"];
-const LABELS = ["已保存", "已绑定", "已绑定", ""];
-
 export default function SetupWizard({
   initial,
   passkeyCount,
@@ -34,6 +32,9 @@ export default function SetupWizard({
   mailReady,
   completed,
 }: Props) {
+  const t = useT();
+  const STEPS = [t("站点信息"), "Passkey", t("验证器"), t("完成")];
+  const LABELS = [t("已保存"), t("已绑定"), t("已绑定"), ""];
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [values, setValues] = useState<SiteValues>(initial);
@@ -54,11 +55,11 @@ export default function SetupWizard({
         body: JSON.stringify(values),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "保存失败");
+      if (!res.ok) throw new Error(data.error ?? t("保存失败"));
       setSiteSaved(true);
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "保存失败");
+      setError(e instanceof Error ? e.message : t("保存失败"));
     } finally {
       setBusy(false);
     }
@@ -70,11 +71,11 @@ export default function SetupWizard({
     try {
       const res = await fetch("/api/setup/complete", { method: "POST" });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "保存失败");
+      if (!res.ok) throw new Error(data.error ?? t("保存失败"));
       router.push("/");
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "保存失败");
+      setError(e instanceof Error ? e.message : t("保存失败"));
       setBusy(false);
     }
   };
@@ -94,14 +95,14 @@ export default function SetupWizard({
 
       {step === 0 && (
         <>
-          <h2 className="section-title">站点信息</h2>
+          <h2 className="section-title">{t("站点信息")}</h2>
           <p className="notice">
-            站点名、简介、分页大小，以及接收验证器变更确认信的邮箱。
-            数据库密钥不在这里填——那些只能配在服务端。
+            
+            {t("站点名、简介、分页大小，以及接收验证器变更确认信的邮箱。 数据库密钥不在这里填——那些只能配在服务端。")}
           </p>
           <form className="setup-form" onSubmit={saveSite}>
             <label className="field">
-              <span className="field-label">站点名</span>
+              <span className="field-label">{t("站点名")}</span>
               <input
                 className="search-input"
                 value={values.siteName}
@@ -112,7 +113,7 @@ export default function SetupWizard({
               />
             </label>
             <label className="field">
-              <span className="field-label">简介</span>
+              <span className="field-label">{t("简介")}</span>
               <input
                 className="search-input"
                 value={values.description}
@@ -120,11 +121,11 @@ export default function SetupWizard({
                   setValues({ ...values, description: e.target.value });
                   setSiteSaved(false);
                 }}
-                placeholder="一句话介绍这个站子"
+                placeholder={t("一句话介绍这个站子")}
               />
             </label>
             <label className="field">
-              <span className="field-label">每页文章数</span>
+              <span className="field-label">{t("每页文章数")}</span>
               <input
                 className="search-input"
                 type="number"
@@ -138,7 +139,7 @@ export default function SetupWizard({
               />
             </label>
             <label className="field">
-              <span className="field-label">通知邮箱</span>
+              <span className="field-label">{t("通知邮箱")}</span>
               <input
                 className="search-input"
                 type="email"
@@ -147,7 +148,7 @@ export default function SetupWizard({
                   setValues({ ...values, notifyEmail: e.target.value });
                   setSiteSaved(false);
                 }}
-                placeholder="更换或解绑验证器时收确认信"
+                placeholder={t("更换或解绑验证器时收确认信")}
               />
             </label>
             <button
@@ -155,7 +156,8 @@ export default function SetupWizard({
               type="submit"
               disabled={busy || !values.siteName}
             >
-              保存站点信息
+              
+              {t("保存站点信息")}
             </button>
           </form>
         </>
@@ -163,9 +165,10 @@ export default function SetupWizard({
 
       {step === 1 && (
         <>
-          <h2 className="section-title">绑定 Passkey</h2>
+          <h2 className="section-title">{t("绑定 Passkey")}</h2>
           <p className="notice">
-            主登录方式。绑好之后 Touch ID / 指纹一按就能进来，不用输任何东西。
+            
+            {t("主登录方式。绑好之后 Touch ID / 指纹一按就能进来，不用输任何东西。")}
             {passkeyCount > 0 && ` 当前已绑 ${passkeyCount} 把。`}
           </p>
           <PasskeyManager
@@ -179,10 +182,11 @@ export default function SetupWizard({
 
       {step === 2 && (
         <>
-          <h2 className="section-title">绑定手机验证器</h2>
+          <h2 className="section-title">{t("绑定手机验证器")}</h2>
           <p className="notice">
-            另一把钥匙。Passkey 不在手边时，用手机上的 6 位码登录。
-            {hasTotp && " 当前已经绑好。"}
+            
+            {t("另一把钥匙。Passkey 不在手边时，用手机上的 6 位码登录。")}
+            {hasTotp && t("当前已经绑好。")}
           </p>
           <TotpManager
             bound={hasTotp}
@@ -194,14 +198,14 @@ export default function SetupWizard({
 
       {step === 3 && (
         <>
-          <h2 className="section-title">完成</h2>
+          <h2 className="section-title">{t("完成")}</h2>
           <p className="notice">
             {completed
-              ? "初始化已经完成过，这里只是让你回头检查。"
-              : "两把钥匙都配好之后就可以开写了。以后在站点设置里随时能改。"}
+              ? t("初始化已经完成过，这里只是让你回头检查。")
+              : t("两把钥匙都配好之后就可以开写了。以后在站点设置里随时能改。")}
           </p>
           {!hasTotp && (
-            <p className="notice">验证器还没绑：建议回到第 3 步，别只留 Passkey 一把钥匙。</p>
+            <p className="notice">{t("验证器还没绑：建议回到第 3 步，别只留 Passkey 一把钥匙。")}</p>
           )}
           <button
             className="btn btn-outline-light btn-plain"
@@ -209,7 +213,8 @@ export default function SetupWizard({
             onClick={finish}
             disabled={busy}
           >
-            完成安装，回首页
+            
+            {t("完成安装，回首页")}
           </button>
         </>
       )}
@@ -223,7 +228,8 @@ export default function SetupWizard({
             type="button"
             onClick={() => setStep(step - 1)}
           >
-            上一步
+            
+            {t("上一步")}
           </button>
         )}
         {step < 3 && (
@@ -232,7 +238,8 @@ export default function SetupWizard({
             type="button"
             onClick={() => setStep(step + 1)}
           >
-            下一步
+            
+            {t("下一步")}
           </button>
         )}
         {done[step] && <span className="notice">{LABELS[step]}</span>}

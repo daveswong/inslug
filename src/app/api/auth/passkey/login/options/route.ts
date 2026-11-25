@@ -5,14 +5,16 @@ import { generateAuthenticationOptions } from "@simplewebauthn/server";
 import type { AuthenticatorTransportFuture } from "@simplewebauthn/server";
 import { listPasskeys, rpConfig } from "@/lib/passkey";
 import { CHALLENGE_COOKIE, COOKIE_OPTIONS } from "@/lib/session";
+import { getT } from "@/lib/i18n";
 
 export async function GET(req: Request) {
+  const t = await getT();
   const { rpID } = rpConfig(req);
   const passkeys = await listPasskeys();
 
   if (passkeys.length === 0) {
     return NextResponse.json(
-      { error: "还没有绑定 Passkey，请先用验证器登录并在设置里添加" },
+      { error: t("还没有绑定 Passkey，请先用验证器登录并在设置里添加") },
       { status: 400 }
     );
   }

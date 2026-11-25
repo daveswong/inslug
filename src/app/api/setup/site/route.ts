@@ -2,10 +2,12 @@
 import { NextResponse } from "next/server";
 import { isLoggedIn } from "@/lib/auth";
 import { saveSettings } from "@/lib/settings";
+import { getT } from "@/lib/i18n";
 
 export async function POST(req: Request) {
+  const t = await getT();
   if (!(await isLoggedIn())) {
-    return NextResponse.json({ error: "请先登录" }, { status: 401 });
+    return NextResponse.json({ error: t("请先登录") }, { status: 401 });
   }
 
   const body = (await req.json().catch(() => ({}))) as {
@@ -17,15 +19,15 @@ export async function POST(req: Request) {
 
   const siteName = String(body.siteName ?? "").trim();
   if (!siteName) {
-    return NextResponse.json({ error: "站点名不能为空" }, { status: 400 });
+    return NextResponse.json({ error: t("站点名不能为空") }, { status: 400 });
   }
   if (siteName.length > 80) {
-    return NextResponse.json({ error: "站点名太长（最多 80 字）" }, { status: 400 });
+    return NextResponse.json({ error: t("站点名太长（最多 80 字）") }, { status: 400 });
   }
 
   const notifyEmail = String(body.notifyEmail ?? "").trim();
   if (notifyEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(notifyEmail)) {
-    return NextResponse.json({ error: "通知邮箱格式不对" }, { status: 400 });
+    return NextResponse.json({ error: t("通知邮箱格式不对") }, { status: 400 });
   }
 
   const num = Number(body.postsPerPage);
@@ -41,7 +43,7 @@ export async function POST(req: Request) {
       postsPerPage,
     });
   } catch {
-    return NextResponse.json({ error: "保存失败：数据库异常" }, { status: 503 });
+    return NextResponse.json({ error: t("保存失败：数据库异常") }, { status: 503 });
   }
   return NextResponse.json({ ok: true });
 }

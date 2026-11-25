@@ -5,6 +5,7 @@ import type { Block } from "@blocknote/core";
 import { isLoggedIn } from "@/lib/auth";
 import { createPost, deletePost, updatePost } from "@/lib/posts";
 import type { Visibility } from "@/lib/types";
+import { getT } from "@/lib/i18n";
 
 export type SaveResult = { ok: true; slug: string } | { ok: false; error: string };
 
@@ -17,12 +18,13 @@ export async function savePost(input: {
   tags: string[];
   visibility: Visibility;
 }): Promise<SaveResult> {
+  const t = await getT();
   if (!(await isLoggedIn())) {
-    return { ok: false, error: "登录已过期，请重新登录后再保存" };
+    return { ok: false, error: t("登录已过期，请重新登录后再保存") };
   }
 
   const title = input.title.trim();
-  if (!title) return { ok: false, error: "先写个标题吧" };
+  if (!title) return { ok: false, error: t("先写个标题吧") };
 
   const payload = {
     title,
@@ -34,7 +36,7 @@ export async function savePost(input: {
   try {
     if (input.slug) {
       const updated = await updatePost(input.slug, payload);
-      if (!updated) return { ok: false, error: "文章不存在，可能已被删除" };
+      if (!updated) return { ok: false, error: t("文章不存在，可能已被删除") };
       revalidatePath("/");
       revalidatePath(`/posts/${input.slug}`);
       return { ok: true, slug: input.slug };
@@ -44,7 +46,7 @@ export async function savePost(input: {
     revalidatePath("/");
     return { ok: true, slug: created.slug };
   } catch {
-    return { ok: false, error: "保存失败：数据库连接异常" };
+    return { ok: false, error: t("保存失败：数据库连接异常") };
   }
 }
 
@@ -52,16 +54,17 @@ export async function savePost(input: {
 export async function deletePostAction(
   slug: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
+  const t = await getT();
   if (!(await isLoggedIn())) {
-    return { ok: false, error: "登录已过期，请重新登录" };
+    return { ok: false, error: t("登录已过期，请重新登录") };
   }
   try {
     const removed = await deletePost(slug);
-    if (!removed) return { ok: false, error: "文章不存在，可能已被删除" };
+    if (!removed) return { ok: false, error: t("文章不存在，可能已被删除") };
     revalidatePath("/");
     revalidatePath(`/posts/${slug}`);
     return { ok: true };
   } catch {
-    return { ok: false, error: "删除失败：数据库连接异常" };
+    return { ok: false, error: t("删除失败：数据库连接异常") };
   }
 }

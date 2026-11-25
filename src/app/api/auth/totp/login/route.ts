@@ -4,8 +4,10 @@ import { getAuth, recordTotpStep } from "@/lib/credentials";
 import { startSession } from "@/lib/auth";
 import { verifyCode } from "@/lib/totp";
 import { clientKey, rateLimit, resetRateLimit } from "@/lib/rate-limit";
+import { getT } from "@/lib/i18n";
 
 export async function POST(req: Request) {
+  const t = await getT();
   const key = `totp-login:${clientKey(req)}`;
   const gate = await rateLimit(key, 5);
   if (!gate.allowed) {
@@ -22,19 +24,19 @@ export async function POST(req: Request) {
   try {
     auth = await getAuth();
   } catch {
-    return NextResponse.json({ error: "数据库暂时不可用，稍后再试" }, { status: 503 });
+    return NextResponse.json({ error: t("数据库暂时不可用，稍后再试") }, { status: 503 });
   }
 
   if (!auth.totpSecret) {
     return NextResponse.json(
-      { error: "还没有绑定验证器。请用 Passkey 登录后到设置页绑定。" },
+      { error: t("还没有绑定验证器。请用 Passkey 登录后到设置页绑定。") },
       { status: 400 }
     );
   }
 
   const result = verifyCode(auth.totpSecret, code, auth.totpLastStep);
   if (!result.ok) {
-    return NextResponse.json({ error: "验证码不对，或已经用过" }, { status: 401 });
+    return NextResponse.json({ error: t("验证码不对，或已经用过") }, { status: 401 });
   }
 
   // 先记时间步再发会话：万一写库失败，宁可让用户重试，也不要留下可复用的码

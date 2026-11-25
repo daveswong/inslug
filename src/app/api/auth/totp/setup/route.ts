@@ -3,10 +3,12 @@
 import { NextResponse } from "next/server";
 import { isLoggedIn } from "@/lib/auth";
 import { groupSecret, newSecret, otpauthUri, qrSvg } from "@/lib/totp";
+import { getT } from "@/lib/i18n";
 
 export async function POST() {
+  const t = await getT();
   if (!(await isLoggedIn())) {
-    return NextResponse.json({ error: "请先登录" }, { status: 401 });
+    return NextResponse.json({ error: t("请先登录") }, { status: 401 });
   }
   const secret = newSecret();
   const qrSvgString = await qrSvg(otpauthUri(secret));

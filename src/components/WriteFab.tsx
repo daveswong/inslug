@@ -4,8 +4,10 @@
 // 仅登录后显示；在 /write 页隐藏，避免误触
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useT } from "@/components/i18n-provider";
 
 export default function WriteFab({ visible }: { visible: boolean }) {
+  const t = useT();
   const pathname = usePathname();
 
   if (!visible) return null;
@@ -16,7 +18,7 @@ export default function WriteFab({ visible }: { visible: boolean }) {
   }
 
   return (
-    <Link href="/write" className="write-fab" aria-label="写文章" title="写文章">
+    <Link href="/write" className="write-fab" aria-label={t("写文章")} title={t("写文章")}>
       <svg
         width="20"
         height="20"
