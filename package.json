@@ -9,6 +9,8 @@
     "backup": "node scripts/export-backup.mjs"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1177.0",
+    "@aws-sdk/s3-presigned-post": "^3.1177.0",
     "@blocknote/core": "^0.57.0",
     "@blocknote/mantine": "^0.57.0",
     "@blocknote/react": "^0.57.0",
@@ -21,6 +23,7 @@
     "jose": "^6.2.18",
     "mongodb": "^7.9.1",
     "next": "16.4.6",
+    "nodemailer": "^10.6.1",
     "otpauth": "^9.6.0",
     "pinyin-pro": "^3.29.5",
     "qrcode": "^1.5.4",
@@ -29,6 +32,7 @@
   },
   "devDependencies": {
     "@types/node": "22.15.30",
+    "@types/nodemailer": "^8.0.2",
     "@types/qrcode": "^1.5.6",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.1.9",
@@ -36,5 +40,6 @@
   },
   "engines": {
     "node": ">=20.9.0"
-  }
+  },
+  "description": "一个自己用的博客：路径短、界面干净、默认安全，专注创作、保存与传播自己的内容。"
 }

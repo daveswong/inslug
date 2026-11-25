@@ -1,8 +1,17 @@
 # inslug
 
-一个极简的个人技术博客，单用户自用。基于 Next.js（App Router）+ React + TypeScript + Bootstrap，数据存 MongoDB Atlas，部署在 Vercel。
+一个自己用的博客。程序只是程序——它只做一件事：让你安静地写、存、传自己的内容。
 
-前端风格：极简单栏、文字驱动，无摘要/封面/卡片，专注编程与电路技术内容。
+**路径短、界面干净、默认安全。** 没有账号系统，没有密码，没有追踪，没有评论，没有推荐算法，
+没有弹窗和花哨的装饰。那些烦人的东西离使用者远一点，人才有心思专注在创作本身。
+
+**归属权在你手里。** 内容存在你自己挑的 MongoDB 里，图片放在你自己挑的对象存储里，
+邮件走你自己挑的通道。**推荐用 Vercel 部署**——导入仓库、配几个变量就完事，是最省事的路子；
+但程序不绑死任何一家：自有服务器、Docker、任何能跑 Node 的地方都能装。
+数据库、图片存储、邮件都是可插拔的，换一家只是改一个变量。
+
+**边界很清楚。** 它是一个单用户、单站点、纯自用的写作工具。不做多用户、不做后台、
+不做社交、不做统计。想让别人访问你的文字，那就把文章发布出去；除此之外，它不替你做任何决定。
 
 ## 当前状态
 
@@ -17,7 +26,7 @@ npm install
 
 # 1. 数据库连接
 cp config/database.example.json config/database.json
-# 编辑 config/database.json，把 uri 换成你的 MongoDB Atlas 连接串
+# 编辑 config/database.json，把 uri 换成你的 MongoDB 连接串（Atlas、自建、Railway 都行）
 
 # 2. 会话密钥
 cp .env.example .env.local
@@ -28,9 +37,11 @@ cp .env.example .env.local
 # 两把钥匙都丢了时用它进门：/login?recovery=1
 
 # 4. 图片上传（可选，不配也能写文章，只是不能插图）
-# 在 .env.local 加 BLOB_READ_WRITE_TOKEN="vercel_blob_rw_..."
-# token 来自 Vercel → Storage → 新建 Blob store（必须是 Public）时勾选
-# "Add a read-write token env var to this connection"
+# 装好之后到 /settings 的「邮件与图片存储」里选方案并填凭据：
+#   vercel-blob —— BLOB_READ_WRITE_TOKEN（Vercel → Storage → 新建 Blob store，必须 Public）
+#   s3          —— S3_* 六个变量
+#   local       —— 无需凭据，写到 uploads/ 目录
+# 发信同理：resend 用 RESEND_API_KEY / RESEND_FROM，smtp 用 SMTP_* 六个变量
 
 npm run dev
 ```
@@ -38,6 +49,7 @@ npm run dev
 打开 http://localhost:3000
 
 > `config/database.json` 和 `.env.local` 含连接串与密钥，已被 `.gitignore` 忽略，**切勿提交到 GitHub**。
+> `config/` 下所有非 `.example.json` 的文件、`uploads/`、`.env*` 都在忽略列表里——凡是要你自己创建或上传的东西，都不会进仓库。
 
 连通性检查（只读，不写数据）：
 
@@ -119,10 +131,13 @@ scripts/
 
 配置分成两组，存储位置和修改时机都不一样：
 
-| 组 | 变量 | 存哪 | 什么时候能改 |
+| 组 | 内容 | 存哪 | 什么时候能改 |
 | --- | --- | --- | --- |
 | 身份验证与启动 | `MONGODB_URI`、`AUTH_SECRET`、`RECOVERY_TOKEN`、`RP_ID`、`ORIGIN` | 非 Vercel：项目根目录的 `.env` 文件（部署时生成，不在 Git 里）；Vercel：项目环境变量 | 只在**安装 / 重置引导**里改 |
-| 邮件与图片存储 | `RESEND_API_KEY`、`RESEND_FROM`、`BLOB_READ_WRITE_TOKEN` | 数据库 | 部署之后在设置页随时改，不用重新部署 |
+| 服务类 | 图片存储（`STORAGE_PROVIDER` + 各方案字段）、发信（`MAIL_PROVIDER` + 各方案字段） | 数据库 | 部署之后在设置页随时改，不用重新部署 |
+
+服务类这两项是**可插拔的**：先选方案（vercel-blob / s3 / local，resend / smtp），再只填这个方案要的字段。
+没选的那套不参与，也不必填。默认走最省事的那条（Vercel Blob + Resend）。
 
 引导入口：
 
@@ -165,24 +180,38 @@ scripts/
 
 本地需要的配置都在 `config/database.json` 和 `.env.local`（两者都不提交），详见 `.env.example`。
 
-Vercel 部署需要在 Project → Settings → Environment Variables 配置：
+### 一定要在部署时给的
 
 | 变量 | 说明 |
 | --- | --- |
-| `MONGODB_URI` | Atlas 连接串（代码优先用环境变量，本地才读 `config/database.json`） |
+| `MONGODB_URI` | MongoDB 连接串。**任何 MongoDB 都行**：Atlas、自建、Railway、容器里的都行（代码优先用环境变量，本地才读 `config/database.json`） |
 | `AUTH_SECRET` | 会话签名密钥 + 加密验证器 secret 的密钥，`openssl rand -base64 32`（换掉会让已绑定的验证器失效） |
-| `RECOVERY_TOKEN` | 紧急入口密钥，≥16 字符，`openssl rand -base64 32`。**平时不设**，只在需要救急时加上 |
+| `RECOVERY_TOKEN` | 紧急入口密钥，≥16 字符，`openssl rand -base64 32`。**建议长期留着**，它是你唯一能进门的路 |
 | `RP_ID` | Passkey 依赖的域名主体，如 `inslug.example.com`（**必须与正式域名一致**，改域名会导致已绑定的 Passkey 失效） |
 | `ORIGIN` | 站点地址，如 `https://inslug.example.com` |
-| `BLOB_READ_WRITE_TOKEN` | Vercel Blob 读写令牌；store 必须是 **Public**（创建后不可改），否则正文图片读者看不到 |
-| `RESEND_API_KEY` | Resend 的 API key，用于发送「更换 / 解绑验证器」的确认邮件 |
-| `RESEND_FROM` | 发件人，形如 `inslug <no-reply@你的域名>`；域名需先在 Resend 验证（加 SPF/DKIM 记录） |
-| `UI_LANGUAGE` | 界面语言，`zh-CN` 或 `en`；不填走本地 `config/locale.json`，再不填默认中文 |
+| `NEXT_PUBLIC_SITE_URL` | 站点地址，用于 canonical / 分享图 / RSS |
+
+### 图片存储（选一个）
+
+在设置页 →「邮件与图片存储」里改，存数据库，不用重新部署。
+
+| 方案 | 需要什么 |
+| --- | --- |
+| `vercel-blob`（Vercel 部署最省事） | `BLOB_READ_WRITE_TOKEN`。store 必须是 **Public**（创建后不可改），否则正文图片读者看不到 |
+| `s3`（R2 / MinIO / AWS S3 / OSS…） | `S3_ENDPOINT`、`S3_REGION`、`S3_BUCKET`、`S3_ACCESS_KEY_ID`、`S3_SECRET_ACCESS_KEY`、`S3_PUBLIC_URL`。桶要允许匿名读取 |
+| `local`（自建服务器） | `LOCAL_UPLOAD_DIR`，默认 `uploads`，目录要可写；多实例部署需要共享这个目录 |
+
+### 发信（选一个）
+
+| 方案 | 需要什么 |
+| --- | --- |
+| `resend` | `RESEND_API_KEY`、`RESEND_FROM`。域名要先在 Resend 验证（加 SPF/DKIM 记录） |
+| `smtp` | `SMTP_HOST`、`SMTP_PORT`、`SMTP_USER`、`SMTP_PASSWORD`、`SMTP_FROM`、`SMTP_SECURE`。QQ / Gmail 要用授权码，不是登录密码 |
 
 > **换绑 / 解绑验证器**：登录后到 `/settings` 的「登录」一节，提交后会往「通知邮箱」发一封确认信，点开链接再确认一次才生效。生效后所有设备都需要重新登录。
-> 邮件相关的三个条件（`RESEND_API_KEY`、`RESEND_FROM`、设置页的通知邮箱）缺任一，这两个操作就会被禁用（首次绑定不受影响）。
+> 发信没配好（或通知邮箱为空）时，这两个操作就会被禁用（首次绑定不受影响）。
 >
-> **两把钥匙都丢了**（手机换了、Passkey 设备不在手上）：Vercel 里加 `RECOVERY_TOKEN` → 重新部署 → 打开 `/login?recovery=1` 粘贴密钥进去 → 在设置页重新绑定验证器 → 回 Vercel 删掉这个变量。
+> **两把钥匙都丢了**（手机换了、Passkey 设备不在手上）：部署环境里加 `RECOVERY_TOKEN` → 重新部署 → 打开 `/login?recovery=1` 粘贴密钥进去 → 在设置页重新绑定验证器。
 > 实在不行还可以直接删掉数据库 `auth` 集合里那条文档，让验证器回到「未绑定」状态。
 
 **前端不提供任何数据库或凭据配置入口**（连接串和密钥放前端会泄露）。

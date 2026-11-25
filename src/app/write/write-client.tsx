@@ -1,5 +1,7 @@
 "use client";
 
+import type { ClientStorageProvider } from "@/lib/upload-client";
+
 import { useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
@@ -21,6 +23,7 @@ type Props = {
   initialBlocks: Block[];
   initialVisibility: Visibility;
   availableTags: string[];
+  storageProvider: ClientStorageProvider;
 };
 
 export default function WriteClient({
@@ -30,6 +33,7 @@ export default function WriteClient({
   initialBlocks,
   initialVisibility,
   availableTags,
+  storageProvider,
 }: Props) {
   const t = useT();
   const VISIBILITY_OPTIONS: { value: Visibility; label: string }[] = [
@@ -158,6 +162,7 @@ export default function WriteClient({
 
       <div className="write-editor">
         <BlockEditor
+          storageProvider={storageProvider}
           initialBlocks={initialBlocks}
           onChange={(blocks) => {
             blocksRef.current = blocks;

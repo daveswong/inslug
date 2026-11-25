@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import SiteFooter from "@/components/SiteFooter";
 import { isLoggedIn } from "@/lib/auth";
 import { getPostBySlug, listTags } from "@/lib/posts";
+import { getStorageProvider } from "@/lib/storage";
 import WriteClient from "./write-client";
 
 export const dynamic = "force-dynamic";
@@ -21,9 +22,10 @@ export default async function WritePage({ searchParams }: Props) {
   }
 
   // 这个路由只对登录者开放，取文章时一并包含私有和草稿
-  const [post, tags] = await Promise.all([
+  const [post, tags, storageProvider] = await Promise.all([
     slug ? getPostBySlug(slug, true) : Promise.resolve(null),
     listTags({ includeHidden: true }),
+    getStorageProvider(),
   ]);
 
   return (
@@ -35,6 +37,7 @@ export default async function WritePage({ searchParams }: Props) {
         initialBlocks={post?.blocks ?? []}
         initialVisibility={post?.visibility ?? "draft"}
         availableTags={tags}
+        storageProvider={storageProvider}
       />
       <SiteFooter />
     </main>

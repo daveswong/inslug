@@ -7,6 +7,7 @@ import TotpManager from "@/app/settings/totp-manager";
 import ConfigFields, { type ConfigField } from "@/components/config-fields";
 import { saveAuthConfig, saveServiceConfig } from "./config-actions";
 import { useT } from "@/components/i18n-provider";
+import ServiceConfigFields, { type ServiceFeature } from "@/components/service-config-fields";
 
 type SiteValues = {
   siteName: string;
@@ -25,8 +26,8 @@ type Props = {
   completed: boolean;
   /** 身份验证与启动必需的变量 */
   authItems: ConfigField[];
-  /** 邮件与图片存储的变量 */
-  serviceItems: ConfigField[];
+  /** 邮件与图片存储的配置（按方案分组） */
+  serviceFeatures: ServiceFeature[];
   /** 能不能写 .env 文件（Vercel 上不行） */
   envWritable: boolean;
   onVercel: boolean;
@@ -44,7 +45,7 @@ export default function SetupWizard({
   mailReady,
   completed,
   authItems,
-  serviceItems,
+  serviceFeatures,
   envWritable,
   onVercel,
   loggedIn,
@@ -159,8 +160,8 @@ export default function SetupWizard({
               <p className="notice">
                 {t("这两项存在数据库里，部署之后随时可以在这里改，不用重新部署。")}
               </p>
-              <ConfigFields
-                items={serviceItems}
+              <ServiceConfigFields
+                features={serviceFeatures}
                 onSave={saveServiceConfig}
                 successHint={t("已保存，立刻生效。")}
               />

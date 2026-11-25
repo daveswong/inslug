@@ -1,13 +1,8 @@
 // 只读连通测试：ping + 列出集合名，不写入任何数据
 import { MongoClient } from "mongodb";
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import { resolveDb } from "./_db.mjs";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const config = JSON.parse(
-  readFileSync(join(__dirname, "..", "config", "database.json"), "utf8")
-);
+const config = resolveDb();
 
 const client = new MongoClient(config.uri, { serverSelectionTimeoutMS: 15000 });
 

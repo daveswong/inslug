@@ -8,8 +8,8 @@ import { listPasskeys } from "@/lib/passkey";
 import { mailReady } from "@/lib/change-request";
 import { isDbConfigured } from "@/lib/mongodb";
 import { canWriteEnvFile, getEnvValue, isVercel } from "@/lib/env-config";
-import { getServiceValues } from "@/lib/service-config";
-import { AUTH_KEYS, SERVICE_KEYS } from "@/lib/config-keys";
+import { buildServiceFeatures } from "@/lib/service-features";
+import { AUTH_KEYS } from "@/lib/config-keys";
 import SetupWizard from "./setup-wizard";
 import { hasCredentials } from "./config-actions";
 import { getT } from "@/lib/i18n";
@@ -51,7 +51,7 @@ export default async function SetupPage() {
   }
   const canMail = await mailReady().catch(() => false);
 
-  const serviceValues = await getServiceValues();
+  const serviceFeatures = await buildServiceFeatures(t);
 
   const authItems = AUTH_KEYS.map((item) => ({
     key: item.key,
@@ -59,13 +59,6 @@ export default async function SetupPage() {
     hint: t(item.hint),
     secret: item.secret,
     configured: Boolean(getEnvValue(item.key)),
-  }));
-  const serviceItems = SERVICE_KEYS.map((item) => ({
-    key: item.key,
-    label: t(item.label),
-    hint: t(item.hint),
-    secret: item.secret,
-    configured: Boolean(serviceValues[item.key] || process.env[item.key]),
   }));
 
   return (
@@ -91,7 +84,7 @@ export default async function SetupPage() {
         mailReady={canMail}
         completed={settings.setupCompleted}
         authItems={authItems}
-        serviceItems={serviceItems}
+        serviceFeatures={serviceFeatures}
         envWritable={canWriteEnvFile()}
         onVercel={isVercel()}
         loggedIn={loggedIn}
