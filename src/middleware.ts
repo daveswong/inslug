@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/session";
 
-// 只保护两件事：写文章、站点设置。其余页面公开可读。
+// 只保护写文章、站点设置、首次安装向导。其余页面公开可读（包括 /reset 恢复指引）。
 // 这里只验签名与过期：Edge 运行时连不了 MongoDB，会话版本号的比对放在 Node 侧（isLoggedIn）。
 export async function middleware(req: NextRequest) {
   const token = req.cookies.get(SESSION_COOKIE)?.value;
@@ -16,5 +16,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/write", "/settings"],
+  matcher: ["/write", "/settings", "/setup"],
 };

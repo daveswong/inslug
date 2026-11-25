@@ -13,9 +13,11 @@ type Setup = { secret: string; grouped: string; qrSvg: string };
 export default function TotpManager({
   bound,
   mailReady,
+  onBound,
 }: {
   bound: boolean;
   mailReady: boolean;
+  onBound?: () => void;
 }) {
   const [setup, setSetup] = useState<Setup | null>(null);
   const [code, setCode] = useState("");
@@ -67,8 +69,13 @@ export default function TotpManager({
       } else {
         setStatus("已绑定。以后可以用这个验证器的 6 位码登录。");
         reset();
-        // 会话版本变了，刷新一下拿新票
-        setTimeout(() => window.location.reload(), 1200);
+        if (onBound) {
+          // 向导里：让服务端重读绑定状态，别整页刷新（会丢掉当前步骤）
+          onBound();
+        } else {
+          // 设置页里：会话版本变了，刷新一下拿新票
+          setTimeout(() => window.location.reload(), 1200);
+        }
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "绑定失败");

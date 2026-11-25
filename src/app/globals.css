@@ -294,6 +294,52 @@ a:hover {
   word-break: break-all;
 }
 
+/* 首次安装向导：步骤条保持文字驱动，不做卡片和进度条 */
+.setup-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  list-style: none;
+  margin: 0 0 1.5rem;
+  padding: 0;
+}
+
+.setup-steps button {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.setup-steps li.current button {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.setup-done {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.setup-form {
+  max-width: 420px;
+}
+
+.setup-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.reset-steps {
+  padding-left: 1.4rem;
+  line-height: 1.9;
+}
+
 /* 设置页表单：左标签右输入，窄屏堆叠成上下 */
 .site-form {
   max-width: 40rem;
