@@ -64,6 +64,29 @@ export default async function SetupPage() {
   // Vercel 上 .env 是下载到本地的，导入环境变量并重新部署之后这里才会变成 true。
   const recoveryReady = (getEnvValue("RECOVERY_TOKEN") ?? "").length >= 16;
 
+  // Passkey 的域名配置对不对得上当前这个站点。
+  // 浏览器只说「The RP ID "x" is invalid for this domain」，不说是哪个域名不对，
+  // 所以这里把服务器读到的值和当前请求的主机名都摆出来。
+  const headersList = await import("next/headers");
+  const h = await headersList.headers();
+  const requestHost = (h.get("x-forwarded-host") ?? h.get("host") ?? "")
+    .split(":")[0]
+    .toLowerCase();
+  const rpId = getEnvValue("RP_ID") ?? "";
+  const origin = getEnvValue("ORIGIN") ?? "";
+  const rpIdLower = rpId.trim().toLowerCase();
+  // 浏览器的要求：RP ID 要等于当前域名，或是它的可注册域后缀。
+  const rpIdMatchesHost =
+    !!requestHost &&
+    !!rpIdLower &&
+    (requestHost === rpIdLower || requestHost.endsWith(`.${rpIdLower}`));
+  let originHost = "";
+  try {
+    originHost = origin ? new URL(origin).hostname.toLowerCase() : "";
+  } catch {
+    originHost = "";
+  }
+
   const serviceFeatures = await buildServiceFeatures(t);
 
   const authItems = AUTH_KEYS.map((item) => ({
@@ -110,6 +133,11 @@ export default async function SetupPage() {
         dbOk={dbOk}
         dbStatus={dbStatus}
         recoveryReady={recoveryReady}
+        rpId={rpId}
+        origin={origin}
+        requestHost={requestHost}
+        rpIdMatchesHost={rpIdMatchesHost}
+        originHost={originHost}
       />
 
       <SiteFooter />

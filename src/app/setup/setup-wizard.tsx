@@ -42,6 +42,16 @@ type Props = {
   dbStatus: DatabaseStatus | null;
   /** 服务器上有没有生效的 RECOVERY_TOKEN（Vercel 上要导入 .env 并重新部署之后才有） */
   recoveryReady: boolean;
+  /** 服务器实际读到的 Passkey 域名主体 */
+  rpId: string;
+  /** 服务器实际读到的站点地址 */
+  origin: string;
+  /** 这次请求是从哪个域名进来的 */
+  requestHost: string;
+  /** RP_ID 与当前域名是否对得上（浏览器的要求：相等或是它的可注册域后缀） */
+  rpIdMatchesHost: boolean;
+  /** ORIGIN 里的主机名 */
+  originHost: string;
 };
 
 export default function SetupWizard({
@@ -61,6 +71,11 @@ export default function SetupWizard({
   dbOk,
   dbStatus,
   recoveryReady,
+  rpId,
+  origin,
+  requestHost,
+  rpIdMatchesHost,
+  originHost,
 }: Props) {
   const t = useT();
   const STEPS = [
@@ -186,6 +201,38 @@ export default function SetupWizard({
                 {t("回来用 .env 里的 RECOVERY_TOKEN 从紧急登录入口进门，然后接着走第 2 步。")}
               </li>
             </ol>
+          )}
+
+          {(rpId || origin) && (
+            <dl className="confirm-meta">
+              <dt>{t("当前域名")}</dt>
+              <dd>{requestHost || t("（未知）")}</dd>
+              <dt>RP_ID</dt>
+              <dd>{rpId || t("（未配置）")}</dd>
+              <dt>ORIGIN</dt>
+              <dd>{origin || t("（未配置）")}</dd>
+            </dl>
+          )}
+
+          {!!rpId && !rpIdMatchesHost && (
+            <p className="form-error">
+              {t(
+                "RP_ID 和当前域名对不上，浏览器会拒绝绑定 Passkey（报错是 The RP ID \"...\" is invalid for this domain）。RP_ID 要填当前域名本身，或者它的上级可注册域，不能带 https://、端口或路径。"
+              )}
+              {" "}
+              {requestHost
+                ? t("按当前域名，RP_ID 应该填：{host}", { host: requestHost })
+                : t("把 RP_ID 改成当前站点的域名，不带协议。")}
+            </p>
+          )}
+
+          {!!originHost && requestHost && originHost !== requestHost && (
+            <p className="form-error">
+              {t(
+                "ORIGIN 的域名和当前域名不一样，确认邮件里的链接会指到别处去。ORIGIN 应该填 https://{host}",
+                { host: requestHost }
+              )}
+            </p>
           )}
 
           {dbStatus && (
