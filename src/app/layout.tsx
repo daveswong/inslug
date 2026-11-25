@@ -44,6 +44,14 @@ export default async function RootLayout({
 
   return (
     <html lang="zh-CN">
+      <head>
+        {/* 手动外观要在首次绘制前生效，避免深浅色闪一下 */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('inslug-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body>
         <WriteFab visible={loggedIn} />
         {children}

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import PasskeyManager from "@/app/settings/passkey-manager";
+import PasskeyManager, { type PasskeyView } from "@/app/settings/passkey-manager";
 import TotpManager from "@/app/settings/totp-manager";
 
 type SiteValues = {
@@ -15,6 +15,8 @@ type SiteValues = {
 type Props = {
   initial: SiteValues;
   passkeyCount: number;
+  passkeys: PasskeyView[];
+  authorized: boolean;
   hasTotp: boolean;
   mailReady: boolean;
   completed: boolean;
@@ -26,6 +28,8 @@ const LABELS = ["已保存", "已绑定", "已绑定", ""];
 export default function SetupWizard({
   initial,
   passkeyCount,
+  passkeys,
+  authorized,
   hasTotp,
   mailReady,
   completed,
@@ -164,7 +168,12 @@ export default function SetupWizard({
             主登录方式。绑好之后 Touch ID / 指纹一按就能进来，不用输任何东西。
             {passkeyCount > 0 && ` 当前已绑 ${passkeyCount} 把。`}
           </p>
-          <PasskeyManager onBound={() => router.refresh()} />
+          <PasskeyManager
+            passkeys={passkeys}
+            authorized={authorized}
+            mailReady={mailReady}
+            onBound={() => router.refresh()}
+          />
         </>
       )}
 

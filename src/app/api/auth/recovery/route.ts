@@ -19,7 +19,7 @@ export async function POST(req: Request) {
   }
 
   const key = `recovery:${clientKey(req)}`;
-  const gate = rateLimit(key, 3);
+  const gate = await rateLimit(key, 3);
   if (!gate.allowed) {
     return NextResponse.json(
       { error: `尝试次数过多，请 ${gate.minutes} 分钟后再试` },
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "密钥不对" }, { status: 401 });
   }
 
-  resetRateLimit(key);
+  await resetRateLimit(key);
   try {
     await startSession();
   } catch {

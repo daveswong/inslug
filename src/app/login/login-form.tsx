@@ -59,7 +59,13 @@ export default function LoginForm({
       if (!verifyRes.ok) throw new Error(data.error ?? "验证失败");
       go();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "登录失败");
+      if (e instanceof Error && e.name === "NotAllowedError") {
+        setError(
+          "浏览器这次没放行 Passkey：再点一次按钮试试；反复不行就换独立标签页打开本站。如果还是不行，用下面的 6 位验证码登录。"
+        );
+      } else {
+        setError(e instanceof Error ? e.message : "登录失败");
+      }
     } finally {
       setBusy(false);
     }

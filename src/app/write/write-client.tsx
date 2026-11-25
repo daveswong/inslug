@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import type { Block } from "@blocknote/core";
 import type { Visibility } from "@/lib/types";
-import { savePost } from "./actions";
+import { deletePostAction, savePost } from "./actions";
 
 // BlockNote 依赖浏览器 API，关闭 SSR
 const BlockEditor = dynamic(() => import("@/components/BlockEditor"), {
@@ -43,6 +43,7 @@ export default function WriteClient({
   const [newTag, setNewTag] = useState("");
   const [visibility, setVisibility] = useState<Visibility>(initialVisibility);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [hint, setHint] = useState("");
 
   // 正文块只在保存时取一次，避免每次输入都触发父组件重渲染
@@ -83,6 +84,22 @@ export default function WriteClient({
     // 保存成功就离开编辑页，直接看文章的实际效果
     // 这里故意不解除 saving，避免跳转前重复提交
     router.push(`/posts/${result.slug}`);
+  };
+
+  const handleDelete = async () => {
+    if (!slug || deleting) return;
+    // 删除不可撤销，必须先明确确认
+    if (!window.confirm("确定删除这篇文章？删除后无法恢复。")) return;
+    setDeleting(true);
+    setHint("删除中…");
+    const result = await deletePostAction(slug);
+    if (!result.ok) {
+      setDeleting(false);
+      setHint(result.error);
+      return;
+    }
+    router.push("/");
+    router.refresh();
   };
 
   return (
@@ -172,6 +189,16 @@ export default function WriteClient({
         >
           {saveLabel}
         </button>
+        {slug && (
+          <button
+            className="btn btn-outline-light btn-plain"
+            type="button"
+            disabled={saving || deleting}
+            onClick={handleDelete}
+          >
+            删除这篇文章
+          </button>
+        )}
       </div>
     </>
   );

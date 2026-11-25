@@ -23,7 +23,7 @@ export default async function WritePage({ searchParams }: Props) {
   // 这个路由只对登录者开放，取文章时一并包含私有和草稿
   const [post, tags] = await Promise.all([
     slug ? getPostBySlug(slug, true) : Promise.resolve(null),
-    listTags(),
+    listTags({ includeHidden: true }),
   ]);
 
   return (

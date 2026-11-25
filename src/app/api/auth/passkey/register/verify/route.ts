@@ -5,11 +5,15 @@ import { verifyRegistrationResponse } from "@simplewebauthn/server";
 import type { AuthenticatorTransportFuture, RegistrationResponseJSON } from "@simplewebauthn/server";
 import { addPasskey, listPasskeys, rpConfig, toBase64Url } from "@/lib/passkey";
 import { isLoggedIn } from "@/lib/auth";
+import { clearPasskeyAddAuthorization, passkeyAddAllowed } from "@/lib/credentials";
 import { CHALLENGE_COOKIE } from "@/lib/session";
 
 export async function POST(req: Request) {
   if (!(await isLoggedIn())) {
     return NextResponse.json({ error: "请先登录" }, { status: 401 });
+  }
+  if (!(await passkeyAddAllowed())) {
+    return NextResponse.json({ error: "授权已过期，请重新申请" }, { status: 403 });
   }
 
   const jar = await cookies();
@@ -49,6 +53,7 @@ export async function POST(req: Request) {
     });
 
     jar.delete(CHALLENGE_COOKIE);
+    await clearPasskeyAddAuthorization();
     return NextResponse.json({ ok: true, count: (await listPasskeys()).length });
   } catch {
     return NextResponse.json({ error: "注册失败，请重试" }, { status: 400 });

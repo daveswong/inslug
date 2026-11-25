@@ -29,6 +29,33 @@
   }
 }
 
+/* 手动选择优先于系统外观 */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --ink: #1a1a1a;
+  --muted: #6b6b6b;
+  --line: #e6e6e6;
+  --link: #0b57d0;
+  --link-hover: #0842a0;
+  --bg: #fff;
+  --surface: #f7f7f7;
+  --fab-bg: #1a1a1a;
+  --fab-fg: #fff;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #e6e6e6;
+  --muted: #9a9a9a;
+  --line: #353535;
+  --link: #8ab4f8;
+  --link-hover: #aecbff;
+  --bg: #161616;
+  --surface: #202020;
+  --fab-bg: #f0f0f0;
+  --fab-fg: #111;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -271,20 +298,54 @@ a:hover {
   margin-top: 0.75rem;
 }
 
+.passkey-list {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+}
+
+.passkey-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 /* 验证器：二维码固定大小，密钥等宽显示便于手抄 */
 .totp-manager {
   margin-top: 1rem;
 }
 
 .totp-qr {
-  width: 200px;
-  height: 200px;
+  width: 160px;
+  height: 160px;
   margin: 0.75rem 0;
 }
 
 .totp-qr svg {
   width: 100%;
   height: 100%;
+}
+
+/* 验证码输入和按钮别挤成竖排 */
+.totp-form {
+  max-width: 460px;
+  flex-wrap: wrap;
+}
+
+.totp-form .search-input {
+  flex: 1 1 220px;
+  min-width: 200px;
+}
+
+.totp-form .btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .totp-secret {
@@ -578,6 +639,25 @@ a:hover {
 
 .bn-editor-wrap .bn-container {
   font-size: 1rem;
+}
+
+/* 对齐按钮：文字驱动，不要抢编辑器焦点 */
+.bn-align {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.bn-align button {
+  background: none;
+  border: 1px solid var(--line);
+  padding: 0.1rem 0.55rem;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
 }
 
 /* 只读正文：去掉编辑器自带的左右留白，其它排版沿用 BlockNote 自己的 */

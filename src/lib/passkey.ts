@@ -31,6 +31,12 @@ export async function addPasskey(
   await (await collection()).insertOne({ ...doc, createdAt: new Date() });
 }
 
+/** 删除一把 Passkey。返回是否真的删掉了。 */
+export async function deletePasskey(credentialId: string): Promise<boolean> {
+  const result = await (await collection()).deleteOne({ credentialId });
+  return result.deletedCount === 1;
+}
+
 export async function touchPasskey(
   credentialId: string,
   counter: number
