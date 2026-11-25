@@ -1,0 +1,635 @@
+@import "bootstrap/dist/css/bootstrap.min.css";
+
+:root {
+  color-scheme: light;
+  --ink: #1a1a1a;
+  --muted: #6b6b6b;
+  --line: #e6e6e6;
+  --link: #0b57d0;
+  --link-hover: #0842a0;
+  --bg: #fff;
+  --surface: #f7f7f7;
+  --fab-bg: #1a1a1a;
+  --fab-fg: #fff;
+}
+
+/* 夜览模式：颜色整体反转，跟随系统外观，无需页面开关 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --ink: #e6e6e6;
+    --muted: #9a9a9a;
+    --line: #353535;
+    --link: #8ab4f8;
+    --link-hover: #aecbff;
+    --bg: #161616;
+    --surface: #202020;
+    --fab-bg: #f0f0f0;
+    --fab-fg: #111;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--bg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--link);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--link-hover);
+  text-decoration: underline;
+}
+
+.site {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 3rem 1.25rem 4rem;
+}
+
+.site-head {
+  margin-bottom: 2.5rem;
+}
+
+.site-title {
+  font-size: 1.6rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.35rem;
+}
+
+.site-title a {
+  color: var(--ink);
+}
+
+.site-title a:hover {
+  text-decoration: none;
+}
+
+.site-desc {
+  color: var(--muted);
+  font-size: 0.95rem;
+  margin: 0 0 0.75rem;
+}
+
+.site-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  font-size: 0.85rem;
+}
+
+.section {
+  margin: 2.5rem 0;
+}
+
+.section-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin: 0 0 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.post-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.post-item {
+  display: flex;
+  gap: 1rem;
+  align-items: baseline;
+  padding: 0.5rem 0;
+}
+
+.post-date {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.post-title {
+  font-size: 1rem;
+}
+
+.post-title a {
+  color: var(--ink);
+}
+
+.post-title a:hover {
+  color: var(--link);
+  text-decoration: none;
+}
+
+/* 分页：上一页 / 页码 / 下一页，纯文字 */
+.pager {
+  display: flex;
+  gap: 1.25rem;
+  align-items: baseline;
+  margin-top: 1.75rem;
+  font-size: 0.85rem;
+}
+
+.pager-index {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.pager-off {
+  color: var(--muted);
+  opacity: 0.4;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.search-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* 登录页：Passkey 是主按钮，密码是后备 */
+.login-form {
+  display: flex;
+  gap: 0.5rem;
+  max-width: 320px;
+  margin-top: 0.75rem;
+}
+
+.form-error {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: #b3261e;
+}
+
+@media (prefers-color-scheme: dark) {
+  .form-error {
+    color: #f2b8b5;
+  }
+}
+
+.search-input {
+  flex: 1;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.9rem;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  outline: none;
+}
+
+.search-input:focus {
+  border-color: var(--muted);
+}
+
+/* 弱化按钮：无圆角、无底色、细边框、深色文字；夜览模式自动反转 */
+.btn.btn-plain {
+  padding: 0.45rem 1rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.btn.btn-plain:hover,
+.btn.btn-plain:focus,
+.btn.btn-plain:active {
+  color: var(--ink);
+  background: var(--surface);
+  border-color: var(--muted);
+  box-shadow: none;
+  outline: none;
+}
+
+.site-foot {
+  margin-top: 4rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+/* 页脚里的"退出登录"是表单提交，样式上要跟旁边的链接一模一样 */
+.foot-logout {
+  display: inline;
+  margin: 0;
+}
+
+.foot-link {
+  padding: 0;
+  font: inherit;
+  color: var(--link);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.foot-link:hover {
+  color: var(--link-hover);
+  text-decoration: underline;
+}
+
+/* 设置页：Passkey 绑定区 */
+.passkey-manager {
+  margin-top: 1rem;
+}
+
+.passkey-manager .notice,
+.passkey-manager .form-error {
+  margin-top: 0.75rem;
+}
+
+/* 设置页表单：左标签右输入，窄屏堆叠成上下 */
+.site-form {
+  max-width: 40rem;
+}
+
+.form-group {
+  margin: 2rem 0 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.form-group:first-child {
+  margin-top: 0;
+}
+
+.field {
+  display: grid;
+  grid-template-columns: 7rem 1fr;
+  gap: 0.3rem 1rem;
+  align-items: start;
+  margin-bottom: 0.65rem;
+}
+
+.field-label {
+  padding-top: 0.45rem;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.field input,
+.field textarea {
+  width: 100%;
+  padding: 0.45rem 0.7rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  outline: none;
+}
+
+.field input:focus,
+.field textarea:focus {
+  border-color: var(--muted);
+}
+
+.field textarea {
+  resize: vertical;
+}
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-top: 1.75rem;
+}
+
+.form-msg {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.form-msg.form-error {
+  margin-top: 0;
+}
+
+@media (max-width: 520px) {
+  .field {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+
+  .field-label {
+    padding-top: 0;
+  }
+}
+
+.notice {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* 文章详情 */
+.post-head {
+  margin-bottom: 2.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.post-head-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.75rem;
+}
+
+.post-head-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+}
+
+/* 正文排版完全交给 BlockNote 自己的 stylesheet：编辑和阅读用同一份样式，避免两套规则打架
+   （例如代码块被外层 pre/code 规则重复加背景和内边距） */
+
+/* 写作页 */
+.write-bar {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  font-size: 0.85rem;
+  margin-bottom: 1.5rem;
+}
+
+.write-save-hint {
+  margin-left: auto;
+  color: var(--muted);
+}
+
+.write-title {
+  width: 100%;
+  font-size: 1.6rem;
+  font-weight: 600;
+  padding: 0.5rem 0;
+  margin-bottom: 1rem;
+  color: var(--ink);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  outline: none;
+}
+
+.write-title:focus {
+  border-bottom-color: var(--muted);
+}
+
+.write-title::placeholder,
+.search-input::placeholder {
+  color: var(--muted);
+  opacity: 0.75;
+}
+
+.write-tags {
+  margin-bottom: 1.5rem;
+}
+
+/* 编辑器里的 tag：纯文字，不做成按钮；选中项加下划线 */
+.tag-chip {
+  padding: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+  background: none;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.tag-chip:hover {
+  color: var(--ink);
+}
+
+.tag-chip.selected {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* 可见性选择：公开 / 私有 / 草稿，纯文字 */
+.write-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.45rem 0.9rem;
+  font-size: 0.85rem;
+}
+
+.write-meta-label {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.visibility-option {
+  padding: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  background: none;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.visibility-option:hover {
+  color: var(--ink);
+}
+
+.visibility-option.selected {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.write-tag-add {
+  display: flex;
+  gap: 0.5rem;
+  max-width: 320px;
+  margin-top: 0.9rem;
+}
+
+.write-editor {
+  margin: 1.5rem 0 2rem;
+}
+
+.bn-editor-wrap .bn-container {
+  font-size: 1rem;
+}
+
+/* 只读正文：去掉编辑器自带的左右留白，其它排版沿用 BlockNote 自己的 */
+.bn-readonly .bn-editor {
+  padding-inline: 0;
+  padding-block: 0;
+  background: transparent;
+}
+
+.bn-readonly .bn-container {
+  font-size: 1rem;
+}
+
+/* 底部操作区：可见性一行，保存按钮在下面一行，都靠左 */
+.write-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+}
+
+/* 文章头部：日期 + 低调操作链接 */
+.post-meta-line {
+  display: flex;
+  align-items: baseline;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+}
+
+.post-meta-links {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.82rem;
+}
+
+.post-meta-links a {
+  color: var(--muted);
+}
+
+.post-meta-links a:hover {
+  color: var(--link);
+}
+
+/* 详情页的 private / draft：和同行的"返回首页""编辑"同字号同色，只作为一段文字 */
+.post-state {
+  color: var(--muted);
+}
+
+/* 附件列表 */
+.attachments {
+  margin-top: 2.5rem;
+}
+
+.attachment-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.attachment-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  padding: 0.4rem 0;
+  font-size: 0.92rem;
+}
+
+.attachment-size {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.attachment-remove {
+  margin-left: auto;
+  font-size: 0.8rem;
+  color: var(--muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.attachment-remove:hover {
+  color: var(--link);
+}
+
+/* 写作页附件区 */
+.write-attachments {
+  margin-bottom: 1.5rem;
+}
+
+.write-att-add {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.7rem;
+}
+
+.write-att-add .search-input {
+  flex: 1 1 160px;
+}
+
+/* 写文章悬浮按钮（登录后可见） */
+.write-fab {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  z-index: 50;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fab-fg);
+  background: var(--fab-bg);
+  border-radius: 50%;
+  transition: opacity 0.15s ease;
+}
+
+.write-fab:hover {
+  opacity: 0.85;
+  text-decoration: none;
+}
+
+/* 列表文章状态标签：new / private / draft
+   放在标题最前面，纯英文小写，无圆角、无底色、无动效 */
+.badge.post-badge {
+  margin-right: 0.5rem;
+  padding: 0.1rem 0.35rem;
+  font-family: inherit;
+  font-size: 0.7rem;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  vertical-align: baseline;
+}
