@@ -57,6 +57,6 @@ export const DEFAULT_SETTINGS: Omit<SettingsDoc, "updatedAt"> = {
   favicon: "",
   ogImage: "",
   footerText: "",
-  postsPerPage: 10,
+  postsPerPage: 20,
   notifyEmail: "",
 };
