@@ -17,10 +17,13 @@ export async function generateMetadata(): Promise<Metadata> {
         .map((word) => word.trim())
         .filter(Boolean)
     : undefined;
-  const images = s.ogImage ? [s.ogImage] : undefined;
   const siteUrl =
     process.env.NEXT_PUBLIC_SITE_URL ||
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+  // 分享卡片图：设置页填了就用填的，没填用仓库里的渐变彩色图标
+  const images = s.ogImage
+    ? [s.ogImage]
+    : [new URL("/icon-color.png", siteUrl).toString()];
 
   return {
     metadataBase: new URL(siteUrl),
@@ -28,7 +31,17 @@ export async function generateMetadata(): Promise<Metadata> {
     description,
     keywords,
     authors: s.author ? [{ name: s.author }] : undefined,
-    icons: s.favicon ? { icon: s.favicon } : undefined,
+    // 设置页填了就用填的，没填用仓库里的默认图标：
+    // 白底黑字做标签栏图标，黑底白字给 iOS，渐变彩色留给分享卡片
+    icons: s.favicon
+      ? { icon: s.favicon }
+      : {
+          icon: [
+            { url: "/favicon.ico", sizes: "16x16 24x24 32x32 48x48 64x64 128x128 256x256" },
+            { url: "/icon.svg", type: "image/svg+xml" },
+          ],
+          apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
+        },
     openGraph: { title, description, type: "website", images },
     twitter: {
       card: images ? "summary_large_image" : "summary",

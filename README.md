@@ -100,6 +100,21 @@ scripts/
 - **密钥类变量不在网页里填**：`MONGODB_URI`、`AUTH_SECRET`、`RECOVERY_TOKEN`、Resend key 都只能配在 Vercel 服务端。网页里填这些等于直接公开，且 Vercel 环境变量本来也无法由运行时写入。
 - 完全丢失凭据的兜底：删 `auth` 集合的 `admin` 文档解绑验证器，删 `passkeys` 集合清空 Passkey，然后从 `/setup` 重来。
 
+## 图标
+
+`public/` 下是 ins 连笔字标的三套版本（笔尖构成 I，一笔画出 n 与 s，外圈圆角方形）：
+
+| 文件 | 用途 |
+| --- | --- |
+| `favicon.ico` | 标签栏图标（白底黑字，含 16–256 共 7 个尺寸） |
+| `icon.svg` | 现代浏览器的标签栏图标（白底黑字） |
+| `icon-dark.svg` | 深色底版本，需要时手动引用 |
+| `icon-color.png` | 分享卡片图（og:image / twitter:image），默认用它 |
+| `icon-color.svg` | 渐变彩色矢量版 |
+| `apple-touch-icon.png` | iOS 添加到主屏幕的图标（黑底白字） |
+
+设置页里填了 favicon 会覆盖上面这套默认值。
+
 ## 界面语言
 
 界面文案（按钮、提示、错误）支持中文 / 英文，**文章内容不翻译**。语言包在 `locales/zh-CN.json` 与 `locales/en.json`，键就是中文原文；缺翻译时自动回退到中文。
