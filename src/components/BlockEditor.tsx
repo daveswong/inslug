@@ -48,7 +48,7 @@ export default function BlockEditor({ initialBlocks, onChange }: Props) {
         const msg = err instanceof Error ? err.message : "";
         if (msg === "IMAGE_TYPE_NOT_ALLOWED") throw new Error(t("只支持 jpg / png / webp / gif / avif / svg 图片"));
         if (msg === "IMAGE_TOO_LARGE_CLIENT") throw new Error(t("图片超过 10MB，请先压缩"));
-        if (msg.includes(t("登录"))) throw new Error(t("登录已过期，请重新登录后再上传"));
+        if (msg.includes("[UNAUTHORIZED]")) throw new Error(t("登录已过期，请重新登录后再上传"));
         if (msg.includes("content type")) throw new Error(t("只支持图片文件（jpg/png/webp/gif）"));
         if (msg.includes("too large")) throw new Error(t("图片超过 10MB，请压缩后再传"));
         throw new Error(msg || t("图片上传失败，请重试"));
