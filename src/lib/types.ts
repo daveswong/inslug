@@ -40,7 +40,7 @@ export interface SettingsDoc {
   ogImage: string;
   footerText: string;
   postsPerPage: number;
-  /** 接收「修改密码 / 改 Passkey」确认邮件的地址；为空则这类操作整体禁用 */
+  /** 接收「更换 / 解绑验证器」确认邮件的地址；为空则这类操作整体禁用 */
   notifyEmail: string;
   updatedAt: Date;
 }

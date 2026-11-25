@@ -4,9 +4,9 @@ import { getDb } from "./mongodb";
 /**
  * 待确认的凭据变更。
  *
- * 为什么要绕一圈邮件：改密码 / 增删 Passkey 是最敏感的操作，一旦账号被撞开，
- * 攻击者应该拿不到「直接改掉凭据」的能力。多发一封确认信，等于要求操作者
- * 同时掌握密码和邮箱，成本很低但拦得住绝大多数情况。
+ * 为什么要绕一圈邮件：换绑 / 解绑验证器会让账号少一把钥匙，一旦会话 cookie 被偷走，
+ * 攻击者就能悄悄换掉你的验证器、把你锁在门外。多发一封确认信，等于要求操作者
+ * 同时能读邮箱，成本很低但拦得住这种情况。
  *
  * 安全约定：
  * - 库里只存 token 的 SHA-256，明文 token 只在邮件链接里出现一次
@@ -14,7 +14,7 @@ import { getDb } from "./mongodb";
  * - 10 分钟内最多发 3 封，避免被当成发信器
  */
 
-export type ChangePurpose = "password" | "passkey-add" | "passkey-remove";
+export type ChangePurpose = "totp-set" | "totp-disable";
 
 export interface PendingDoc {
   _id?: unknown;

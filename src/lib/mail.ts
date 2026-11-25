@@ -6,7 +6,7 @@
  * - RESEND_FROM：发件人，形如 `inslog <no-reply@insapp.tech>`
  *   域名必须先在 Resend 里验证过（加 SPF/DKIM 记录），否则只能发给自己账号的邮箱。
  *
- * 没配置时 mailConfig() 返回 null，上层据此把「修改密码」入口整体隐藏。
+ * 没配置时 mailConfig() 返回 null，上层据此禁用「更换 / 解绑验证器」。
  */
 
 const RESEND_ENDPOINT = "https://api.resend.com/emails";

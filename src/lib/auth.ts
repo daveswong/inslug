@@ -20,18 +20,10 @@ export async function startSession(): Promise<void> {
 }
 
 /**
- * 当前后备密码的哈希。优先级见 credentials.ts：
- * 数据库 > ADMIN_PASSWORD_HASH > config/auth.json
- */
-export async function getPasswordHash(): Promise<string | null> {
-  return (await getAuth()).passwordHash;
-}
-
-/**
- * 页面/接口里判断是否已登录。
+ * 当前登录状态。
  *
  * 除了验签，还要比对 token 里的 sv 与库里的 sessionVersion：
- * 改密码后版本号 +1，别处留着的旧 cookie 立刻失效，不用等 30 天过期。
+ * 换过验证器后版本号 +1，别处留着的旧 cookie 立刻失效，不用等 30 天过期。
  * 用 cache 包一层，同一次渲染里首页 / layout / 页脚都调用也只查一次库。
  */
 export const isLoggedIn = cache(async (): Promise<boolean> => {
