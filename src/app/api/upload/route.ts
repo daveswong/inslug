@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { isLoggedIn } from "@/lib/auth";
 import { getT } from "@/lib/i18n";
+import { getServiceValue } from "@/lib/service-config";
 
 const ALLOWED_TYPES = [
   "image/jpeg",
@@ -26,6 +27,10 @@ export async function POST(req: Request) {
       { status: 400 }
     );
   }
+
+  // Blob 的 SDK 只认进程环境变量，这里把运行时配置的值临时注入
+  const blobToken = await getServiceValue("BLOB_READ_WRITE_TOKEN");
+  if (blobToken) process.env.BLOB_READ_WRITE_TOKEN = blobToken;
 
   try {
     const result = await handleUpload({

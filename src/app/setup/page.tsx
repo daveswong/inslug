@@ -1,4 +1,4 @@
-// 首次安装向导：登录后一次性把站点信息和两把钥匙配好
+// 首次安装向导：先配服务器的运行环境变量，再配站点信息和两把钥匙
 import { redirect } from "next/navigation";
 import SiteFooter from "@/components/SiteFooter";
 import { isLoggedIn } from "@/lib/auth";
@@ -6,14 +6,29 @@ import { getAuth, passkeyAddAllowed } from "@/lib/credentials";
 import { getSettings } from "@/lib/settings";
 import { listPasskeys } from "@/lib/passkey";
 import { mailReady } from "@/lib/change-request";
+import { isDbConfigured } from "@/lib/mongodb";
+import { canWriteEnvFile, getEnvValue, isVercel } from "@/lib/env-config";
+import { getServiceValues } from "@/lib/service-config";
+import { AUTH_KEYS, SERVICE_KEYS } from "@/lib/config-keys";
 import SetupWizard from "./setup-wizard";
+import { hasCredentials } from "./config-actions";
 import { getT } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
 export default async function SetupPage() {
   const t = await getT();
-  if (!(await isLoggedIn())) redirect("/login?next=%2Fsetup");
+  const loggedIn = await isLoggedIn();
+
+  // 站点上还没有任何登录凭据时，第 1 步（服务器配置）必须能免登录打开：
+  // 新部署可能连数据库都还没配，这时候除了这一步没有别的入口。
+  const dbOk = await isDbConfigured();
+  const hasAny = dbOk ? await hasCredentials() : false;
+  const configStepOpen = !hasAny;
+
+  if (!loggedIn && !configStepOpen) {
+    redirect("/login?next=%2Fsetup");
+  }
 
   const settings = await getSettings();
   const [keyDocs, authorized] = await Promise.all([
@@ -36,13 +51,29 @@ export default async function SetupPage() {
   }
   const canMail = await mailReady().catch(() => false);
 
+  const serviceValues = await getServiceValues();
+
+  const authItems = AUTH_KEYS.map((item) => ({
+    key: item.key,
+    label: t(item.label),
+    hint: t(item.hint),
+    secret: item.secret,
+    configured: Boolean(getEnvValue(item.key)),
+  }));
+  const serviceItems = SERVICE_KEYS.map((item) => ({
+    key: item.key,
+    label: t(item.label),
+    hint: t(item.hint),
+    secret: item.secret,
+    configured: Boolean(serviceValues[item.key] || process.env[item.key]),
+  }));
+
   return (
     <main className="site">
       <header className="site-head">
         <h1 className="site-title">{t("首次安装")}</h1>
         <p className="site-desc">
-          
-          {t("分四步把站点和登录方式配好。这里改的都是站点设置与登录凭据，不涉及数据库密钥。")}
+          {t("先配服务器的运行环境变量，再配站点和登录方式。")}
         </p>
       </header>
 
@@ -59,6 +90,11 @@ export default async function SetupPage() {
         hasTotp={hasTotp}
         mailReady={canMail}
         completed={settings.setupCompleted}
+        authItems={authItems}
+        serviceItems={serviceItems}
+        envWritable={canWriteEnvFile()}
+        onVercel={isVercel()}
+        loggedIn={loggedIn}
       />
 
       <SiteFooter />

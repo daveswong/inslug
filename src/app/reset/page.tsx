@@ -1,10 +1,12 @@
 // 恢复指引：未登录只给通用步骤（不泄露状态）；登录后按实际状态给出针对性步骤
 import SiteFooter from "@/components/SiteFooter";
+import ResetConfigButton from "./reset-config-button";
 import { isLoggedIn } from "@/lib/auth";
 import { getAuth } from "@/lib/credentials";
 import { getSettings } from "@/lib/settings";
 import { listPasskeys } from "@/lib/passkey";
 import { mailReady } from "@/lib/change-request";
+import { canWriteEnvFile } from "@/lib/env-config";
 import { getT } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
@@ -63,6 +65,7 @@ export default async function ResetPage() {
     hasTotp = false;
   }
   const canMail = await mailReady().catch(() => false);
+  const canWriteEnv = canWriteEnvFile();
   const token = process.env.RECOVERY_TOKEN ?? "";
   const hasRecovery = token.length >= 16;
 
@@ -88,6 +91,14 @@ export default async function ResetPage() {
       </section>
 
       <section className="section">
+        <h2 className="section-title">{t("重置配置")}</h2>
+        <p className="notice">
+          {t(
+            "需要把身份验证与启动配置推倒重来时用这个：会从 .env 里删掉数据库地址、会话密钥、紧急密钥这些配置项。站点设置和文章都在数据库里，不受影响。"
+          )}
+        </p>
+        <ResetConfigButton available={canWriteEnv} />
+
         <h2 className="section-title">{t("接下来做什么")}</h2>
         {passkeyCount === 0 && !hasTotp && (
           <p className="notice">
