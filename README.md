@@ -133,7 +133,7 @@ scripts/
 
 | 组 | 内容 | 存哪 | 什么时候能改 |
 | --- | --- | --- | --- |
-| 身份验证与启动 | `MONGODB_URI`、`AUTH_SECRET`、`RECOVERY_TOKEN`、`RP_ID`、`ORIGIN` | 非 Vercel：项目根目录的 `.env` 文件（部署时生成，不在 Git 里）；Vercel：项目环境变量 | 只在**安装 / 重置引导**里改 |
+| 身份验证与启动 | `MONGODB_URI`、`MONGODB_DB_NAME`、`AUTH_SECRET`、`RECOVERY_TOKEN`、`RP_ID`、`ORIGIN` | 非 Vercel：项目根目录的 `.env` 文件（部署时生成，不在 Git 里）；Vercel：项目环境变量 | 只在**安装 / 重置引导**里改 |
 | 服务类 | 图片存储（`STORAGE_PROVIDER` + 各方案字段）、发信（`MAIL_PROVIDER` + 各方案字段） | 数据库 | 部署之后在设置页随时改，不用重新部署 |
 
 服务类这两项是**可插拔的**：先选方案（vercel-blob / s3 / local，resend / smtp），再只填这个方案要的字段。
@@ -149,7 +149,7 @@ scripts/
 | 会清掉 | 不会动 |
 | --- | --- |
 | 数据库里存的邮件 / 图片存储凭据 | 站点设置（站名、SEO、社交链接、分页…） |
-| `.env` 文件里的数据库地址、会话密钥、紧急密钥、域名、站点地址 | 文章与标签 |
+| `.env` 文件里的数据库地址、库名、会话密钥、紧急密钥、域名、站点地址 | 文章与标签 |
 | | 已绑定的 Passkey 与手机验证器 |
 
 平台改不掉的（Vercel 的环境变量）会在确认后的页面上**逐个列出来**，由你手动去控制台删除。
@@ -185,6 +185,7 @@ scripts/
 | 变量 | 说明 |
 | --- | --- |
 | `MONGODB_URI` | MongoDB 连接串。**任何 MongoDB 都行**：Atlas、自建、Railway、容器里的都行（代码优先用环境变量，本地才读 `config/database.json`） |
+| `MONGODB_DB_NAME` | 库名。留空用连接串路径里的名字，再没有就是 `inslog`。同一个集群跑多个站点时用不同库名区分；填一个不存在的库名，安装向导会自动建出来 |
 | `AUTH_SECRET` | 会话签名密钥 + 加密验证器 secret 的密钥，`openssl rand -base64 32`（换掉会让已绑定的验证器失效） |
 | `RECOVERY_TOKEN` | 紧急入口密钥，≥16 字符，`openssl rand -base64 32`。**建议长期留着**，它是你唯一能进门的路 |
 | `RP_ID` | Passkey 依赖的域名主体，如 `inslog.example.com`（**必须与正式域名一致**，改域名会导致已绑定的 Passkey 失效） |
