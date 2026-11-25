@@ -4,6 +4,7 @@
 import { isLoggedIn } from "@/lib/auth";
 import { getT } from "@/lib/i18n";
 import { requestConfigReset } from "@/lib/change-request";
+import { getEnvValue } from "@/lib/env-config";
 
 export async function requestConfigResetAction(): Promise<
   { ok: true } | { ok: false; error: string }
@@ -17,7 +18,7 @@ export async function requestConfigResetAction(): Promise<
   const h = await headersList.headers();
   const forwardedHost = h.get("x-forwarded-host") ?? h.get("host") ?? "";
   const origin =
-    process.env.ORIGIN ||
+    getEnvValue("ORIGIN") ||
     process.env.NEXT_PUBLIC_SITE_URL ||
     `https://${forwardedHost}`;
   const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || "未知";
