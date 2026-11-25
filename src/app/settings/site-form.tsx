@@ -101,7 +101,7 @@ export default function SiteForm({ settings }: { settings: SettingsDoc }) {
           name="notifyEmail"
           type="email"
           defaultValue={settings.notifyEmail ?? ""}
-          placeholder="改密码的确认信发到这里"
+          placeholder="更换验证器的确认信发到这里"
         />
       </label>
 

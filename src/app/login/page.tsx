@@ -1,4 +1,4 @@
-// 登录页：主用 Passkey，后备密码；已登录则只给入口，管理 Passkey 去设置页
+// 登录页：Passkey 或手机验证器；两把钥匙都丢了才用紧急入口（?recovery=1）
 import { isLoggedIn } from "@/lib/auth";
 import SiteFooter from "@/components/SiteFooter";
 import LoginForm from "./login-form";
@@ -6,11 +6,11 @@ import LoginForm from "./login-form";
 export const dynamic = "force-dynamic";
 
 type Props = {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; recovery?: string }>;
 };
 
 export default async function LoginPage({ searchParams }: Props) {
-  const { next } = await searchParams;
+  const { next, recovery } = await searchParams;
   const loggedIn = await isLoggedIn();
 
   return (
@@ -22,7 +22,11 @@ export default async function LoginPage({ searchParams }: Props) {
         <p className="site-desc">只有这里需要身份：写文章和站点设置。</p>
       </header>
 
-      <LoginForm loggedIn={loggedIn} next={next ?? "/"} />
+      <LoginForm
+        loggedIn={loggedIn}
+        next={next ?? "/"}
+        recovery={recovery === "1"}
+      />
 
       <SiteFooter />
     </main>

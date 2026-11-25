@@ -12,7 +12,7 @@ export async function GET(req: Request) {
 
   if (passkeys.length === 0) {
     return NextResponse.json(
-      { error: "还没有绑定 Passkey，请先用密码登录并在设置里添加" },
+      { error: "还没有绑定 Passkey，请先用验证器登录并在设置里添加" },
       { status: 400 }
     );
   }

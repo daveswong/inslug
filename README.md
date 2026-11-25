@@ -6,9 +6,9 @@
 
 ## 当前状态
 
-读写闭环可用：首页 / 详情 / 搜索 / 写作全部读数据库，文章可在编辑器里写并保存。登录用 Passkey（WebAuthn）+ 后备密码，中间件保护写文章与站点设置。站点设置（基本信息 / SEO / 社交 / 分页 / 页脚）、图片直传 Vercel Blob、SEO 元信息都已完成。
+读写闭环可用：首页 / 详情 / 搜索 / 写作全部读数据库，文章可在编辑器里写并保存。登录用 Passkey（WebAuthn）或手机验证器（TOTP，扫码绑定、6 位码登录），**没有密码**；middleware 保护写文章与站点设置。站点设置（基本信息 / SEO / 社交 / 分页 / 页脚 / 通知邮箱）、图片直传 Vercel Blob、SEO 元信息都已完成。更换 / 解绑验证器需要邮件二次确认。
 
-尚未做：凭据修改（改密码 / 改 Passkey）的邮件二次确认、自定义 404、RSS。
+尚未做：自定义 404、RSS。
 
 ## 本地运行
 
@@ -23,9 +23,9 @@ cp config/database.example.json config/database.json
 cp .env.example .env.local
 # 生成一串随机值填进 AUTH_SECRET：openssl rand -base64 32
 
-# 3. 后备密码
-npm run hash-password -- 你的密码
-# 把输出的哈希粘进 config/auth.json 的 passwordHash（见 config/auth.example.json）
+# 3. 紧急入口密钥（可选，但强烈建议）
+# 在 .env.local 里加 RECOVERY_TOKEN="$(openssl rand -base64 32)"
+# 两把钥匙都丢了时用它进门：/login?recovery=1
 
 # 4. 图片上传（可选，不配也能写文章，只是不能插图）
 # 在 .env.local 加 BLOB_READ_WRITE_TOKEN="vercel_blob_rw_..."
@@ -37,7 +37,7 @@ npm run dev
 
 打开 http://localhost:3000
 
-> `config/database.json` 和 `config/auth.json` 含密码信息，已被 `.gitignore` 忽略，**切勿提交到 GitHub**。
+> `config/database.json` 和 `.env.local` 含连接串与密钥，已被 `.gitignore` 忽略，**切勿提交到 GitHub**。
 
 连通性检查（只读，不写数据）：
 
@@ -62,20 +62,18 @@ src/
     posts/[slug]/       # 文章详情
     search/             # 站内搜索
     write/              # 写作页（server action 保存到库）
-    login/              # 登录（Passkey / 密码）
-    settings/           # 站点设置：站点信息表单 + Passkey 管理
-    api/auth/           # 登录、Passkey、退出的接口
+    login/              # 登录（Passkey / 验证器 6 位码 / 紧急入口）
+    settings/           # 站点设置：站点信息表单 + Passkey 管理 + 验证器绑定
+    confirm/[token]/    # 邮件确认页（验证器变更生效处）
+    api/auth/           # Passkey、验证码、紧急入口、退出的接口
   components/           # BlockEditor（编辑）、PostBody（只读正文）、WriteFab、SiteFooter
-  lib/                  # mongodb / posts / settings / auth / session / passkey / post-utils
+  lib/                  # mongodb / posts / settings / auth / session / passkey / totp / secret-box / post-utils
   middleware.ts         # 保护 /write 与 /settings
 config/
   database.example.json # 数据库配置模板（提交仓库）
   database.json         # 本地实际配置（gitignore）
-  auth.example.json     # 后备密码哈希模板（提交仓库）
-  auth.json             # 本地密码哈希（gitignore）
 scripts/
   test-connection.mjs   # 只读连通测试
-  hash-password.mjs     # 生成后备密码的 bcrypt 哈希
   seed-demo.mjs         # 演示数据
 ```
 
@@ -88,41 +86,45 @@ scripts/
 - 可见性：三态 `draft`（草稿）/ `private`（私有，访客不可见）/ `public`（公开）；访客只读公开文章，私有/草稿直接访问也拦截
 - 发布日期距今不超过 6 个月的文章显示 `new` 标记
 - 搜索：匹配标题+正文+tag
-- 登录：主用 Passkey（WebAuthn），密码（哈希+限速）作为后备；middleware 只保护写文章与设置
+- 登录：Passkey（WebAuthn）为主，手机验证器（TOTP）为辅，**不设密码**；middleware 只保护写文章与设置
+- 验证器：扫码绑定，6 位码登录（30 秒一步，窗口 ±1，同一步的码不能复用）；secret 以 AES-256-GCM 加密后落库
+- 验证器变更：首次绑定直接生效；**更换 / 解绑必须过邮件确认**（这两件事会让已有钥匙失效）
+- 应急：两把钥匙都丢了走 `/login?recovery=1` + `RECOVERY_TOKEN` 环境变量
 - 站点设置：基本信息、SEO、社交链接、favicon/页脚、分页大小
 - 不做：用户系统、独立后台、评论
 
 ## 环境变量与部署
 
-本地需要的配置都在 `config/database.json`、`config/auth.json` 和 `.env.local`（三者都不提交），详见 `.env.example`。
+本地需要的配置都在 `config/database.json` 和 `.env.local`（两者都不提交），详见 `.env.example`。
 
 Vercel 部署需要在 Project → Settings → Environment Variables 配置：
 
 | 变量 | 说明 |
 | --- | --- |
 | `MONGODB_URI` | Atlas 连接串（代码优先用环境变量，本地才读 `config/database.json`） |
-| `AUTH_SECRET` | 会话签名密钥，`openssl rand -base64 32` |
-| `ADMIN_PASSWORD_HASH` | 后备密码哈希，`npm run hash-password -- 你的密码` 的输出（Vercel 里直接粘原文，不需要转义） |
+| `AUTH_SECRET` | 会话签名密钥 + 加密验证器 secret 的密钥，`openssl rand -base64 32`（换掉会让已绑定的验证器失效） |
+| `RECOVERY_TOKEN` | 紧急入口密钥，≥16 字符，`openssl rand -base64 32`。**平时不设**，只在需要救急时加上 |
 | `RP_ID` | Passkey 依赖的域名主体，如 `inslug.example.com`（**必须与正式域名一致**，改域名会导致已绑定的 Passkey 失效） |
 | `ORIGIN` | 站点地址，如 `https://inslug.example.com` |
 | `BLOB_READ_WRITE_TOKEN` | Vercel Blob 读写令牌；store 必须是 **Public**（创建后不可改），否则正文图片读者看不到 |
-| `RESEND_API_KEY` | Resend 的 API key，用于发送「修改密码」确认邮件 |
+| `RESEND_API_KEY` | Resend 的 API key，用于发送「更换 / 解绑验证器」的确认邮件 |
 | `RESEND_FROM` | 发件人，形如 `inslug <no-reply@你的域名>`；域名需先在 Resend 验证（加 SPF/DKIM 记录） |
 
-> **改密码**：登录后到 `/settings` 的「修改密码」，提交后会往「通知邮箱」发一封确认信，点开链接再确认一次才生效。生效后所有设备都需要重新登录。
-> 邮件相关的三个条件（`RESEND_API_KEY`、`RESEND_FROM`、设置页的通知邮箱）缺任一，「修改密码」入口就会自动隐藏。
+> **换绑 / 解绑验证器**：登录后到 `/settings` 的「登录」一节，提交后会往「通知邮箱」发一封确认信，点开链接再确认一次才生效。生效后所有设备都需要重新登录。
+> 邮件相关的三个条件（`RESEND_API_KEY`、`RESEND_FROM`、设置页的通知邮箱）缺任一，这两个操作就会被禁用（首次绑定不受影响）。
 >
-> **忘记后备密码**（进不去设置页时的救急）：改 `ADMIN_PASSWORD_HASH` 后重新部署，或删掉数据库 `auth` 集合里那条文档让它回落到种子哈希。已绑定的 Passkey 不受影响。
+> **两把钥匙都丢了**（手机换了、Passkey 设备不在手上）：Vercel 里加 `RECOVERY_TOKEN` → 重新部署 → 打开 `/login?recovery=1` 粘贴密钥进去 → 在设置页重新绑定验证器 → 回 Vercel 删掉这个变量。
+> 实在不行还可以直接删掉数据库 `auth` 集合里那条文档，让验证器回到「未绑定」状态。
 
-**前端不提供任何数据库或密码配置入口**（连接串和哈希放前端会泄露）。
+**前端不提供任何数据库或凭据配置入口**（连接串和密钥放前端会泄露）。
 
 部署步骤：
 
-1. GitHub 建仓库并推送代码（确认 `config/database.json`、`config/auth.json` 未被提交）
+1. GitHub 建仓库并推送代码（确认 `config/database.json`、`.env.local` 未被提交）
 2. Vercel 导入该仓库，框架自动识别为 Next.js
 3. 配好上表中的环境变量
 4. 部署完成后绑定域名；域名 DNS 托管在 Vercel 时，HTTPS 证书自动签发
-5. 首次登录：用密码登录 → 到 `/settings` 的「登录」一节绑定这台设备的 Passkey，之后就能用 Face ID / 指纹登录
+5. 首次进入：用 Passkey 登录（或先用 `RECOVERY_TOKEN` 进门）→ 到 `/settings` 的「登录」一节绑定这台设备的 Passkey，再扫一次码绑上手机验证器，之后两把钥匙都能进
 6. 未来部署演示站：把 `MONGODB_URI` 换成演示库连接串
 
 ## 开源协议

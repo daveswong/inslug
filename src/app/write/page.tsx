@@ -14,7 +14,7 @@ type Props = {
 export default async function WritePage({ searchParams }: Props) {
   const { slug } = await searchParams;
 
-  // middleware 只验签名，会话版本失效（改过密码）的旧 cookie 要在这里挡掉
+  // middleware 只验签名，会话版本失效（换过验证器）的旧 cookie 要在这里挡掉
   if (!(await isLoggedIn())) {
     const next = slug ? `/write?slug=${encodeURIComponent(slug)}` : "/write";
     redirect(`/login?next=${encodeURIComponent(next)}`);

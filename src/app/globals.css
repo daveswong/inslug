@@ -175,7 +175,7 @@ a:hover {
   gap: 0.5rem;
 }
 
-/* 登录页：Passkey 是主按钮，密码是后备 */
+/* 登录页：Passkey 是主按钮，验证器 6 位码是另一条路 */
 .login-form {
   display: flex;
   gap: 0.5rem;
@@ -269,6 +269,29 @@ a:hover {
 .passkey-manager .notice,
 .passkey-manager .form-error {
   margin-top: 0.75rem;
+}
+
+/* 验证器：二维码固定大小，密钥等宽显示便于手抄 */
+.totp-manager {
+  margin-top: 1rem;
+}
+
+.totp-qr {
+  width: 200px;
+  height: 200px;
+  margin: 0.75rem 0;
+}
+
+.totp-qr svg {
+  width: 100%;
+  height: 100%;
+}
+
+.totp-secret {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9rem;
+  color: var(--fg);
+  word-break: break-all;
 }
 
 /* 设置页表单：左标签右输入，窄屏堆叠成上下 */
