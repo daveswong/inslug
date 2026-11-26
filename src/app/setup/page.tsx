@@ -107,7 +107,7 @@ export default async function SetupPage() {
       <header className="site-head">
         <h1 className="site-title">{t("首次安装")}</h1>
         <p className="site-desc">
-          {t("先配服务器的运行环境变量，再配站点和登录方式。")}
+          {t("配置服务器、站点与登录方式。")}
         </p>
       </header>
 
@@ -130,7 +130,6 @@ export default async function SetupPage() {
         envWritable={canWriteEnvFile()}
         onVercel={isVercel()}
         loggedIn={loggedIn}
-        dbOk={dbOk}
         dbStatus={dbStatus}
         recoveryReady={recoveryReady}
         rpId={rpId}

@@ -45,11 +45,7 @@ export default async function Home({ searchParams }: Props) {
     return qs ? `/?${qs}` : "/";
   };
 
-  const socialLinks = [
-    settings.social.github && { label: "GitHub", href: settings.social.github },
-    settings.social.x && { label: "X", href: settings.social.x },
-    settings.social.email && { label: "Email", href: `mailto:${settings.social.email}` },
-  ].filter((link): link is { label: string; href: string } => Boolean(link));
+  const socialLinks = settings.social.filter((link) => link.title && link.url);
 
   return (
     <main className="site">
@@ -130,8 +126,8 @@ export default async function Home({ searchParams }: Props) {
       {socialLinks.length > 0 && (
         <nav className="site-links">
           {socialLinks.map((link) => (
-            <a href={link.href} key={link.label} rel="noopener noreferrer">
-              {link.label}
+            <a href={link.url} key={`${link.title}-${link.url}`} rel="noopener noreferrer">
+              {link.title}
             </a>
           ))}
         </nav>

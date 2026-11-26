@@ -467,59 +467,6 @@ a:hover {
   margin-top: 1.5rem;
 }
 
-/* 设置页的折叠面板：用 Bootstrap 折叠控件的骨架，但去掉它那套卡片感 */
-.settings-accordion {
-  --bs-accordion-bg: transparent;
-  --bs-accordion-border-color: var(--line);
-  --bs-accordion-btn-bg: transparent;
-  --bs-accordion-btn-color: var(--ink);
-  --bs-accordion-active-bg: transparent;
-  --bs-accordion-active-color: var(--ink);
-  --bs-accordion-btn-focus-box-shadow: none;
-}
-
-.settings-accordion .accordion-item {
-  background: transparent;
-  border-color: var(--line);
-}
-
-.settings-accordion .accordion-button {
-  background: transparent;
-  color: var(--ink);
-  padding: 0.7rem 1rem;
-  font-size: 1rem;
-  font-weight: 600;
-  box-shadow: none;
-}
-
-.settings-accordion .accordion-button:not(.collapsed) {
-  background: transparent;
-  color: var(--ink);
-  box-shadow: none;
-}
-
-.settings-accordion .accordion-button:focus {
-  border-color: var(--line);
-  box-shadow: none;
-}
-
-.settings-accordion .accordion-body {
-  padding: 1rem 1rem 0.25rem;
-}
-
-/* 折叠状态下标题右边的一行摘要 */
-.settings-accordion .accordion-summary {
-  margin-left: auto;
-  margin-right: 0.75rem;
-  color: var(--muted);
-  font-size: 0.85rem;
-  font-weight: 400;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 55%;
-}
-
 /* provider 分组：先选方案，再显示这个方案的字段 */
 .provider-block {
   margin: 0 0 1.5rem;
@@ -643,9 +590,52 @@ a:hover {
   line-height: 1.9;
 }
 
+/* 恢复页生成临时密钥的面板；pre 去掉默认留白 */
+.recovery-panel {
+  margin: 1.25rem 0;
+}
+
+pre.secret-key {
+  margin: 0.5rem 0;
+  padding: 0.5rem 0.7rem;
+  background: var(--bg);
+  border: 1px solid var(--line);
+}
+
 /* 设置页表单：左标签右输入，窄屏堆叠成上下 */
 .site-form {
   max-width: 40rem;
+}
+
+/* 自定义社交链接：标题 + 网址 + 删除，一行一条 */
+.social-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.65rem;
+}
+
+.social-row input {
+  flex: 1 1 10rem;
+  min-width: 0;
+  padding: 0.45rem 0.7rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  outline: none;
+}
+
+.social-row input:focus {
+  border-color: var(--muted);
+}
+
+/* 主题/语言、Passkey/验证器这些独立控件与表单字段之间留出行距 */
+.settings-extras {
+  margin-top: 1.5rem;
 }
 
 .form-group {

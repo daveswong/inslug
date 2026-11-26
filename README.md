@@ -1,6 +1,6 @@
 # inslug
 
-一个自己用的博客。程序只是程序——它只做一件事：让你安静地写、存、传自己的内容。
+一个基于 note.js + next.js 的 blog web app：让你专注于写作，让读者专注于阅读。
 
 **路径短、界面干净、默认安全。** 没有账号系统，没有密码，没有追踪，没有评论，没有推荐算法，
 没有弹窗和花哨的装饰。那些烦人的东西离使用者远一点，人才有心思专注在创作本身。
@@ -13,17 +13,19 @@
 **边界很清楚。** 它是一个单用户、单站点、纯自用的写作工具。不做多用户、不做后台、
 不做社交、不做统计。想让别人看到你的文字，把文章发布出去就行；除此之外，它不替你做任何决定。
 
+**没有主题模板，也不会有。** 外观就这一套，刻意不让人把精力花在折腾博客的样子上——这是设计取舍，不是待办。
+
 ## 现在能用的
 
 - **读写闭环**：首页时间线（只有日期 + 标题，无摘要无封面、要分页）→ 文章详情 → 站内搜索 → 写作页（BlockNote 类 Notion 所见即所得）→ 存 MongoDB。
 - **文章**：可见性三态 `draft`（草稿）/ `private`（私有）/ `public`（公开），访客只读 public，私有与草稿直接访问也 404；发布不超过 6 个月的公开文章标 `new`；可置顶（列表和详情都不显示置顶标记，位置本身就是信号）。
 - **标签与地址**：tag 手动创建 + 选择，未被任何文章引用的自动删除；公开标签目录只列 public 用过的标签，防草稿内容泄露；slug 由标题拼音 + 随机后缀生成，改标题不改 URL。
-- **登录**：Passkey（WebAuthn）为主、手机验证器 TOTP（扫码绑定、6 位码）为辅，**没有密码**；两把钥匙都丢了走 `/login?recovery=1` + `RECOVERY_TOKEN`。middleware 只保护 `/write` 与 `/settings`，真正的验签在 Node 侧。
+- **登录**：Passkey（WebAuthn）为主、手机验证器 TOTP（扫码绑定、6 位码）为辅，**没有密码**；两把钥匙都丢了走 `/login?recovery=1` + `RECOVERY_TOKEN`。`proxy.ts` 只保护 `/write` 与 `/settings` 并粗筛 cookie，真正的验签在页面层。
 - **敏感操作邮件确认**：更换 / 解绑验证器、新增 / 删除 Passkey、重置配置都要发确认信，链接 10 分钟有效、只能用一次，确认页再点一次才生效（首次绑定验证器除外）。
-- **站点设置**：8 个折叠分组——基本信息 / 列表与页脚 / SEO / 通知 / 社交链接 / 外观 / 邮件与图片存储 / 登录。主题跟随系统、可固定浅色或深色；界面语言中文 / English 切换即时生效。
+- **站点设置**：四组平铺——站点信息（基本信息 + SEO）/ 外观（主题、界面语言、图片地址、每页文章数、页脚）/ 社交链接（自定义标题 + 网址，条数不限）/ 安全（通知邮箱、Passkey、验证器）。一个保存按钮，只提交改过的字段；主题和界面语言独立、点一下即生效。
 - **对外输出**：RSS 2.0、`sitemap.xml`、`robots.txt`、自定义 404 都已实现，RSS 与 sitemap 只输出 public 文章；SEO 元信息、canonical、og、分享图齐全。
-- **可插拔服务**：图片 `vercel-blob` / `s3` / `local`，发信 `resend` / `smtp`，配置存数据库，改了不用重新部署；正文里的图片只存 URL。
-- **安装与恢复**：`/setup` 五步向导（含域名自检）、`/reset` 恢复指引、`/api/diag` 域名诊断、`npm run backup` 导出文章与设置。
+- **可插拔服务**：图片 `vercel-blob` / `s3` / `local`，发信 `resend` / `smtp`，都在安装向导里选方案、填字段、写进 `.env`；正文里的图片只存 URL。
+- **安装与恢复**：`/setup` 五步向导（含域名自检）、`/reset` 恢复指引（可生成临时密钥，自己去服务端配置）、`/api/diag` 域名诊断、`npm run backup` 导出文章与设置。
 - **不娇气**：数据库还没配好时首页 / 文章页显示安装提示，`rss.xml` 与 `sitemap.xml` 返回 503，而不是抛 500；`MONGODB_DB_NAME` 指向一个还不存在的库时，安装向导会自动建出来。
 
 ## 本地跑起来
@@ -79,16 +81,16 @@ Vercel 上的完整顺序：
 | 组 | 内容 | 存哪 | 什么时候能改 |
 | --- | --- | --- | --- |
 | 身份验证与启动 | `MONGODB_URI`、`MONGODB_DB_NAME`、`RP_ID`、`ORIGIN`（手填）+ `AUTH_SECRET`、`RECOVERY_TOKEN`（程序生成） | `.env` 文件 / Vercel 环境变量 | 只在安装 / 重置引导里 |
-| 服务类 | 图片存储（`STORAGE_PROVIDER` + 各方案字段）、发信（`MAIL_PROVIDER` + 各方案字段） | 数据库 | 部署之后在设置页随时改，不用重新部署 |
+| 服务类 | 图片存储（`STORAGE_PROVIDER` + 各方案字段）、发信（`MAIL_PROVIDER` + 各方案字段） | 同一个 `.env` | 只在安装 / 重置引导里改；非 Vercel 改完约 3 秒生效，Vercel 要重新部署 |
 
-服务类可插拔：先选方案，再只填这个方案要的字段，没选的那套不参与也不必填。默认走最省事的那条（Vercel Blob + Resend）。
+服务类可插拔：先选方案，再只填这个方案要的字段，没选的那套不参与也不必填。默认走最省事的那条（Vercel Blob + Resend）。它不存数据库——改乱了在服务端 `.env` 里一眼能查到、改回来。Vercel 上若选 Vercel Blob，token 由平台自动注入，不用填，去 Blob 后台把 store 连上即可。
 
 ## 恢复与重置
 
 - 进不去先看 `/reset`：未登录只给通用步骤、不泄露任何状态；登录后按实际状态列出 Passkey 数量、验证器 / 邮件确认 / 紧急密钥是否就绪，并给出下一步。
-- 两把钥匙都丢了：确认 `RECOVERY_TOKEN` 已生效 → `/login?recovery=1` 粘贴密钥进门 → 立刻重绑 Passkey 和验证器 → 之后可以删掉这把临时密钥（删了就没有兜底）。
+- 两把钥匙都丢了：`/reset` 页面能生成一把临时密钥（只生成、不写文件、不回显已有配置），自己填进服务端 `.env` 或 Vercel 环境变量 → 生效后用 `/login?recovery=1` 进门 → 立刻重绑 Passkey 和验证器 → 删掉这把临时密钥（删了就没有兜底）。只有能改服务器配置的人才是站点拥有者，别人拿到密钥也没用。
 - 彻底清空凭据：删数据库 `auth` 集合的 `admin` 文档等于解绑验证器，删 `passkeys` 集合等于清空所有 Passkey，再从 `/setup` 重来。
-- 「重置配置」要过邮件确认：只清 auth 组的 `.env` 键与 service 组的数据库配置；**站点设置、文章、标签、已绑定的 Passkey 与验证器都不动**。Vercel 上程序删不掉的环境变量，会在确认后逐个列出，由你手动去控制台删除。
+- 「重置配置」要过邮件确认：清掉 auth 组和 service 组在 `.env` 里的键；**站点设置、文章、标签、已绑定的 Passkey 与验证器都不动**。Vercel 上程序删不掉的环境变量，会在确认后逐个列出，由你手动去控制台删除。
 
 ## 部署与环境变量
 
@@ -111,7 +113,7 @@ Vercel 上的完整顺序：
 | `NEXT_PUBLIC_SITE_URL` | 可选。canonical / 分享图 / RSS 用；不填则回退到 `ORIGIN`。向导不生成，需要时手动加 |
 | `UI_LANGUAGE` | 可选。部署期默认界面语言（`zh-CN` / `en`）；日常在设置页切，不用碰它 |
 
-### 服务类（设置页 →「邮件与图片存储」，存数据库）
+### 服务类（安装向导第 1 步填写，写进 .env）
 
 | 功能 | 方案与字段 |
 | --- | --- |
@@ -128,6 +130,10 @@ Vercel 上的完整顺序：
 
 日常切换在站点设置 →「外观」→「界面语言」，点「中文 / English」立刻生效，不用改环境变量、不用重新部署；语言是站点级的。部署期默认值另有两个入口：本地 `cp config/locale.example.json config/locale.json` 改 `locale`，Vercel 加 `UI_LANGUAGE`。取值只有 `zh-CN` 和 `en`。想加语言就复制一份 `en.json` 并在 `src/lib/i18n-core.ts` 的 `SUPPORTED_LOCALES` 里登记。
 
+## 代码注释与编码
+
+代码里的注释是**用中文写的**。用编辑器打开源码时，请确认编码设为 **UTF-8**，否则中文注释会显示成乱码。如果看不懂中文，要么学一点中文，要么用中国的 AI 工具把注释翻译成你的母语——别把乱码当成代码坏了。
+
 ## 目录结构
 
 ```
@@ -136,7 +142,7 @@ src/
     page.tsx                  # 首页：站点信息 + 搜索 + 标签 + 文章时间线
     posts/[slug]/             # 文章详情
     search/  write/  login/   # 站内搜索 / 写作（server action）/ 登录
-    settings/                 # 8 个折叠分组；Passkey、验证器、服务配置都在这里
+    settings/                 # 四组平铺的设置表单；Passkey、验证器、主题、语言在这里
     setup/  reset/            # 首次安装向导 / 恢复指引
     confirm/[token]/          # 邮件确认页（凭据变更真正生效的地方）
     not-found.tsx             # 自定义 404
@@ -145,7 +151,7 @@ src/
   components/                 # BlockEditor、PostBody、SiteFooter、WriteFab、i18n-provider、各类设置表单
   lib/                         # mongodb / posts / settings / auth / session / passkey / totp /
                                # secret-box / pending / change-request / env-store / service-config / i18n-core …
-  middleware.ts                # 只粗筛 /write 与 /settings 的 cookie，验签留给 Node 侧
+  proxy.ts                     # 只粗筛 /write 与 /settings 的 cookie，验签留给页面层 isLoggedIn()
 config/*.example.json          # 配置模板（提交）；实际 database.json / locale.json 被忽略
 locales/*.json                 # 界面语言包
 scripts/                       # 连通测试 / 演示数据 / 导出备份

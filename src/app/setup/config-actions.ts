@@ -17,7 +17,6 @@
 import { isLoggedIn } from "@/lib/auth";
 import { getAuth } from "@/lib/credentials";
 import { getEnvValue, isVercel, setEnvValues } from "@/lib/env-config";
-import { setServiceValues } from "@/lib/service-config";
 import { listPasskeys } from "@/lib/passkey";
 import { getSettings } from "@/lib/settings";
 import { getT } from "@/lib/i18n";
@@ -93,32 +92,4 @@ export async function saveAuthConfig(
     // 连不上不算保存失败——地址已经写进去了，部署时会再连一次
   }
   return { ok: true, written, db };
-}
-
-/** 邮件与图片存储的变量：存数据库，部署后随时可改 */
-export async function saveServiceConfig(
-  values: Record<string, string>
-): Promise<ConfigSaveResult> {
-  const t = await getT();
-  if (!(await isLoggedIn())) {
-    return { ok: false, error: t("登录已过期，请重新登录") };
-  }
-
-  const updates: Record<string, string | null> = {};
-  const written: string[] = [];
-  for (const [key, raw] of Object.entries(values)) {
-    const value = String(raw ?? "").trim();
-    if (!value) continue;
-    updates[key] = value;
-    written.push(key);
-  }
-  if (!written.length) {
-    return { ok: false, error: t("没有需要保存的内容") };
-  }
-
-  const result = await setServiceValues(updates);
-  if (!result.ok) {
-    return { ok: false, error: result.error };
-  }
-  return { ok: true, written };
 }

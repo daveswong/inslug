@@ -3,66 +3,71 @@
 // 站点设置的保存：只处理站点展示信息，不碰任何数据库连接配置
 import { isLoggedIn } from "@/lib/auth";
 import { saveSettings } from "@/lib/settings";
+import type { SocialLink } from "@/lib/types";
 import { getT } from "@/lib/i18n";
 
 export type SettingsState = { status: "idle" | "ok" | "error"; message: string };
 
 /**
- * 保存站点设置的某一组。
- *
- * 设置页按折叠面板分了组，每组一个独立表单、带自己的保存按钮，
- * 所以这里只更新表单里出现的那几个字段，不会把别的组覆盖掉。
- * 分组名由表单里的隐藏字段 __group 带来。
+ * 保存站点设置。前端只提交改过的字段，没出现的字段原样不动。
+ * 登录校验在这里再做一遍（纵深防御），不依赖 proxy 的粗筛。
  */
 export async function saveSiteSettings(
   _prev: SettingsState,
   form: FormData
 ): Promise<SettingsState> {
   const t = await getT();
-  // 中间件已经拦过一次，这里再校验一遍（纵深防御）
   if (!(await isLoggedIn())) {
     return { status: "error", message: t("登录已过期，请重新登录后再试") };
   }
 
-  const group = String(form.get("__group") ?? "").trim();
+  const has = (key: string) => form.has(key);
   const value = (key: string) => String(form.get(key) ?? "").trim();
+  const changes: Record<string, unknown> = {};
 
   try {
-    if (group === "basic") {
+    if (has("siteName")) {
       const siteName = value("siteName");
       if (!siteName) return { status: "error", message: t("站点名不能为空") };
-      await saveSettings({
-        siteName,
-        description: value("description"),
-        author: value("author"),
-        favicon: value("favicon"),
-        ogImage: value("ogImage"),
-      });
-    } else if (group === "list") {
-      const perPage = Number(value("postsPerPage"));
-      const postsPerPage = Number.isFinite(perPage)
-        ? Math.min(50, Math.max(1, Math.round(perPage)))
-        : 20;
-      await saveSettings({ postsPerPage, footerText: value("footerText") });
-    } else if (group === "seo") {
-      await saveSettings({
-        seoTitle: value("seoTitle"),
-        seoDescription: value("seoDescription"),
-        seoKeywords: value("seoKeywords"),
-      });
-    } else if (group === "notify") {
-      await saveSettings({ notifyEmail: value("notifyEmail") });
-    } else if (group === "social") {
-      await saveSettings({
-        social: {
-          github: value("github"),
-          x: value("x"),
-          email: value("email"),
-        },
-      });
-    } else {
-      return { status: "error", message: t("保存失败：未知的分组") };
+      changes.siteName = siteName;
     }
+    const textKeys = [
+      "description", "author", "footerText", "seoTitle",
+      "seoDescription", "seoKeywords", "notifyEmail", "favicon", "ogImage",
+    ] as const;
+    for (const key of textKeys) {
+      if (has(key)) changes[key] = value(key);
+    }
+    if (has("postsPerPage")) {
+      const num = Number(value("postsPerPage"));
+      changes.postsPerPage = Number.isFinite(num)
+        ? Math.min(50, Math.max(1, Math.round(num)))
+        : 20;
+    }
+    if (has("social")) {
+      let links: unknown;
+      try {
+        links = JSON.parse(value("social"));
+      } catch {
+        return { status: "error", message: t("社交链接格式不对") };
+      }
+      if (!Array.isArray(links)) {
+        return { status: "error", message: t("社交链接格式不对") };
+      }
+      const clean: SocialLink[] = links
+        .filter((item): item is Record<string, unknown> =>
+          Boolean(item && typeof item === "object")
+        )
+        .map((item) => ({
+          title: String(item.title ?? "").trim(),
+          url: String(item.url ?? "").trim(),
+        }))
+        .filter((item) => item.title && item.url);
+      changes.social = clean;
+    }
+
+    if (Object.keys(changes).length === 0) return { status: "idle", message: "" };
+    await saveSettings(changes);
     return { status: "ok", message: t("已保存") };
   } catch {
     return { status: "error", message: t("保存失败：数据库连接异常") };

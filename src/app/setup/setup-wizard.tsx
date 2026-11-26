@@ -5,10 +5,9 @@ import { useRouter } from "next/navigation";
 import PasskeyManager, { type PasskeyView } from "@/app/settings/passkey-manager";
 import TotpManager from "@/app/settings/totp-manager";
 import type { ConfigField } from "@/components/config-fields";
-import { saveServiceConfig } from "./config-actions";
 import type { DatabaseStatus } from "@/lib/mongodb";
 import { useT } from "@/components/i18n-provider";
-import ServiceConfigFields, { type ServiceFeature } from "@/components/service-config-fields";
+import type { ServiceFeature } from "@/components/service-config-fields";
 import AuthConfigPanel, { type GeneratedItem } from "./auth-config-panel";
 
 type SiteValues = {
@@ -36,8 +35,6 @@ type Props = {
   envWritable: boolean;
   onVercel: boolean;
   loggedIn: boolean;
-  /** 数据库现在连得上吗。服务类配置存在数据库里，连不上就存不了 */
-  dbOk: boolean;
   /** 当前库的状态：存在还是刚建的 */
   dbStatus: DatabaseStatus | null;
   /** 服务器上有没有生效的 RECOVERY_TOKEN（Vercel 上要导入 .env 并重新部署之后才有） */
@@ -68,7 +65,6 @@ export default function SetupWizard({
   envWritable,
   onVercel,
   loggedIn,
-  dbOk,
   dbStatus,
   recoveryReady,
   rpId,
@@ -146,12 +142,12 @@ export default function SetupWizard({
 
       {step > 0 && !loggedIn && (
         <p className="notice">
-          {t("这一步要先进来才能保存。")}
+          {t("这一步需要先登录。")}
           {!recoveryReady
             ? t(
                 "服务器上还没有生效的 RECOVERY_TOKEN——先把第 1 步的 .env 导入 Vercel 并重新部署，紧急入口才会开。"
               )
-            : t("站点上还没有任何钥匙时，用 .env 里的 RECOVERY_TOKEN 从紧急登录入口进。")}
+            : t("用 .env 里的 RECOVERY_TOKEN 从紧急入口进入。")}
           {" "}
           <a href="/login?recovery=1&next=%2Fsetup">{t("去登录")}</a>
         </p>
@@ -163,42 +159,43 @@ export default function SetupWizard({
           <p className="notice">
             {onVercel
               ? t(
-                  "当前跑在 Vercel 上，文件系统是只读的。填完点「生成 .env 文件」，下载后导入到 Vercel 的环境变量里，再重新部署。"
+                  "Vercel 不能写文件：下载 .env 后导入环境变量，再重新部署。"
                 )
               : t(
-                  "下面这些值会写进项目根目录的 .env 文件。这个文件不在 Git 里，部署时生成。"
+                  "写入项目根目录的 .env，不进 Git。"
                 )}
           </p>
           <p className="notice">
             {t(
-              "配完之后后面几步都要先进来。站点上还没有任何钥匙时，用 .env 里的 RECOVERY_TOKEN 从紧急登录入口进。"
+              "后面几步需要登录。首次请用 .env 里的 RECOVERY_TOKEN 从紧急入口进入。"
             )}
           </p>
           <AuthConfigPanel
             manualItems={authItems}
             generatedItems={generatedAuthItems}
             envWritable={envWritable}
+            serviceFeatures={serviceFeatures}
           />
 
           {!recoveryReady && (
             <p className="notice">
               {t(
-                "上面的值现在还没进到服务器里。Vercel 上要等 .env 导入环境变量并重新部署之后才生效；服务器读到 RECOVERY_TOKEN 之前，紧急登录入口是关着的。"
+                "配置尚未生效：Vercel 需导入 .env 并重新部署，之后紧急登录才可用。"
               )}
             </p>
           )}
 
           {onVercel && (
             <ol className="reset-steps">
-              <li>{t("填好上面的值，点「生成 .env 文件」下载它。")}</li>
+              <li>{t("填好各项，下载生成的 .env。")}</li>
               <li>
                 {t(
                   "到 Vercel 项目 → Settings → Environment Variables，上传这个 .env 文件。"
                 )}
               </li>
-              <li>{t("重新部署一次，等它跑完。")}</li>
+              <li>{t("重新部署并等待完成。")}</li>
               <li>
-                {t("回来用 .env 里的 RECOVERY_TOKEN 从紧急登录入口进门，然后接着走第 2 步。")}
+                {t("用 RECOVERY_TOKEN 从紧急入口登录，继续第 2 步。")}
               </li>
             </ol>
           )}
@@ -221,15 +218,15 @@ export default function SetupWizard({
               )}
               {" "}
               {requestHost
-                ? t("按当前域名，RP_ID 应该填：{host}", { host: requestHost })
-                : t("把 RP_ID 改成当前站点的域名，不带协议。")}
+                ? t("按当前域名，应填：{host}", { host: requestHost })
+                : t("改成当前站点的域名，不带协议。")}
             </p>
           )}
 
           {!!originHost && requestHost && originHost !== requestHost && (
             <p className="form-error">
               {t(
-                "ORIGIN 的域名和当前域名不一样，确认邮件里的链接会指到别处去。ORIGIN 应该填 https://{host}",
+                "ORIGIN 与当前域名不符，确认邮件链接会指向别处。应填 https://{host}",
                 { host: requestHost }
               )}
             </p>
@@ -245,26 +242,6 @@ export default function SetupWizard({
                   })}
             </p>
           )}
-
-          <h2 className="section-title">{t("邮件与图片存储")}</h2>
-          {dbOk ? (
-            <>
-              <p className="notice">
-                {t("这两项存在数据库里，部署之后随时可以在这里改，不用重新部署。")}
-              </p>
-              <ServiceConfigFields
-                features={serviceFeatures}
-                onSave={saveServiceConfig}
-                successHint={t("已保存，立刻生效。")}
-              />
-            </>
-          ) : (
-            <p className="notice">
-              {t(
-                "这两项存在数据库里，得等数据库连上之后才能保存。先把上面的数据库地址配好，再回到这一步。"
-              )}
-            </p>
-          )}
         </>
       )}
 
@@ -273,7 +250,7 @@ export default function SetupWizard({
           <h2 className="section-title">{t("站点信息")}</h2>
           <p className="notice">
             
-            {t("站点名、简介、分页大小，以及接收验证器变更确认信的邮箱。 数据库密钥不在这里填——那些只能配在服务端。")}
+            {t("填写站点信息；密钥只在服务端配置。")}
           </p>
           <form className="setup-form" onSubmit={saveSite}>
             <label className="field">
@@ -343,7 +320,7 @@ export default function SetupWizard({
           <h2 className="section-title">{t("绑定 Passkey")}</h2>
           <p className="notice">
             
-            {t("主登录方式。绑好之后 Touch ID / 指纹一按就能进来，不用输任何东西。")}
+            {t("主登录方式，绑好后 Touch ID / 指纹一按即可。")}
             {passkeyCount > 0 && ` 当前已绑 ${passkeyCount} 把。`}
           </p>
           <PasskeyManager
@@ -360,7 +337,7 @@ export default function SetupWizard({
           <h2 className="section-title">{t("绑定手机验证器")}</h2>
           <p className="notice">
             
-            {t("另一把钥匙。Passkey 不在手边时，用手机上的 6 位码登录。")}
+            {t("备用登录方式，用手机上的 6 位码登录。")}
             {hasTotp && t("当前已经绑好。")}
           </p>
           <TotpManager
@@ -376,11 +353,11 @@ export default function SetupWizard({
           <h2 className="section-title">{t("完成")}</h2>
           <p className="notice">
             {completed
-              ? t("初始化已经完成过，这里只是让你回头检查。")
-              : t("两把钥匙都配好之后就可以开写了。以后在站点设置里随时能改。")}
+              ? t("已完成初始化，这里供复查。")
+              : t("两把钥匙齐了，以后可在设置里随时改。")}
           </p>
           {!hasTotp && (
-            <p className="notice">{t("验证器还没绑：建议回到第 4 步，别只留 Passkey 一把钥匙。")}</p>
+            <p className="notice">{t("验证器还没绑，建议回到第 4 步。")}</p>
           )}
           <button
             className="btn btn-outline-light btn-plain"
