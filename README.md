@@ -6,111 +6,151 @@
 没有弹窗和花哨的装饰。那些烦人的东西离使用者远一点，人才有心思专注在创作本身。
 
 **归属权在你手里。** 内容存在你自己挑的 MongoDB 里，图片放在你自己挑的对象存储里，
-邮件走你自己挑的通道。**推荐用 Vercel 部署**——导入仓库、配几个变量就完事，是最省事的路子；
+邮件走你自己挑的通道。**推荐用 Vercel 部署**——导入仓库、跟着安装向导点几下就完事，是最省事的路子；
 但程序不绑死任何一家：自有服务器、Docker、任何能跑 Node 的地方都能装。
-数据库、图片存储、邮件都是可插拔的，换一家只是改一个变量。
+数据库、图片存储、邮件都是可插拔的，换一家只是改一个配置。
 
 **边界很清楚。** 它是一个单用户、单站点、纯自用的写作工具。不做多用户、不做后台、
-不做社交、不做统计。想让别人访问你的文字，那就把文章发布出去；除此之外，它不替你做任何决定。
+不做社交、不做统计。想让别人看到你的文字，把文章发布出去就行；除此之外，它不替你做任何决定。
 
-## 当前状态
+## 现在能用的
 
-读写闭环可用：首页 / 详情 / 搜索 / 写作全部读数据库，文章可在编辑器里写并保存。登录用 Passkey（WebAuthn）或手机验证器（TOTP，扫码绑定、6 位码登录），**没有密码**；middleware 保护写文章与站点设置。站点设置（基本信息 / SEO / 社交 / 分页 / 页脚 / 通知邮箱）、图片直传 Vercel Blob、SEO 元信息都已完成。更换 / 解绑验证器需要邮件二次确认。
+- **读写闭环**：首页时间线（只有日期 + 标题，无摘要无封面、要分页）→ 文章详情 → 站内搜索 → 写作页（BlockNote 类 Notion 所见即所得）→ 存 MongoDB。
+- **文章**：可见性三态 `draft`（草稿）/ `private`（私有）/ `public`（公开），访客只读 public，私有与草稿直接访问也 404；发布不超过 6 个月的公开文章标 `new`；可置顶（列表和详情都不显示置顶标记，位置本身就是信号）。
+- **标签与地址**：tag 手动创建 + 选择，未被任何文章引用的自动删除；公开标签目录只列 public 用过的标签，防草稿内容泄露；slug 由标题拼音 + 随机后缀生成，改标题不改 URL。
+- **登录**：Passkey（WebAuthn）为主、手机验证器 TOTP（扫码绑定、6 位码）为辅，**没有密码**；两把钥匙都丢了走 `/login?recovery=1` + `RECOVERY_TOKEN`。middleware 只保护 `/write` 与 `/settings`，真正的验签在 Node 侧。
+- **敏感操作邮件确认**：更换 / 解绑验证器、新增 / 删除 Passkey、重置配置都要发确认信，链接 10 分钟有效、只能用一次，确认页再点一次才生效（首次绑定验证器除外）。
+- **站点设置**：8 个折叠分组——基本信息 / 列表与页脚 / SEO / 通知 / 社交链接 / 外观 / 邮件与图片存储 / 登录。主题跟随系统、可固定浅色或深色；界面语言中文 / English 切换即时生效。
+- **对外输出**：RSS 2.0、`sitemap.xml`、`robots.txt`、自定义 404 都已实现，RSS 与 sitemap 只输出 public 文章；SEO 元信息、canonical、og、分享图齐全。
+- **可插拔服务**：图片 `vercel-blob` / `s3` / `local`，发信 `resend` / `smtp`，配置存数据库，改了不用重新部署；正文里的图片只存 URL。
+- **安装与恢复**：`/setup` 五步向导（含域名自检）、`/reset` 恢复指引、`/api/diag` 域名诊断、`npm run backup` 导出文章与设置。
+- **不娇气**：数据库还没配好时首页 / 文章页显示安装提示，`rss.xml` 与 `sitemap.xml` 返回 503，而不是抛 500；`MONGODB_DB_NAME` 指向一个还不存在的库时，安装向导会自动建出来。
 
-尚未做：自定义 404、RSS。
-
-## 本地运行
+## 本地跑起来
 
 ```bash
 npm install
-
-# 1. 数据库连接
-cp config/database.example.json config/database.json
-# 编辑 config/database.json，把 uri 换成你的 MongoDB 连接串（Atlas、自建、Railway 都行）
-
-# 2. 会话密钥
-cp .env.example .env.local
-# 生成一串随机值填进 AUTH_SECRET：openssl rand -base64 32
-
-# 3. 紧急入口密钥（可选，但强烈建议）
-# 在 .env.local 里加 RECOVERY_TOKEN="$(openssl rand -base64 32)"
-# 两把钥匙都丢了时用它进门：/login?recovery=1
-
-# 4. 图片上传（可选，不配也能写文章，只是不能插图）
-# 装好之后到 /settings 的「邮件与图片存储」里选方案并填凭据：
-#   vercel-blob —— BLOB_READ_WRITE_TOKEN（Vercel → Storage → 新建 Blob store，必须 Public）
-#   s3          —— S3_* 六个变量
-#   local       —— 无需凭据，写到 uploads/ 目录
-# 发信同理：resend 用 RESEND_API_KEY / RESEND_FROM，smtp 用 SMTP_* 六个变量
-
 npm run dev
 ```
 
-打开 http://localhost:3000
+打开 http://localhost:3000 。**不用先手动创建任何配置文件**：全新站点会在首页给出安装入口，直接进 `/setup` 走向导即可，配置由向导写进项目根目录的 `.env`。
 
-> `config/database.json` 和 `.env.local` 含连接串与密钥，已被 `.gitignore` 忽略，**切勿提交到 GitHub**。
-> `config/` 下所有非 `.example.json` 的文件、`uploads/`、`.env*` 都在忽略列表里——凡是要你自己创建或上传的东西，都不会进仓库。
-
-连通性检查（只读，不写数据）：
+想绕开向导手动配也可以：`config/database.example.json` → `config/database.json` 填连接串，`.env.example` 里按需打开几项另存为 `.env.local`。读取顺序是 进程环境变量 → `.env` → `.env.local` → `config/database.json`。这些文件都在 `.gitignore` 里，**切勿提交到 GitHub**。
 
 ```bash
-node scripts/test-connection.mjs       # ping + 列出集合
+node scripts/test-connection.mjs   # 只读：ping + 列出集合
+node scripts/seed-demo.mjs         # 演示数据，可重复执行重灌
+npm run backup                     # 导出文章 / 标签 / 设置到 backups/，不导出凭据
+npx tsc --noEmit                   # 类型检查
+npm run build                      # 生产构建
 ```
 
-> 若连接报 `SSL alert internal error`，多为 Atlas 的 IP 白名单问题：到 Atlas → Network Access 添加当前出口 IP。
+> Atlas 报 `SSL alert internal error` 多半是 IP 白名单问题：到 Network Access 加当前出口 IP。
+> 仓库没有 test / lint 脚本，验收以 `tsc --noEmit` + `npm run build` 加具体行为核对为准。
 
-演示数据（与项目本身相关的几篇文章，可重复执行重灌）：
+## 首次安装（`/setup`）
 
-```bash
-node scripts/seed-demo.mjs
-```
+五步：**服务器配置 → 站点信息 → 绑定 Passkey → 绑定手机验证器 → 完成**。
+
+第 1 步在站点**还没有任何登录凭据**时免登录（新部署可能连数据库都没配，除此之外别无入口）；一旦有了凭据，再改这些配置必须先登录，而且免登录时不会覆盖已有值。向导会摆出当前域名、服务器读到的 `RP_ID` 与 `ORIGIN`，对不上时当场报错，不用等浏览器抛英文错。
+
+`AUTH_SECRET` 与 `RECOVERY_TOKEN` 由程序生成（32 字节随机数，base64 后 44 字符），不接受手填，也只在生成那一次显示——请立刻存进密码管理器。填完主按钮：
+
+- **自有服务器 / Docker**：写入项目根目录 `.env`，刷新即生效，并顺手下载一份留底。
+- **Vercel**：文件系统只读，点「生成 .env 文件」下载，导入到 Vercel → 项目 → Settings → Environment Variables，**然后重新部署**。变量生效前紧急入口是关着的，漏掉重新部署这一步就会卡住。
+
+Vercel 上的完整顺序：
+
+1. 导入 GitHub 仓库并部署（可以先不配任何变量，站点会显示安装提示）
+2. 打开 `/setup`，第 1 步填数据库地址、库名、`RP_ID`、`ORIGIN`，生成密钥并下载 `.env`
+3. 把 `.env` 导入 Vercel 环境变量，重新部署并等它跑完
+4. 回 `/login`——安装未完成时会自动显示紧急登录入口——用 `.env` 里的 `RECOVERY_TOKEN` 进门
+5. 继续第 2–5 步：站点信息（**通知邮箱要填**，见下）→ 绑 Passkey → 扫码绑验证器 → 点「完成安装」
+
+> **绑 Passkey 的前置条件**：新增 Passkey 也要走邮件确认，所以第 1 步里得选好发信方案并填好凭据，第 2 步里得填通知邮箱，否则「申请绑定新的 Passkey」按钮是禁用的。确认信点开链接后再回向导点「完成绑定」。
+> 完成后 `settings.setupCompleted = true`，从登录页进首页不再自动改道。
+
+改这几项前先想清楚：`RP_ID` / `ORIGIN` 改了会让已绑定的 Passkey 失效；`AUTH_SECRET` 改了会让所有设备掉线、验证器要重绑；`MONGODB_URI` 改了会立刻重连数据库，页面可能短暂打不开。`/api/diag` 只返回 `rpId` / `origin` / 当前请求域名和匹配结论，不返回密钥或连接串。
+
+**凭据不会留在前端。** 向导里的配置表单只用来生成或写入 `.env`：值不会注入正在运行的进程，已配置的密钥不回显，站点设置页完全不碰这些。站点初始化之后，再改这些配置只能走安装 / 重置引导，且必须先登录。
+
+## 配置分两组
+
+| 组 | 内容 | 存哪 | 什么时候能改 |
+| --- | --- | --- | --- |
+| 身份验证与启动 | `MONGODB_URI`、`MONGODB_DB_NAME`、`RP_ID`、`ORIGIN`（手填）+ `AUTH_SECRET`、`RECOVERY_TOKEN`（程序生成） | `.env` 文件 / Vercel 环境变量 | 只在安装 / 重置引导里 |
+| 服务类 | 图片存储（`STORAGE_PROVIDER` + 各方案字段）、发信（`MAIL_PROVIDER` + 各方案字段） | 数据库 | 部署之后在设置页随时改，不用重新部署 |
+
+服务类可插拔：先选方案，再只填这个方案要的字段，没选的那套不参与也不必填。默认走最省事的那条（Vercel Blob + Resend）。
+
+## 恢复与重置
+
+- 进不去先看 `/reset`：未登录只给通用步骤、不泄露任何状态；登录后按实际状态列出 Passkey 数量、验证器 / 邮件确认 / 紧急密钥是否就绪，并给出下一步。
+- 两把钥匙都丢了：确认 `RECOVERY_TOKEN` 已生效 → `/login?recovery=1` 粘贴密钥进门 → 立刻重绑 Passkey 和验证器 → 之后可以删掉这把临时密钥（删了就没有兜底）。
+- 彻底清空凭据：删数据库 `auth` 集合的 `admin` 文档等于解绑验证器，删 `passkeys` 集合等于清空所有 Passkey，再从 `/setup` 重来。
+- 「重置配置」要过邮件确认：只清 auth 组的 `.env` 键与 service 组的数据库配置；**站点设置、文章、标签、已绑定的 Passkey 与验证器都不动**。Vercel 上程序删不掉的环境变量，会在确认后逐个列出，由你手动去控制台删除。
+
+## 部署与环境变量
+
+推荐 Vercel：导入 GitHub 仓库（框架自动识别 Next.js）→ 按上面的向导配置 → 绑定域名，DNS 托管在 Vercel 时 HTTPS 证书自动签发。自部署用 `npm run build && npm run start`，`.env` 放在项目根目录。
+
+数据库连接串是通用的：Atlas、自建、Railway、容器里的 MongoDB 都行。库名优先级 `MONGODB_DB_NAME` > 连接串路径里的名字 > `inslog`；同一集群跑多个站点时用不同库名区分，填一个不存在的库名，安装向导会自动建出来。
+
+### 环境变量速查
+
+前六项由安装向导填写或生成，后两项可选、需要时手动加：
+
+| 变量 | 说明 |
+| --- | --- |
+| `MONGODB_URI` | MongoDB 连接串，向导里填 |
+| `MONGODB_DB_NAME` | 库名，可选，向导里填 |
+| `AUTH_SECRET` | 会话签名 + 加密 TOTP secret 的密钥，程序生成 |
+| `RECOVERY_TOKEN` | 紧急入口密钥，程序生成，进门全靠它 |
+| `RP_ID` | Passkey 域名主体，如 `inslog.example.com`，**必须与正式域名一致** |
+| `ORIGIN` | 站点完整地址，如 `https://inslog.example.com`，确认邮件链接按它拼 |
+| `NEXT_PUBLIC_SITE_URL` | 可选。canonical / 分享图 / RSS 用；不填则回退到 `ORIGIN`。向导不生成，需要时手动加 |
+| `UI_LANGUAGE` | 可选。部署期默认界面语言（`zh-CN` / `en`）；日常在设置页切，不用碰它 |
+
+### 服务类（设置页 →「邮件与图片存储」，存数据库）
+
+| 功能 | 方案与字段 |
+| --- | --- |
+| 图片 `STORAGE_PROVIDER` | `vercel-blob`：`BLOB_READ_WRITE_TOKEN`（store 必须 **Public**，创建后不可改）<br>`s3`：`S3_ENDPOINT`、`S3_REGION`、`S3_BUCKET`、`S3_ACCESS_KEY_ID`、`S3_SECRET_ACCESS_KEY`、`S3_PUBLIC_URL`（R2 / MinIO / AWS S3 / OSS…，桶要允许匿名读）<br>`local`：`LOCAL_UPLOAD_DIR`（默认 `uploads`，目录要可写；多实例需共享） |
+| 发信 `MAIL_PROVIDER` | `resend`：`RESEND_API_KEY`、`RESEND_FROM`（域名先验证 SPF / DKIM）<br>`smtp`：`SMTP_HOST`、`SMTP_PORT`、`SMTP_USER`、`SMTP_PASSWORD`、`SMTP_FROM`、`SMTP_SECURE`（QQ / Gmail 用授权码，不是登录密码） |
+
+发信没配好（或通知邮箱为空）时，换绑 / 解绑验证器与增删 Passkey 会被禁用，而不是降级放行。非 Vercel 组合未做人工实测，靠代码正确性与明确报错兜底，以后由使用者反馈。
+
+> 忽略清单覆盖 `.env*`、`.env*.local`、`config/*.json`（除 `*.example.json`）、`uploads/`、`public/uploads/`、`backups/`。连接串、密钥、令牌、真实文章数据一律不进仓库。
+
+## 界面语言
+
+界面文案（按钮、提示、错误）支持中文 / 英文，**文章内容不翻译**。语言包在 `locales/zh-CN.json` 与 `locales/en.json`，键就是中文原文，缺翻译时自动回退到中文。
+
+日常切换在站点设置 →「外观」→「界面语言」，点「中文 / English」立刻生效，不用改环境变量、不用重新部署；语言是站点级的。部署期默认值另有两个入口：本地 `cp config/locale.example.json config/locale.json` 改 `locale`，Vercel 加 `UI_LANGUAGE`。取值只有 `zh-CN` 和 `en`。想加语言就复制一份 `en.json` 并在 `src/lib/i18n-core.ts` 的 `SUPPORTED_LOCALES` 里登记。
 
 ## 目录结构
 
 ```
 src/
   app/
-    page.tsx            # 首页：站点信息 + 搜索 + 标签 + 文章时间线
-    posts/[slug]/       # 文章详情
-    search/             # 站内搜索
-    write/              # 写作页（server action 保存到库）
-    login/              # 登录（Passkey / 验证器 6 位码 / 紧急入口）
-    settings/           # 站点设置：站点信息表单 + Passkey 管理 + 验证器绑定
-    confirm/[token]/    # 邮件确认页（验证器变更生效处）
-    api/auth/           # Passkey、验证码、紧急入口、退出的接口
-  components/           # BlockEditor（编辑）、PostBody（只读正文）、WriteFab、SiteFooter
-  lib/                  # mongodb / posts / settings / auth / session / passkey / totp / secret-box / post-utils
-  middleware.ts         # 保护 /write 与 /settings
-config/
-  database.example.json # 数据库配置模板（提交仓库）
-  database.json         # 本地实际配置（gitignore）
-scripts/
-  test-connection.mjs   # 只读连通测试
-  seed-demo.mjs         # 演示数据
+    page.tsx                  # 首页：站点信息 + 搜索 + 标签 + 文章时间线
+    posts/[slug]/             # 文章详情
+    search/  write/  login/   # 站内搜索 / 写作（server action）/ 登录
+    settings/                 # 8 个折叠分组；Passkey、验证器、服务配置都在这里
+    setup/  reset/            # 首次安装向导 / 恢复指引
+    confirm/[token]/          # 邮件确认页（凭据变更真正生效的地方）
+    not-found.tsx             # 自定义 404
+    rss.xml/  sitemap.xml/  robots.txt/
+    api/                      # auth/*（passkey、totp、recovery、logout）、setup/*、upload*（三套存储）、diag
+  components/                 # BlockEditor、PostBody、SiteFooter、WriteFab、i18n-provider、各类设置表单
+  lib/                         # mongodb / posts / settings / auth / session / passkey / totp /
+                               # secret-box / pending / change-request / env-store / service-config / i18n-core …
+  middleware.ts                # 只粗筛 /write 与 /settings 的 cookie，验签留给 Node 侧
+config/*.example.json          # 配置模板（提交）；实际 database.json / locale.json 被忽略
+locales/*.json                 # 界面语言包
+scripts/                       # 连通测试 / 演示数据 / 导出备份
+public/                        # 图标
 ```
-
-## 技术方案（已确认）
-
-- 首页区块顺序：站点名 → 简介 → 站内搜索 → 标签目录 → 更新列表（仅日期+标题、分页，无摘要/封面）→ 社媒链接（有才显示）→ 页脚
-- 编辑器：BlockNote，类 Notion 所见即所得，仅排版类块（标题分级、文字格式、列表、引用/代码、分割线/表格、对齐、图片），不含待办/折叠
-- 图片：上传到 Vercel Blob，数据库只存 URL
-- tag：手动创建+选择，未被使用的自动删除
-- 可见性：三态 `draft`（草稿）/ `private`（私有，访客不可见）/ `public`（公开）；访客只读公开文章，私有/草稿直接访问也拦截
-- 发布日期距今不超过 6 个月的文章显示 `new` 标记
-- 搜索：匹配标题+正文+tag
-- 登录：Passkey（WebAuthn）为主，手机验证器（TOTP）为辅，**不设密码**；middleware 保护写文章、设置与安装向导
-- 验证器：扫码绑定，6 位码登录（30 秒一步，窗口 ±1，同一步的码不能复用）；secret 以 AES-256-GCM 加密后落库
-- 验证器变更：首次绑定直接生效；**更换 / 解绑必须过邮件确认**（这两件事会让已有钥匙失效）
-- 应急：两把钥匙都丢了走 `/login?recovery=1` + `RECOVERY_TOKEN` 环境变量
-- 站点设置：基本信息、SEO、社交链接、favicon/页脚、分页大小
-- 不做：用户系统、独立后台、评论
-
-## 首次安装与恢复引导
-
-- `/setup`（**需登录**）：四步向导 —— 站点信息（站名 / 简介 / 分页 / 通知邮箱）→ 绑 Passkey → 绑手机验证器 → 完成。完成后写 `settings.setupCompleted = true`，之后从登录页进首页不再自动改道。向导复用设置页的两个绑定组件，绑完会刷新状态。
-- `/reset`（公开）：未登录只显示**通用恢复步骤**，不泄露任何状态；登录后显示 Passkey 数量、验证器是否绑定、邮件确认是否可用、紧急密钥是否配置（只看存在与否，不显示值），并按实际情况列出下一步。
-- **密钥类变量不在网页里填**：`MONGODB_URI`、`AUTH_SECRET`、`RECOVERY_TOKEN`、Resend key 都只能配在 Vercel 服务端。网页里填这些等于直接公开，且 Vercel 环境变量本来也无法由运行时写入。
-- 完全丢失凭据的兜底：删 `auth` 集合的 `admin` 文档解绑验证器，删 `passkeys` 集合清空 Passkey，然后从 `/setup` 重来。
 
 ## 图标
 
@@ -126,111 +166,6 @@ scripts/
 | `apple-touch-icon.png` | iOS 添加到主屏幕的图标（黑底白字） |
 
 设置页里填了 favicon 会覆盖上面这套默认值。
-
-## 服务器配置怎么配
-
-配置分成两组，存储位置和修改时机都不一样：
-
-| 组 | 内容 | 存哪 | 什么时候能改 |
-| --- | --- | --- | --- |
-| 身份验证与启动 | `MONGODB_URI`、`MONGODB_DB_NAME`、`RP_ID`、`ORIGIN`（手填）+ `AUTH_SECRET`、`RECOVERY_TOKEN`（**程序生成**） | `.env` 文件（部署时生成，不在 Git 里）；Vercel 上是下载同一个文件再导入 | 只在**安装 / 重置引导**里改 |
-| 服务类 | 图片存储（`STORAGE_PROVIDER` + 各方案字段）、发信（`MAIL_PROVIDER` + 各方案字段） | 数据库 | 部署之后在设置页随时改，不用重新部署 |
-
-服务类这两项是**可插拔的**：先选方案（vercel-blob / s3 / local，resend / smtp），再只填这个方案要的字段。
-没选的那套不参与，也不必填。默认走最省事的那条（Vercel Blob + Resend）。
-
-引导入口：
-
-- 站点没初始化时打开 `/setup`，第一步就是配这些。**这一步免登录**——新部署可能连数据库都还没配，除此之外没有别的入口。
-- 要把配置推倒重来，去 `/reset` 的「重置配置」：**会发确认邮件**，点邮件里的链接再点一次确认才会生效。
-
-重置的边界：
-
-| 会清掉 | 不会动 |
-| --- | --- |
-| 数据库里存的邮件 / 图片存储凭据 | 站点设置（站名、SEO、社交链接、分页…） |
-| `.env` 文件里的数据库地址、库名、会话密钥、紧急密钥、域名、站点地址 | 文章与标签 |
-| | 已绑定的 Passkey 与手机验证器 |
-
-平台改不掉的（Vercel 的环境变量）会在确认后的页面上**逐个列出来**，由你手动去控制台删除。
-
-平台差异（表单是同一套，只有最后一步不同）：
-
-- **自有服务器 / Docker**：引导页直接写 `.env` 文件，写完刷新即生效，不用重启。
-- **Vercel**：文件系统只读写不了文件。引导页会**打包成一个 `.env` 文件让你下载**，
-  再把它导入到 Vercel 的环境变量里（Vercel → 项目 → Settings → Environment Variables → 上传），然后重新部署。
-
-`AUTH_SECRET` 和 `RECOVERY_TOKEN` 由程序生成（32 字节随机数），不用手写：
-密码里的特殊字符不用自己转义，也不会出现人为的弱口令。生成后请存到密码管理器——
-**紧急密钥是唯一能进门的路**。
-
-> `AUTH_SECRET` 改了会让所有设备掉线、已绑定的验证器也要重新绑；`MONGODB_URI` 改了会立刻重连数据库，页面可能短暂打不开。
-> 重新生成密钥就等于改了 `AUTH_SECRET`：所有设备掉线，验证器要重新扫码绑定。
-
-## 界面语言
-
-界面文案（按钮、提示、错误）支持中文 / 英文，**文章内容不翻译**。语言包在 `locales/zh-CN.json` 与 `locales/en.json`，键就是中文原文；缺翻译时自动回退到中文。
-
-**日常切换：在站点设置 →「外观」→「界面语言」里点「中文 / English」，立刻生效**，不用改环境变量、不用重新部署。语言是站点级的，所有人看到的都是这个语言。
-
-下面两处只在部署时定默认值，平时用不到：
-
-- 本地：`cp config/locale.example.json config/locale.json`，把 `locale` 改成 `"en"` 或 `"zh-CN"`
-- Vercel：加环境变量 `UI_LANGUAGE=en`
-
-取值只有 `zh-CN`（中文）和 `en`（英文）两个，界面上直接显示「中文 / English」，不用记代码。
-
-改完重新构建 / 部署生效。想加新语言就复制一份 `locales/en.json` 改成对应语言，再把开关指向新文件名（同时要在 `SUPPORTED_LOCALES` 里登记）。
-
-## 环境变量与部署
-
-本地需要的配置都在 `config/database.json` 和 `.env.local`（两者都不提交），详见 `.env.example`。
-
-### 一定要在部署时给的
-
-| 变量 | 说明 |
-| --- | --- |
-| `MONGODB_URI` | MongoDB 连接串。**任何 MongoDB 都行**：Atlas、自建、Railway、容器里的都行（代码优先用环境变量，本地才读 `config/database.json`） |
-| `MONGODB_DB_NAME` | 库名。留空用连接串路径里的名字，再没有就是 `inslog`。同一个集群跑多个站点时用不同库名区分；填一个不存在的库名，安装向导会自动建出来 |
-| `AUTH_SECRET` | 会话签名密钥 + 加密验证器 secret 的密钥，`openssl rand -base64 32`（换掉会让已绑定的验证器失效） |
-| `RECOVERY_TOKEN` | 紧急入口密钥，≥16 字符，`openssl rand -base64 32`。**建议长期留着**，它是你唯一能进门的路 |
-| `RP_ID` | Passkey 依赖的域名主体，如 `inslog.example.com`（**必须与正式域名一致**，改域名会导致已绑定的 Passkey 失效） |
-| `ORIGIN` | 站点地址，如 `https://inslog.example.com` |
-| `NEXT_PUBLIC_SITE_URL` | 站点地址，用于 canonical / 分享图 / RSS |
-
-### 图片存储（选一个）
-
-在设置页 →「邮件与图片存储」里改，存数据库，不用重新部署。
-
-| 方案 | 需要什么 |
-| --- | --- |
-| `vercel-blob`（Vercel 部署最省事） | `BLOB_READ_WRITE_TOKEN`。store 必须是 **Public**（创建后不可改），否则正文图片读者看不到 |
-| `s3`（R2 / MinIO / AWS S3 / OSS…） | `S3_ENDPOINT`、`S3_REGION`、`S3_BUCKET`、`S3_ACCESS_KEY_ID`、`S3_SECRET_ACCESS_KEY`、`S3_PUBLIC_URL`。桶要允许匿名读取 |
-| `local`（自建服务器） | `LOCAL_UPLOAD_DIR`，默认 `uploads`，目录要可写；多实例部署需要共享这个目录 |
-
-### 发信（选一个）
-
-| 方案 | 需要什么 |
-| --- | --- |
-| `resend` | `RESEND_API_KEY`、`RESEND_FROM`。域名要先在 Resend 验证（加 SPF/DKIM 记录） |
-| `smtp` | `SMTP_HOST`、`SMTP_PORT`、`SMTP_USER`、`SMTP_PASSWORD`、`SMTP_FROM`、`SMTP_SECURE`。QQ / Gmail 要用授权码，不是登录密码 |
-
-> **换绑 / 解绑验证器**：登录后到 `/settings` 的「登录」一节，提交后会往「通知邮箱」发一封确认信，点开链接再确认一次才生效。生效后所有设备都需要重新登录。
-> 发信没配好（或通知邮箱为空）时，这两个操作就会被禁用（首次绑定不受影响）。
->
-> **两把钥匙都丢了**（手机换了、Passkey 设备不在手上）：部署环境里加 `RECOVERY_TOKEN` → 重新部署 → 打开 `/login?recovery=1` 粘贴密钥进去 → 在设置页重新绑定验证器。
-> 实在不行还可以直接删掉数据库 `auth` 集合里那条文档，让验证器回到「未绑定」状态。
-
-**前端不提供任何数据库或凭据配置入口**（连接串和密钥放前端会泄露）。
-
-部署步骤：
-
-1. GitHub 建仓库并推送代码（确认 `config/database.json`、`.env.local` 未被提交）
-2. Vercel 导入该仓库，框架自动识别为 Next.js
-3. 配好上表中的环境变量
-4. 部署完成后绑定域名；域名 DNS 托管在 Vercel 时，HTTPS 证书自动签发
-5. 首次进入：用 Passkey 登录（或先用 `RECOVERY_TOKEN` 进门）→ 到 `/settings` 的「登录」一节绑定这台设备的 Passkey，再扫一次码绑上手机验证器，之后两把钥匙都能进
-6. 未来部署演示站：把 `MONGODB_URI` 换成演示库连接串
 
 ## 开源协议
 

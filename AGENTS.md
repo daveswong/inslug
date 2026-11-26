@@ -71,7 +71,8 @@ npx tsc --noEmit                   # 类型检查（需先 npm install）
 4. slug 由 `makeSlug`（pinyin-pro + 随机后缀）生成，重名最多重试 5 次；已有文章 URL 必须兼容。
 5. 标签未被引用的自动删除；公开标签目录只列 public 文章用过的，防草稿内容泄露。
 6. 搜索匹配标题 + `plainText` + tag，正则已转义。发布距今 ≤ 6 个月显示 new。
-7. 编辑器只用排版类块（不含待办 / 折叠）；正文存 `Block[]` + `plainText`；图片只存 URL。
+7. 编辑器只用排版类块（不含待办 / 折叠）；**不提供对齐按钮**——`textAlignment` 只是块属性，
+   旧文章带对齐的数据阅读页照常渲染，别为旧数据写迁移。正文存 `Block[]` + `plainText`；图片只存 URL。
 8. 无密码登录：Passkey 为主、TOTP 为辅、`RECOVERY_TOKEN` + `/login?recovery=1` 兜底。
    更换 / 解绑验证器必须邮件二次确认（首次绑定除外）。前端不提供任何凭据配置入口。
 9. `middleware.ts` 只做粗筛，真正验签在 Node 侧 `isLoggedIn()`（Edge 连不了 MongoDB）。
@@ -100,11 +101,11 @@ npx tsc --noEmit                   # 类型检查（需先 npm install）
 加语言需复制 `en.json` 并在 `i18n-core.ts` 的 `SUPPORTED_LOCALES` 登记。
 文章内容与邮件正文不翻译。
 
-## 已知文档偏差
+## 文档同步
 
-README「当前状态」写「尚未做：自定义 404、RSS」，但代码里 `not-found.tsx`、
-`rss.xml/route.ts`、`sitemap.xml/route.ts`、`robots.txt/route.ts`、`export-backup.mjs`、
-语言切换、域名配置自检都已存在。**README 与代码冲突时以代码为准**，并提醒维护者更新 README。
+README 已于 2026-11-26 全面重写、与代码对齐（安装向导五步、配置分组、可插拔存储、
+RSS / sitemap / 404、目录结构、部署顺序）。**改功能时同步更新 README 与本文件**；
+README 与代码冲突时以代码为准，并顺手把文档修掉。
 
 ## 安全与交付约定
 
