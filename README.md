@@ -1,6 +1,6 @@
 # inslug
 
-一个基于 note.js + next.js 的 blog web app：让你专注于写作，让读者专注于阅读。
+一个基于 Node.js + Next.js 的 Blog web APP：让你专注于写作，让读者专注于阅读。
 
 **路径短、界面干净、默认安全。** 没有账号系统，没有密码，没有追踪，没有评论，没有推荐算法，
 没有弹窗和花哨的装饰。那些烦人的东西离使用者远一点，人才有心思专注在创作本身。
@@ -37,9 +37,7 @@ npm run dev
 
 打开 http://localhost:3000 。**不用先手动创建任何配置文件**：全新站点会在首页给出安装入口，直接进 `/setup` 走向导即可，配置由向导写进项目根目录的 `.env`。
 
-想绕开向导手动配也可以：`config/database.example.json` → `config/database.json` 填连接串，`.env.example` 里按需打开几项另存为 `.env.local`。
-
-读取规则：`MONGODB_URI` 先从 `.env` / `.env.local` / 进程环境变量里找（**文件优先于环境变量**，因为向导把值写进文件后，进程环境变量不会跟着变——那是启动时注入的）；三个都没有才回退到 `config/database.json`。这些文件都在 `.gitignore` 里，**切勿提交到 GitHub**。
+想绕开向导手动配也可以：`config/database.example.json` → `config/database.json` 填连接串，`.env.example` 里按需打开几项另存为 `.env.local`。读取顺序是 进程环境变量 → `.env` → `.env.local` → `config/database.json`。这些文件都在 `.gitignore` 里，**切勿提交到 GitHub**。
 
 ```bash
 node scripts/test-connection.mjs   # 只读：ping + 列出集合
