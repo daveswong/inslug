@@ -350,7 +350,6 @@
   "图片存储方式": "Image storage",
   "选一个。Vercel 部署用 Vercel Blob 最省事；自建服务器可以用本地磁盘或任何 S3 兼容服务。": "Pick one. On Vercel, Vercel Blob is the least work; on your own server use local disk or any S3-compatible service.",
   "Vercel Blob（Vercel 部署最省事）": "Vercel Blob (easiest on Vercel)",
-  "Vercel Blob 的读写令牌。连上 Blob store 后 Vercel 会自动注入这个变量，不用手填。": "The Vercel Blob read-write token. Once the Blob store is connected, Vercel injects this variable for you.",
   "S3 兼容（R2 / MinIO / S3 / OSS…）": "S3-compatible (R2 / MinIO / S3 / OSS…)",
   "S3 接入地址": "S3 endpoint",
   "留空就是 AWS S3 本身。Cloudflare R2 填 https://<账号>.r2.cloudflarestorage.com，MinIO 填 http://<主机>:9000。": "Leave blank for AWS S3 itself. Cloudflare R2: https://<account>.r2.cloudflarestorage.com; MinIO: http://<host>:9000.",
@@ -460,5 +459,13 @@
   "。然后重新部署或重启。": "in the project root. Then redeploy or restart.",
   "生效后打开": "Once active, open",
   "，粘贴密钥进去。": ", then paste the key.",
-  "进去后立刻重新绑定 Passkey 和验证器，再把这把临时密钥删掉。": "Once in, rebind your Passkey and authenticator right away, then delete this temporary key."
+  "进去后立刻重新绑定 Passkey 和验证器，再把这把临时密钥删掉。": "Once in, rebind your Passkey and authenticator right away, then delete this temporary key.",
+  "站点设置存哪": "Where site settings are stored",
+  "MongoDB（跟着数据库一起备份）": "MongoDB (backed up with the database)",
+  "配置文件（config/settings.json）": "Config file (config/settings.json)",
+  "mongodb 或 file。file 是服务器上的 config/settings.json，只在文件系统可写时可用。": "mongodb or file. file means config/settings.json on the server; only available when the filesystem is writable.",
+  "当前平台写不了文件，只能存 MongoDB。": "This platform cannot write files; MongoDB only.",
+  "站点设置存在服务器上的 config/settings.json。": "Site settings are stored in config/settings.json on the server.",
+  "站点设置存在数据库里。": "Site settings are stored in the database.",
+  "Vercel Blob read-write token. When connecting a Blob store in Storage, enable \"Add a read-write token env var\" — Vercel injects it, no manual copying. Browser-direct uploads need it.": "Vercel Blob read-write token. When connecting a Blob store in Storage, enable \"Add a read-write token env var\" — Vercel injects it, no manual copying. Browser-direct uploads need it."
 }

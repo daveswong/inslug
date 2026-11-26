@@ -32,6 +32,8 @@ export type ConfigKey = {
   isProviderChoice?: boolean;
   /** 由程序生成，不用手填 */
   generated?: boolean;
+  /** 下拉选择器的候选项（枚举型配置用） */
+  options?: { value: string; label: string }[];
 };
 
 export const CONFIG_KEYS: ConfigKey[] = [
@@ -79,6 +81,17 @@ export const CONFIG_KEYS: ConfigKey[] = [
     hint: "站点的完整地址，例如 https://inslog.example.com。确认邮件里的链接按它拼。",
     secret: false,
   },
+  {
+    key: "SETTINGS_STORE",
+    group: "auth",
+    label: "站点设置存哪",
+    hint: "mongodb 或 file。file 是服务器上的 config/settings.json，只在文件系统可写时可用。",
+    secret: false,
+    options: [
+      { value: "mongodb", label: "MongoDB（跟着数据库一起备份）" },
+      { value: "file", label: "配置文件（config/settings.json）" },
+    ],
+  },
 
   // ── 图片存储 ────────────────────────────────
   {
@@ -96,7 +109,7 @@ export const CONFIG_KEYS: ConfigKey[] = [
     feature: "storage",
     provider: "vercel-blob",
     label: "图片存储令牌",
-    hint: "Vercel Blob 的读写令牌。连上 Blob store 后 Vercel 会自动注入这个变量，不用手填。",
+    hint: "Vercel Blob 的读写令牌。在 Storage 里连上 Blob store 时勾上「Add a read-write token env var」，Vercel 会自动注入，不用手填。浏览器直传图片需要它。",
     secret: true,
   },
   {

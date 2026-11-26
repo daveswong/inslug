@@ -4,7 +4,7 @@ import SiteFooter from "@/components/SiteFooter";
 import { isLoggedIn } from "@/lib/auth";
 import { getAuth, passkeyAddAllowed } from "@/lib/credentials";
 import { listPasskeys } from "@/lib/passkey";
-import { getSettings } from "@/lib/settings";
+import { getSettings, settingsStore } from "@/lib/settings";
 import { mailReady } from "@/lib/change-request";
 import PasskeyManager from "./passkey-manager";
 import TotpManager from "./totp-manager";
@@ -64,6 +64,11 @@ export default async function SettingsPage() {
     <main className="site">
       <header className="site-head">
         <h1 className="site-title">{t("站点设置")}</h1>
+        <p className="notice">
+          {settingsStore() === "file"
+            ? t("站点设置存在服务器上的 config/settings.json。")
+            : t("站点设置存在数据库里。")}
+        </p>
         {!settings.setupCompleted && (
           <p className="notice">
             <a href="/setup">{t("初始化还没走完，去安装向导")}</a>

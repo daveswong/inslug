@@ -35,6 +35,8 @@ type Props = {
   envWritable: boolean;
   /** 邮件与图片存储的方案与字段，和 auth 字段一起保存 */
   serviceFeatures: ServiceFeature[];
+  /** 文件系统能不能写配置文件（写不了就不提供「配置文件」这个选项） */
+  fileWritable: boolean;
 };
 
 type Secrets = { authSecret: string; recoveryToken: string };
@@ -51,6 +53,7 @@ export default function AuthConfigPanel({
   generatedItems,
   envWritable,
   serviceFeatures,
+  fileWritable,
 }: Props) {
   const t = useT();
   const [values, setValues] = useState<Record<string, string>>({});
@@ -74,34 +77,70 @@ export default function AuthConfigPanel({
     key;
 
   // 手填字段按用途分两块；键名固定，分组只是视觉上的整理
-  const dbKeys = ["MONGODB_URI", "MONGODB_DB_NAME"];
+  const dbKeys = ["MONGODB_URI", "MONGODB_DB_NAME", "SETTINGS_STORE"];
   const domainKeys = ["RP_ID", "ORIGIN"];
   const dbItems = manualItems.filter((item) => dbKeys.includes(item.key));
   const domainItems = manualItems.filter((item) => domainKeys.includes(item.key));
-  const renderField = (item: (typeof manualItems)[number]) => (
-    <div className="config-item" key={item.key}>
-      <div className="config-item-head">
-        <span className="config-item-label">{item.label}</span>
-        <code className="config-item-key">{item.key}</code>
-        {item.configured ? (
-          <span className="config-item-state">{t("已配置")}</span>
-        ) : (
-          <span className="config-item-state config-item-missing">
-            {t("未配置")}
-          </span>
-        )}
+  const renderField = (item: (typeof manualItems)[number]) => {
+    // 枚举型配置（比如站点设置存哪）用下拉，不给自由输入
+    if (item.options) {
+      // 文件系统写不了时，「配置文件」这个选项直接不出现
+      const options = fileWritable
+        ? item.options
+        : item.options.filter((option) => option.value !== "file");
+      // 优先用服务器上当前生效的值；没有就退到第一个选项
+      const current =
+        values[item.key] ?? item.value ?? options[0]?.value ?? "";
+      return (
+        <div className="config-item" key={item.key}>
+          <div className="config-item-head">
+            <span className="config-item-label">{item.label}</span>
+            <code className="config-item-key">{item.key}</code>
+          </div>
+          <select
+            className="search-input"
+            value={current}
+            onChange={(e) =>
+              setValues({ ...values, [item.key]: e.target.value })
+            }
+          >
+            {options.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <p className="field-hint">
+            {fileWritable ? item.hint : t("当前平台写不了文件，只能存 MongoDB。")}
+          </p>
+        </div>
+      );
+    }
+    return (
+      <div className="config-item" key={item.key}>
+        <div className="config-item-head">
+          <span className="config-item-label">{item.label}</span>
+          <code className="config-item-key">{item.key}</code>
+          {item.configured ? (
+            <span className="config-item-state">{t("已配置")}</span>
+          ) : (
+            <span className="config-item-state config-item-missing">
+              {t("未配置")}
+            </span>
+          )}
+        </div>
+        <input
+          className="search-input"
+          type={item.secret ? "password" : "text"}
+          value={values[item.key] ?? ""}
+          onChange={(e) => setValues({ ...values, [item.key]: e.target.value })}
+          placeholder={item.secret ? t("输入新的值") : item.hint}
+          autoComplete="off"
+        />
+        <p className="field-hint">{item.hint}</p>
       </div>
-      <input
-        className="search-input"
-        type={item.secret ? "password" : "text"}
-        value={values[item.key] ?? ""}
-        onChange={(e) => setValues({ ...values, [item.key]: e.target.value })}
-        placeholder={item.secret ? t("输入新的值") : item.hint}
-        autoComplete="off"
-      />
-      <p className="field-hint">{item.hint}</p>
-    </div>
-  );
+    );
+  };
 
   /** 生成两把密钥（自部署会顺手写进 .env） */
   const generate = (): Promise<Secrets | null> =>
@@ -118,6 +157,21 @@ export default function AuthConfigPanel({
       return next;
     });
 
+  /**
+   * 所有手填字段的当前值。
+   * 下拉项没手动改过时用服务器上生效的值；写不了文件的平台上退到第一个选项。
+   */
+  const currentValues = (): Record<string, string> => {
+    const out: Record<string, string> = {};
+    for (const item of manualItems) {
+      const fallback = item.options
+        ? item.value || item.options[0]?.value || ""
+        : "";
+      out[item.key] = values[item.key] ?? fallback;
+    }
+    return out;
+  };
+
   /** 把所有值拼成 .env 的内容 */
   const buildEnvFile = (sec: Secrets): string => {
     const lines: string[] = [
@@ -126,7 +180,7 @@ export default function AuthConfigPanel({
       "",
     ];
     const all: [string, string][] = [
-      ...manualItems.map((item) => [item.key, values[item.key] ?? ""] as [string, string]),
+      ...Object.entries(currentValues()),
       ["AUTH_SECRET", sec.authSecret],
       ["RECOVERY_TOKEN", sec.recoveryToken],
       ...Object.entries(serviceValues),
@@ -164,7 +218,7 @@ export default function AuthConfigPanel({
 
       if (envWritable) {
         const result = await saveAuthConfig({
-          ...values,
+          ...currentValues(),
           AUTH_SECRET: sec.authSecret,
           RECOVERY_TOKEN: sec.recoveryToken,
           ...serviceValues,

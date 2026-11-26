@@ -82,8 +82,34 @@ Vercel 上的完整顺序：
 | --- | --- | --- | --- |
 | 身份验证与启动 | `MONGODB_URI`、`MONGODB_DB_NAME`、`RP_ID`、`ORIGIN`（手填）+ `AUTH_SECRET`、`RECOVERY_TOKEN`（程序生成） | `.env` 文件 / Vercel 环境变量 | 只在安装 / 重置引导里 |
 | 服务类 | 图片存储（`STORAGE_PROVIDER` + 各方案字段）、发信（`MAIL_PROVIDER` + 各方案字段） | 同一个 `.env` | 只在安装 / 重置引导里改；非 Vercel 改完约 3 秒生效，Vercel 要重新部署 |
+| 存储位置 | `SETTINGS_STORE` | 同一个 `.env` | 只在安装 / 重置引导里；决定站点设置存在哪儿 |
 
 服务类可插拔：先选方案，再只填这个方案要的字段，没选的那套不参与也不必填。默认走最省事的那条（Vercel Blob + Resend）。它不存数据库——改乱了在服务端 `.env` 里一眼能查到、改回来。Vercel 上若选 Vercel Blob，token 由平台自动注入，不用填，去 Blob 后台把 store 连上即可。
+
+### 站点设置存在哪儿
+
+`SETTINGS_STORE` 决定站点设置（站名、简介、社交链接、分页大小这些）放在哪儿，两个选项：
+
+| 值 | 存在哪 | 适合谁 | 代价 |
+| --- | --- | --- | --- |
+| `mongodb`（默认） | 数据库的 `settings` 集合 | 大多数人 | 跟着数据库一起备份；换库要带着走 |
+| `file` | 项目根目录的 `config/settings.json` | 想让站点信息独立于数据库，或想直接手改这个文件的 | 只有文件系统可写时可用（Vercel 不行）；文件不进 Git，服务器重建就丢 |
+
+`file` 后端的实际行为：改完立即生效，不用连数据库；数据库只放文章、标签这些内容。两边的数据互相独立——站点设置不会因为数据库清空而丢。文章永远在 MongoDB 里，`file` 只管站点设置。
+
+在安装向导第 1 步就能选。选之前程序会确认当前平台能不能写文件：Vercel 的文件系统只读，所以那边只提供 MongoDB；自部署（自有服务器 / Docker）两个都能选。选完写在 `.env` 的 `SETTINGS_STORE` 里，部署时定好，程序不猜。
+
+切换后端不会自动搬运数据——从 `mongodb` 切到 `file` 时，站点设置会变成默认值（因为文件里还没有）；反方向同理。要保留原来的内容，先把旧地方的值抄过来。
+
+### 为什么没有 Global Config
+
+Vercel 的 Storage 里还有个 Global Config（原 Edge Config），是个全球分布的 KV 存储，读起来极快。inslog 没有接它，原因是它对博客这种用法不划算：
+
+- **写不进去**：SDK 只能读，写必须走 Vercel REST API，要一个账号级 API token、Global Config ID、Team ID 四样东西。那是能改整个 Vercel 账号的凭据，让博客作者去配它不合适。
+- **改了不马上生效**：写入最多 10 秒才全球传播，改完设置刷新可能看到旧值。
+- **写有配额**：免费额度每月 100 次写。
+
+它更适合企业官网那类场景：配置由运维统一管、读多写少、变更走发布流程、团队本来就有 Vercel 管理权限。对个人博客，省下的只是一次数据库读取，代价却是把「填个连接串」变成「配四个变量并理解令牌权限」——不值得。想要快读的思路在博客这里本来就用不上：站点设置是每页读一次的小数据，不是热点数据。
 
 ## 恢复与重置
 
@@ -98,18 +124,33 @@ Vercel 上的完整顺序：
 
 数据库连接串是通用的：Atlas、自建、Railway、容器里的 MongoDB 都行。库名优先级 `MONGODB_DB_NAME` > 连接串路径里的名字 > `inslog`；同一集群跑多个站点时用不同库名区分，填一个不存在的库名，安装向导会自动建出来。
 
+**inslog 只用 MongoDB**，不兼容 Postgres / Redis 那一类——数据层是 MongoDB 原生驱动加聚合管道（置顶排序、时间线排序都靠 `$ifNull` 补字段），换库等于重写数据层，不是换个连接串的事。
+
+MongoDB 的部署方式有三条，按需要挑：
+
+| 方式 | 怎么弄 | 适合谁 | 代价 |
+| --- | --- | --- | --- |
+| **Vercel 里一键开通** | Dashboard → Storage → Create Database → 选 MongoDB Atlas → Continue → 建资源 → Connect to Project。Vercel 自动注入 `MONGODB_URI` | 不想注册第三家平台 | **只能新建账号和集群**，接不了你已有的 Atlas；账单并入 Vercel |
+| **自己的 Atlas**（mongodb.com） | 注册后建集群、Database Access 建用户、Network Access 加白名单，复制连接串填进向导 | 已经在用 Atlas，或想自己管 | 免费层（M0）存储上限 512MB、每周传输 10GB；**闲置 30 天且零连接会自动暂停**（可恢复，不是删除）；每账号只能建 1 个免费集群 |
+| **Railway / 自建 / Docker** | 自己跑一个 MongoDB，填 `mongodb://` 连接串 | 想完全掌控 | 全部自己运维：备份、升级、安全补丁都归你 |
+
+新手直接用第一条：什么都不用懂，点几下就有连接串。
+
+**Vercel 上一定要做的一件事**：Atlas 的 Network Access 白名单要放开 `0.0.0.0/0`。Vercel 的出口 IP 不固定（每次部署可能不同），没法按 IP 白名单放行，只能全开。
+
 ### 环境变量速查
 
-前六项由安装向导填写或生成，后两项可选、需要时手动加：
+前七项由安装向导填写或生成，后两项可选、需要时手动加：
 
 | 变量 | 说明 |
 | --- | --- |
-| `MONGODB_URI` | MongoDB 连接串，向导里填 |
+| `MONGODB_URI` | MongoDB 连接串，向导里填；Vercel 的 Atlas 集成会自动注入 |
 | `MONGODB_DB_NAME` | 库名，可选，向导里填 |
 | `AUTH_SECRET` | 会话签名 + 加密 TOTP secret 的密钥，程序生成 |
 | `RECOVERY_TOKEN` | 紧急入口密钥，程序生成，进门全靠它 |
 | `RP_ID` | Passkey 域名主体，如 `inslog.example.com`，**必须与正式域名一致** |
 | `ORIGIN` | 站点完整地址，如 `https://inslog.example.com`，确认邮件链接按它拼 |
+| `SETTINGS_STORE` | 站点设置存哪儿：`mongodb`（默认）或 `file`。部署时定，见上一节 |
 | `NEXT_PUBLIC_SITE_URL` | 可选。canonical / 分享图 / RSS 用；不填则回退到 `ORIGIN`。向导不生成，需要时手动加 |
 | `UI_LANGUAGE` | 可选。部署期默认界面语言（`zh-CN` / `en`）；日常在设置页切，不用碰它 |
 
@@ -121,6 +162,12 @@ Vercel 上的完整顺序：
 | 发信 `MAIL_PROVIDER` | `resend`：`RESEND_API_KEY`、`RESEND_FROM`（域名先验证 SPF / DKIM）<br>`smtp`：`SMTP_HOST`、`SMTP_PORT`、`SMTP_USER`、`SMTP_PASSWORD`、`SMTP_FROM`、`SMTP_SECURE`（QQ / Gmail 用授权码，不是登录密码） |
 
 发信没配好（或通知邮箱为空）时，换绑 / 解绑验证器与增删 Passkey 会被禁用，而不是降级放行。非 Vercel 组合未做人工实测，靠代码正确性与明确报错兜底，以后由使用者反馈。
+
+**图片存储用 Vercel Blob 的话**：Dashboard → Storage → Create Database → 选 Blob → 建 store（访问权限必须选 **Public**，建完不可改）→ 连到项目。
+
+连上之后 Vercel 自动注入环境变量，**不用手填任何东西**。默认注入的是 OIDC 凭据（`BLOB_STORE_ID` 和自动轮换的 `VERCEL_OIDC_TOKEN`）。另外还有一个开关 "Add a read-write token env var"，勾上会多注入一个长期令牌 `BLOB_READ_WRITE_TOKEN`。
+
+inslog 的图片是**浏览器直传**的（要生成给前端的 client token），这正是官方说明里需要长期令牌的那两种情况之一，所以连接时要**勾上这个开关**。不勾的话图片插不进去。两种凭据都在环境变量里，程序不需要用户手动抄。
 
 > 忽略清单覆盖 `.env*`、`.env*.local`、`config/*.json`（除 `*.example.json`）、`uploads/`、`public/uploads/`、`backups/`。连接串、密钥、令牌、真实文章数据一律不进仓库。
 

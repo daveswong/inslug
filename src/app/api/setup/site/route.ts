@@ -42,8 +42,13 @@ export async function POST(req: Request) {
       notifyEmail,
       postsPerPage,
     });
-  } catch {
-    return NextResponse.json({ error: t("保存失败：数据库异常") }, { status: 503 });
+  } catch (error) {
+    // 后端可能是 MongoDB 也可能是配置文件，报错要说清是哪种
+    const message = error instanceof Error ? error.message : "";
+    return NextResponse.json(
+      { error: message || t("保存失败：数据库异常") },
+      { status: 503 }
+    );
   }
   return NextResponse.json({ ok: true });
 }

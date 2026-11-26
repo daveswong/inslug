@@ -26,9 +26,13 @@ export async function performConfigReset(): Promise<ResetOutcome> {
   const cleared: string[] = [];
   const manual: string[] = [];
 
-  // 两组配置现在都在 .env：非 Vercel 直接删键，Vercel 只能提示手动
+  // 两组配置现在都在 .env：非 Vercel 直接删键，Vercel 只能提示手动。
+  // SETTINGS_STORE 不在其中：它选的是站点设置存在哪儿，不是凭据，
+  // 清掉会让设置突然从「配置文件」掉回「数据库」。
   const allKeys = [
-    ...AUTH_KEYS.map((item) => item.key),
+    ...AUTH_KEYS.filter((item) => item.key !== "SETTINGS_STORE").map(
+      (item) => item.key
+    ),
     ...SERVICE_KEYS.map((item) => item.key),
   ];
   const fileValues = readEnvFile();

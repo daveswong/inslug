@@ -8,6 +8,7 @@ import { listPasskeys } from "@/lib/passkey";
 import { mailReady } from "@/lib/change-request";
 import { ensureDatabase, isDbConfigured, type DatabaseStatus } from "@/lib/mongodb";
 import { canWriteEnvFile, getEnvValue, isVercel } from "@/lib/env-config";
+import { canWriteSettingsFile } from "@/lib/settings-file";
 import { buildServiceFeatures } from "@/lib/service-features";
 import { AUTH_KEYS } from "@/lib/config-keys";
 import SetupWizard from "./setup-wizard";
@@ -96,6 +97,11 @@ export default async function SetupPage() {
     secret: item.secret,
     configured: Boolean(getEnvValue(item.key)),
     generated: Boolean(item.generated),
+    options: item.options?.map((option) => ({
+      value: option.value,
+      label: t(option.label),
+    })),
+    value: getEnvValue(item.key) ?? "",
   }));
   // 手填的：数据库地址、库名、域名这些
   const manualAuthItems = authItems.filter((item) => !item.generated);
@@ -128,6 +134,7 @@ export default async function SetupPage() {
         generatedAuthItems={generatedAuthItems}
         serviceFeatures={serviceFeatures}
         envWritable={canWriteEnvFile()}
+        fileWritable={canWriteSettingsFile()}
         onVercel={isVercel()}
         loggedIn={loggedIn}
         dbStatus={dbStatus}
