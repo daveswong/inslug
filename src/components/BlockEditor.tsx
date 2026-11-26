@@ -81,24 +81,12 @@ export default function BlockEditor({
     };
   }, []);
 
-  // 对齐是块属性（textAlignment），默认斜杠菜单里没有，单独给一排轻量按钮
-  const applyAlign = (value: "left" | "center" | "right") => {
-    const { block } = editor.getTextCursorPosition();
-    editor.updateBlock(block, { props: { textAlignment: value } } as never);
-  };
-
   return (
     <div
       className="bn-editor-wrap"
       data-mantine-color-scheme={dark ? "dark" : "light"}
       data-bs-theme={dark ? "dark" : "light"}
     >
-      <div className="bn-align">
-        <span>{t("对齐")}</span>
-        <button type="button" onClick={() => applyAlign("left")}>{t("左")}</button>
-        <button type="button" onClick={() => applyAlign("center")}>{t("中")}</button>
-        <button type="button" onClick={() => applyAlign("right")}>{t("右")}</button>
-      </div>
       <BlockNoteView
         editor={editor}
         theme={dark ? "dark" : "light"}

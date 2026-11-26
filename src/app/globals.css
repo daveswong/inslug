@@ -905,25 +905,6 @@ a:hover {
   font-size: 1rem;
 }
 
-/* 对齐按钮：文字驱动，不要抢编辑器焦点 */
-.bn-align {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  margin-bottom: 0.5rem;
-  color: var(--muted);
-  font-size: 0.85rem;
-}
-
-.bn-align button {
-  background: none;
-  border: 1px solid var(--line);
-  padding: 0.1rem 0.55rem;
-  color: var(--ink);
-  font: inherit;
-  cursor: pointer;
-}
-
 /* 只读正文：去掉编辑器自带的左右留白，其它排版沿用 BlockNote 自己的 */
 .bn-readonly .bn-editor {
   padding-inline: 0;
