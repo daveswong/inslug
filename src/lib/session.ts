@@ -29,7 +29,7 @@ export async function signSessionToken(
 /**
  * 只验签名与过期，返回 token 里的会话版本号。
  * 版本号是否仍然等于库里的值，由 Node 侧的 isLoggedIn() 判断——
- * middleware 跑在 Edge 上连不了数据库，那里只能做这层粗筛。
+ * proxy.ts 里只做「有没有 cookie」的粗筛，这里才是真正的验签入口。
  */
 export async function verifySessionToken(
   token: string

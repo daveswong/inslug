@@ -10,6 +10,8 @@
 
 单用户、单站点、纯自用的极简博客。只做「安静地写、存、传自己的内容」。
 不做用户系统、密码、评论、统计、社交、推荐、独立后台、多用户、弹窗和花哨装饰 —— 别主动加。
+**没有主题模板也不会有**：外观只有一套，用户明确不想让人把精力花在折腾外观上，不妥协；
+别提议或添加主题切换 / 模板市场 / 外观预设。
 
 仓库：https://github.com/daveswong/inslog.git （main）
 公开部署采用 MIT，但必须保留指向源码仓库的可见链接（`src/components/SiteFooter.tsx`），
@@ -52,9 +54,9 @@ npx tsc --noEmit                   # 类型检查（需先 npm install）
 | `src/lib/posts.ts` | CRUD、搜索、分页、标签同步、可见性过滤 |
 | `src/lib/types.ts` | PostDoc / SettingsDoc / Visibility / DEFAULT_SETTINGS |
 | `src/lib/env-config.ts`、`env-store.ts` | `.env` 读写（文件优先于 process.env，3 秒缓存；Vercel 只读） |
-| `src/lib/service-config.ts` | 服务类配置（存数据库） |
+| `src/lib/service-config.ts` | 服务类配置（读 `.env`，不存数据库） |
 | `src/lib/i18n-core.ts` | SUPPORTED_LOCALES、字典回退、`{name}` 占位符 |
-| `src/middleware.ts` | 只 matcher `/write`、`/settings`，只粗筛 cookie |
+| `src/proxy.ts` | 只 matcher `/write`、`/settings`，只粗筛 cookie（Next 16 把 middleware 改名为 proxy） |
 | `scripts/` | `_db.mjs`、`test-connection.mjs`、`seed-demo.mjs`、`export-backup.mjs` |
 | `config/*.example.json` | 提交模板；实际 `database.json` / `locale.json` 被忽略 |
 | `locales/*.json` | 界面语言包（key 是中文原文） |
@@ -65,7 +67,10 @@ npx tsc --noEmit                   # 类型检查（需先 npm install）
 1. 可见性三态 `draft` / `private` / `public`；访客只读 public，私有 / 草稿直接访问也拦截。
    RSS / sitemap 只输出 public。改动查询逻辑时先确认 `includeHidden` 默认值。
 2. 首页区块顺序：站点名 → 简介 → 搜索 → 标签目录 → 更新列表（仅日期 + 标题、分页，
-   无摘要 / 封面）→ 社媒（有才显示）→ 页脚。
+   无摘要 / 封面）→ 社媒（有才显示）→ 页脚。社媒是 `{title,url}[]`，站长在设置页自由增删，
+   纯文字链接、不要图标；`getSettings()` 会把老的 `{github,x,email}` 对象转成数组，别删这个兼容。
+2a. 设置页四组平铺（站点信息 / 外观 / 社交链接 / 安全），**一个保存按钮**，
+   前端只提交改过的字段（`site-form.tsx` 的 hidden 字段）；主题和界面语言各自独立保存，不进表单。
 3. 列表排序：置顶优先，其余 `sortDate = $ifNull(publishedAt, createdAt)` 倒序。
    聚合里的 `$ifNull` 兼容老文章缺 `pinned` / `publishedAt`，**别简化掉**。
 4. slug 由 `makeSlug`（pinyin-pro + 随机后缀）生成，重名最多重试 5 次；已有文章 URL 必须兼容。
@@ -75,8 +80,8 @@ npx tsc --noEmit                   # 类型检查（需先 npm install）
    旧文章带对齐的数据阅读页照常渲染，别为旧数据写迁移。正文存 `Block[]` + `plainText`；图片只存 URL。
 8. 无密码登录：Passkey 为主、TOTP 为辅、`RECOVERY_TOKEN` + `/login?recovery=1` 兜底。
    更换 / 解绑验证器必须邮件二次确认（首次绑定除外）。前端不提供任何凭据配置入口。
-9. `middleware.ts` 只做粗筛，真正验签在 Node 侧 `isLoggedIn()`（Edge 连不了 MongoDB）。
-   别把鉴权逻辑搬进 middleware。
+9. `proxy.ts` 只做粗筛，真正验签在页面层 `isLoggedIn()`；proxy 固定跑 Node.js，
+   但别把鉴权逻辑搬进去——验签只留 `isLoggedIn()` 一个入口。
 10. 数据库未配置时首页 / 文章页降级显示安装提示、`rss.xml` 返回 503 —— 别「修」成抛 500。
 11. `scripts/export-backup.mjs` 刻意不导出 `auth` / `passkeys` / `pending_changes`，别加进去。
 12. `AUTH_SECRET` 变更会让所有设备掉线 + 验证器重绑；`RP_ID` / `ORIGIN` 改了会让已绑定
@@ -87,9 +92,9 @@ npx tsc --noEmit                   # 类型检查（需先 npm install）
 - **身份验证与启动组**（`.env` / Vercel 环境变量，只在 `/setup`、`/reset` 里改）：
   `MONGODB_URI`、`MONGODB_DB_NAME`、`AUTH_SECRET`、`RECOVERY_TOKEN`、`RP_ID`、`ORIGIN`、
   `NEXT_PUBLIC_SITE_URL`。`AUTH_SECRET` / `RECOVERY_TOKEN` 由程序生成，不手写。
-- **服务类组**（存数据库，部署后设置页随时改，不重新部署）：
+- **服务类组**（也写 `.env`，只在 `/setup`、`/reset` 里改，设置页不提供入口）：
   `STORAGE_PROVIDER`（vercel-blob / s3 / local）、`MAIL_PROVIDER`（resend / smtp）及各自字段。
-  没选中的那套不必填。
+  没选中的那套不必填。Vercel+Blob 由平台注入 token，用户去 Blob 后台连 store 即可。
 - 库名优先级：`MONGODB_DB_NAME` > 连接串路径 > `inslog`；连接串变化自动重连。
 - Vercel 文件系统只读：引导页导出 `.env` 供导入到控制台后重新部署。
 

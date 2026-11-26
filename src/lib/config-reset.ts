@@ -14,7 +14,6 @@
 import { AUTH_KEYS, SERVICE_KEYS } from "./config-keys";
 import { canWriteEnvFile, resetEnvKeys } from "./env-config";
 import { readEnvFile } from "./env-store";
-import { getServiceValues, setServiceValues } from "./service-config";
 
 export type ResetOutcome = {
   /** 应用已经清掉的字段 */
@@ -27,37 +26,24 @@ export async function performConfigReset(): Promise<ResetOutcome> {
   const cleared: string[] = [];
   const manual: string[] = [];
 
-  // 一、服务组（邮件与图片存储）：存在数据库里，删掉就是真删
-  const dbValues = await getServiceValues();
-  const serviceKeys = SERVICE_KEYS.map((item) => item.key);
-  const inDb = serviceKeys.filter((key) => Boolean(dbValues[key]));
-  if (inDb.length) {
-    const updates: Record<string, null> = {};
-    for (const key of inDb) updates[key] = null;
-    const result = await setServiceValues(updates);
-    if (result.ok) cleared.push(...inDb);
-    else manual.push(...inDb);
-  }
-  // 只在环境变量里、没存进数据库的：应用删不掉
-  for (const key of serviceKeys) {
-    if (!dbValues[key] && process.env[key]) manual.push(key);
-  }
-
-  // 二、身份验证与启动组：非 Vercel 写 .env 文件，Vercel 只能提示手动
-  const authKeys = AUTH_KEYS.map((item) => item.key);
+  // 两组配置现在都在 .env：非 Vercel 直接删键，Vercel 只能提示手动
+  const allKeys = [
+    ...AUTH_KEYS.map((item) => item.key),
+    ...SERVICE_KEYS.map((item) => item.key),
+  ];
   const fileValues = readEnvFile();
-  const inFile = authKeys.filter((key) => Boolean(fileValues[key]));
+  const inFile = allKeys.filter((key) => Boolean(fileValues[key]));
 
   if (canWriteEnvFile()) {
-    const result = resetEnvKeys(authKeys);
+    const result = resetEnvKeys(allKeys);
     if (result.ok) cleared.push(...inFile);
     else manual.push(...inFile);
-    // 只在进程环境变量里的（比如控制台注入的），应用改不了
-    for (const key of authKeys) {
+    // 只在进程环境变量里的（比如 Vercel 控制台注入的），应用改不了
+    for (const key of allKeys) {
       if (!fileValues[key] && process.env[key]) manual.push(key);
     }
   } else {
-    for (const key of authKeys) {
+    for (const key of allKeys) {
       if (fileValues[key] || process.env[key]) manual.push(key);
     }
   }

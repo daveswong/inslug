@@ -10,7 +10,7 @@ import { getT } from "@/lib/i18n";
 export type SaveResult = { ok: true; slug: string } | { ok: false; error: string };
 
 // 写作页的保存：有 slug 走更新，没有就新建。
-// middleware 只挡页面请求，server action 是另一个入口，这里必须自己再校验一次。
+// proxy.ts 只挡页面请求，server action 是另一个入口，这里必须自己再校验一次。
 export async function savePost(input: {
   slug: string | null;
   title: string;

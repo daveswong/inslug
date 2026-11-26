@@ -23,11 +23,13 @@ export interface TagDoc {
   createdAt: Date;
 }
 
-export interface SocialLinks {
-  github?: string;
-  x?: string;
-  email?: string;
+/** 一条社交链接：标题和网址都由站长自己填，不再固定 GitHub / X / Email */
+export interface SocialLink {
+  title: string;
+  url: string;
 }
+
+export type SocialLinks = SocialLink[];
 
 export interface SettingsDoc {
   _id: "site";
@@ -59,7 +61,7 @@ export const DEFAULT_SETTINGS: Omit<SettingsDoc, "updatedAt"> = {
   seoTitle: "",
   seoDescription: "",
   seoKeywords: "",
-  social: {},
+  social: [],
   favicon: "",
   ogImage: "",
   footerText: "",

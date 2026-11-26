@@ -1,6 +1,7 @@
 // 恢复指引：未登录只给通用步骤（不泄露状态）；登录后按实际状态给出针对性步骤
 import SiteFooter from "@/components/SiteFooter";
 import ResetConfigButton from "./reset-config-button";
+import RecoveryTokenPanel from "./recovery-token-panel";
 import { isLoggedIn } from "@/lib/auth";
 import { getAuth } from "@/lib/credentials";
 import { getSettings } from "@/lib/settings";
@@ -27,28 +28,30 @@ export default async function ResetPage() {
         <section className="section">
           <ol className="reset-steps">
             <li>
-              
-              {t("Passkey 还在手上：直接")}<a href="/login">{t("登录")}</a>。
+              {t("Passkey 还在手上：直接")}<a href="/login">{t("登录")}</a>{t("。")}
             </li>
             <li>
-              
               {t("只有手机验证器在手：在")}<a href="/login">{t("登录页")}</a>{t("输 6 位码。")}
             </li>
             <li>
-              
-              {t("两把钥匙都不在手：去 Vercel 项目 → Settings → Environment Variables 加一条")}
-              <code> RECOVERY_TOKEN </code>{t("（用")} <code>openssl rand -base64 32</code>  {t("生成， 至少 16 字符），等重新部署后打开")}
-              <a href="/login?recovery=1">{t("紧急登录")}</a>{t("，把那串密钥粘进去。")}
+              {t("两把钥匙都不在手：用下面的按钮生成一把临时密钥。")}
+            </li>
+          </ol>
+
+          <RecoveryTokenPanel />
+
+          <ol className="reset-steps" start={4}>
+            <li>
+              {t("把它填进服务端：Vercel 在 Settings → Environment Variables 加一条")}
+              <code> RECOVERY_TOKEN </code>{t("；自部署写入项目根目录的")}
+              <code> .env </code>{t("。然后重新部署或重启。")}
             </li>
             <li>
-              
-              {t("进去之后立刻重新绑定 Passkey 和验证器，然后回 Vercel 把")}
-              <code> RECOVERY_TOKEN </code>  {t("删掉。")}
+              {t("生效后打开")}<a href="/login?recovery=1">{t("紧急登录")}</a>{t("，粘贴密钥进去。")}
             </li>
           </ol>
           <p className="notice">
-            
-            {t("注意：数据库地址、会话密钥这些只能在服务端配，网页里不提供填写入口。")}
+            {t("进去后立刻重新绑定 Passkey 和验证器，再把这把临时密钥删掉。")}
           </p>
         </section>
 

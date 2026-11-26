@@ -19,6 +19,8 @@ type Props = {
   ratio?: "square" | "wide";
   hint?: string;
   placeholder?: string;
+  /** 值变化时通知外层表单，便于只提交改动过的字段 */
+  onChange?: (url: string) => void;
 };
 
 export default function ImageField({
@@ -28,12 +30,18 @@ export default function ImageField({
   ratio = "square",
   hint,
   placeholder,
+  onChange,
 }: Props) {
   const t = useT();
-  const [url, setUrl] = useState(value);
+  const [url, setUrlState] = useState(value);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const setUrl = (next: string) => {
+    setUrlState(next);
+    onChange?.(next);
+  };
 
   const onFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
