@@ -157,7 +157,9 @@ export async function inspectDatabase(): Promise<DatabaseStatus> {
 /**
  * 确保这个库存在：不存在就建一个。
  *
- * MongoDB 的数据库是「写入即产生」，所以建库就是写一条站点设置记录。
+ * MongoDB 的数据库是「写入即产生」，所以建库就是写一条记录。
+ * 用 meta 集合做这件事，跟站点设置分开——设置存在别处时，
+ * 数据库里就不该留一份没人读、看着又像有数据的 settings 记录。
  * 已经存在的话原样接着用，不碰里面的任何数据。
  */
 export async function ensureDatabase(): Promise<DatabaseStatus> {
@@ -166,7 +168,7 @@ export async function ensureDatabase(): Promise<DatabaseStatus> {
 
   const db = await getDb();
   await db
-    .collection<{ _id: string; updatedAt: Date }>("settings")
+    .collection<{ _id: string; updatedAt: Date }>("meta")
     .updateOne(
       { _id: "site" },
       { $setOnInsert: { _id: "site", updatedAt: new Date() } },

@@ -33,6 +33,8 @@ type Props = {
   serviceFeatures: ServiceFeature[];
   /** 能不能写 .env 文件（Vercel 上不行） */
   envWritable: boolean;
+  /** 能不能写配置文件（写不了就不提供「配置文件」这个选项） */
+  fileWritable: boolean;
   onVercel: boolean;
   loggedIn: boolean;
   /** 当前库的状态：存在还是刚建的 */
@@ -63,6 +65,7 @@ export default function SetupWizard({
   generatedAuthItems,
   serviceFeatures,
   envWritable,
+  fileWritable,
   onVercel,
   loggedIn,
   dbStatus,
@@ -174,6 +177,7 @@ export default function SetupWizard({
             manualItems={authItems}
             generatedItems={generatedAuthItems}
             envWritable={envWritable}
+            fileWritable={fileWritable}
             serviceFeatures={serviceFeatures}
           />
 

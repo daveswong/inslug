@@ -1,7 +1,25 @@
 import { getDb } from "./mongodb";
 import { DEFAULT_SETTINGS, type SettingsDoc, type SocialLinks } from "./types";
+import { getEnvValue } from "./env-config";
+import { readSettingsFile, writeSettingsFile } from "./settings-file";
 
 type SettingsCollection = Omit<SettingsDoc, "_id"> & { _id: string };
+
+/**
+ * 站点设置存在哪儿。
+ *
+ * - mongodb（默认）：存进数据库的 settings 集合。跟着数据库一起备份。
+ * - file：存进项目根目录的 config/settings.json。改完立刻生效，不用连库；
+ *   数据库只放文章。适合想让站点信息独立于数据库、或者想直接手改这个文件的用法。
+ *
+ * 由 .env 里的 SETTINGS_STORE 决定，部署时定好，程序不猜。
+ */
+export type SettingsStore = "mongodb" | "file";
+
+export function settingsStore(): SettingsStore {
+  const raw = (getEnvValue("SETTINGS_STORE") ?? "").trim().toLowerCase();
+  return raw === "file" ? "file" : "mongodb";
+}
 
 /**
  * 老版本的社交链接是固定三个字段 { github, x, email }。
@@ -31,7 +49,30 @@ function normalizeSocial(raw: unknown): SocialLinks {
   return [];
 }
 
+/** 文件里读出来的是 JSON，日期得转回 Date */
+function toDate(value: unknown): Date {
+  if (value instanceof Date) return value;
+  const parsed = new Date(String(value ?? ""));
+  return Number.isNaN(parsed.getTime()) ? new Date(0) : parsed;
+}
+
 export async function getSettings(): Promise<SettingsDoc> {
+  if (settingsStore() === "file") {
+    const raw = readSettingsFile();
+    if (!raw) return { ...DEFAULT_SETTINGS, updatedAt: new Date(0) };
+    const { _id: _ignored, updatedAt: rawUpdatedAt, ...rest } = raw as Record<
+      string,
+      unknown
+    >;
+    return {
+      ...DEFAULT_SETTINGS,
+      ...(rest as Partial<SettingsDoc>),
+      _id: "site",
+      social: normalizeSocial(raw.social),
+      updatedAt: toDate(rawUpdatedAt),
+    } as SettingsDoc;
+  }
+
   try {
     const db = await getDb();
     const doc = await db
@@ -57,9 +98,22 @@ export async function getSettings(): Promise<SettingsDoc> {
 export async function saveSettings(
   values: Partial<Omit<SettingsDoc, "_id" | "updatedAt">>
 ): Promise<SettingsDoc> {
-  const db = await getDb();
   const current = await getSettings();
-  const merged: SettingsDoc = { ...current, ...values, _id: "site", updatedAt: new Date() };
+  const merged: SettingsDoc = {
+    ...current,
+    ...values,
+    _id: "site",
+    updatedAt: new Date(),
+  };
+
+  if (settingsStore() === "file") {
+    const { _id: _ignored, ...rest } = merged;
+    const result = writeSettingsFile(rest as unknown as Record<string, unknown>);
+    if (!result.ok) throw new Error(result.error);
+    return merged;
+  }
+
+  const db = await getDb();
   await db.collection<SettingsCollection>("settings").updateOne(
     { _id: "site" },
     { $set: merged },

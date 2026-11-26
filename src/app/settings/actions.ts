@@ -69,7 +69,12 @@ export async function saveSiteSettings(
     if (Object.keys(changes).length === 0) return { status: "idle", message: "" };
     await saveSettings(changes);
     return { status: "ok", message: t("已保存") };
-  } catch {
-    return { status: "error", message: t("保存失败：数据库连接异常") };
+  } catch (error) {
+    // 后端可能是 MongoDB 也可能是配置文件，报错要说清是哪种
+    const message = error instanceof Error ? error.message : "";
+    return {
+      status: "error",
+      message: message || t("保存失败：数据库连接异常"),
+    };
   }
 }

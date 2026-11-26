@@ -18,6 +18,10 @@ export type ConfigField = {
   hint: string;
   secret: boolean;
   configured: boolean;
+  /** 枚举型配置：给候选项，渲染成下拉 */
+  options?: { value: string; label: string }[];
+  /** 当前生效的值；下拉的初始选中项用它 */
+  value?: string;
 };
 
 type Props = {
