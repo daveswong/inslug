@@ -178,7 +178,7 @@ export default function TotpManager({
           {!mailReady && (
             <p className="notice">
               
-              {t("换绑和解绑都要过邮件确认，所以得先在服务端配好 RESEND_API_KEY、RESEND_FROM， 并在下面「通知」里填好通知邮箱。没配之前这两个按钮不可用。")}
+              {t("换绑 / 解绑需邮件确认。请先配置服务端发信，并在站点设置里填好通知邮箱。")}
             </p>
           )}
         </>

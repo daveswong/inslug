@@ -144,7 +144,7 @@ export default async function ResetPage() {
           <p className="notice">
             
             {t("邮件确认没配好：需要服务端配置")} <code>RESEND_API_KEY</code>  {t("与")}
-            <code> RESEND_FROM</code>{t("，并在设置页「通知」里填好邮箱。 否则更换 / 解绑验证器会被禁用。")}
+            <code> RESEND_FROM</code>{t("，并在站点设置里填好通知邮箱。否则更换 / 解绑验证器会被禁用。")}
           </p>
         )}
         {!hasRecovery && (
