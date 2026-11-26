@@ -10,11 +10,12 @@ import {
   type Translate,
 } from "./i18n-core";
 import { getSettings } from "./settings";
+import { getEnvValue } from "./env-config";
 
 /**
  * 界面语言，从三处取，优先级从高到低：
  *
- * 1. 设置页里选的（存数据库 settings.uiLanguage）——最常用，改完立刻生效
+ * 1. 设置页里选的（存 settings.uiLanguage）——最常用，改完立刻生效
  * 2. 环境变量 UI_LANGUAGE —— 部署时定的默认值
  * 3. 本地 config/locale.json —— 本机开发时改
  * 4. 都没有就是中文
@@ -27,6 +28,12 @@ export async function currentLocale(): Promise<Locale> {
     }
   } catch {
     // 数据库读不到就往下走，不因为这个把整站卡住
+  }
+
+  // 部署时定的默认值：Vercel 上在环境变量里，本地 .env 也算
+  const fromEnv = getEnvValue("UI_LANGUAGE")?.trim();
+  if (fromEnv && SUPPORTED_LOCALES.includes(fromEnv as Locale)) {
+    return fromEnv as Locale;
   }
 
   try {

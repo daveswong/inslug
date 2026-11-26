@@ -78,7 +78,6 @@
   "留空用简介": "Leave blank to use the description",
   "关键词": "Keywords",
   "用逗号分隔": "Separate with commas",
-  "通知": "Notifications",
   "通知邮箱": "Notification email",
   "更换验证器的确认信发到这里": "Where confirmation emails for authenticator changes are sent",
   "社交链接": "Social links",
@@ -122,7 +121,6 @@
   "已经绑了一把验证器。": "An authenticator is already bound.",
   "换一把": "Replace it",
   "解绑": "Unbind",
-  "换绑和解绑都要过邮件确认，所以得先在服务端配好 RESEND_API_KEY、RESEND_FROM， 并在下面「通知」里填好通知邮箱。没配之前这两个按钮不可用。": "Replacing or unbinding requires email confirmation. Configure RESEND_API_KEY and RESEND_FROM on the server and fill in the notification email below. Until then these buttons are disabled.",
   "还没有绑定验证器。": "No authenticator bound yet.",
   "绑定验证器": "Bind authenticator",
   "站点设置": "Site settings",
@@ -173,7 +171,6 @@
   "扫码绑定，这是 Passkey 之外的另一把钥匙。": " to scan and bind it — a second key besides Passkey.",
   "邮件确认没配好：需要服务端配置": "Email confirmation is not set up: configure",
   "与": "and",
-  "，并在设置页「通知」里填好邮箱。 否则更换 / 解绑验证器会被禁用。": " on the server, and fill in the notification email in Settings → Notifications. Otherwise replacing / unbinding the authenticator is disabled.",
   "建议临时配置一把紧急密钥": "Consider adding a recovery key",
   "：两把钥匙都丢时用它进门， 用完之后删掉。": " : use it if both keys are lost, then delete it after use.",
   "该配的都配好了。重置只需要删掉对应凭据再重新绑定。": "Everything is configured. To reset, delete the credential and bind it again.",
@@ -467,5 +464,6 @@
   "当前平台写不了文件，只能存 MongoDB。": "This platform cannot write files; MongoDB only.",
   "站点设置存在服务器上的 config/settings.json。": "Site settings are stored in config/settings.json on the server.",
   "站点设置存在数据库里。": "Site settings are stored in the database.",
-  "Vercel Blob read-write token. When connecting a Blob store in Storage, enable \"Add a read-write token env var\" — Vercel injects it, no manual copying. Browser-direct uploads need it.": "Vercel Blob read-write token. When connecting a Blob store in Storage, enable \"Add a read-write token env var\" — Vercel injects it, no manual copying. Browser-direct uploads need it."
+  "Vercel Blob read-write token. When connecting a Blob store in Storage, enable \"Add a read-write token env var\" — Vercel injects it, no manual copying. Browser-direct uploads need it.": "Vercel Blob read-write token. When connecting a Blob store in Storage, enable \"Add a read-write token env var\" — Vercel injects it, no manual copying. Browser-direct uploads need it.",
+  "，并在站点设置里填好通知邮箱。否则更换 / 解绑验证器会被禁用。": ", and set a notification email in site settings. Otherwise replacing / unbinding the authenticator is disabled."
 }
