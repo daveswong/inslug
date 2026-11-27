@@ -12,7 +12,7 @@ import { mailReady } from "@/lib/change-request";
 import { getEnvValue } from "@/lib/env-config";
 import { buildServiceFeatures } from "@/lib/service-features";
 import { AUTH_KEYS } from "@/lib/config-keys";
-import { ensureDatabase, type DatabaseStatus } from "@/lib/mongodb";
+import { ensureDatabase, hasDbConfig, type DatabaseStatus } from "@/lib/mongodb";
 import { getT } from "@/lib/i18n";
 
 export async function getSetupData(): Promise<{
@@ -34,6 +34,8 @@ export async function getSetupData(): Promise<{
   rpIdMatchesHost: boolean;
   originHost: string;
   dbStatus: DatabaseStatus | null;
+  /** 有没有配数据库地址（配了但连不上时，用来给出更具体的提示） */
+  dbConfigured: boolean;
   serviceFeatures: Awaited<ReturnType<typeof buildServiceFeatures>>;
   manualAuthItems: {
     key: string;
@@ -139,6 +141,7 @@ export async function getSetupData(): Promise<{
     rpIdMatchesHost,
     originHost,
     dbStatus,
+    dbConfigured: hasDbConfig(),
     serviceFeatures,
     // 手填的：数据库地址、库名、域名这些
     manualAuthItems: authItems.filter((item) => !item.generated),

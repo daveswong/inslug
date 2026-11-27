@@ -112,6 +112,31 @@ export async function isDbConfigured(): Promise<boolean> {
 }
 
 /**
+ * 有没有配数据库连接串——不管连不连得上。
+ *
+ * 跟 isDbConfigured() 的区别很要紧：
+ * - isDbConfigured() 是「现在连得上吗」，连不上也返回 false
+ * - 这个是「配了地址吗」，只看有没有配
+ *
+ * 首次安装的免登录判断靠这个：连接串压根没配，说明还在装站的起步阶段，
+ * 允许免登录设置；配了却连不上，那可能是数据库权限出问题，
+ * 此时按「已经有凭据」处理，要求登录。
+ */
+export function hasDbConfig(): boolean {
+  if (getEnvValue("MONGODB_URI")?.trim()) return true;
+  try {
+    const raw = readFileSync(
+      join(process.cwd(), "config", "database.json"),
+      "utf8"
+    );
+    const cfg = JSON.parse(raw);
+    return Boolean(cfg?.uri?.trim());
+  } catch {
+    return false;
+  }
+}
+
+/**
  * 连不上时返回 null 而不是抛错。
  *
  * 全新部署的第一件事就是「还没有数据库地址」——那会儿首页、文章页都得能打开，
