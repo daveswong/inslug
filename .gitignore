@@ -41,6 +41,9 @@ config/*.json
 TODO.md
 *.xmind
 
+# 内部协作说明：只用来跟 AI 助手同步工作方式，不入库
+AGENTS.md
+
 # vercel
 .vercel
 
