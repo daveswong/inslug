@@ -145,7 +145,29 @@ GitHub 账号**下，顺手建好 MongoDB Atlas 数据库和图片存储，然�
 要点：部署完之后还有一步——Vercel 的环境变量改动要重新部署才生效。向导第 1 步会把要填的
 变量列成清单给你，照着填进 Vercel 的 Environment Variables，再重新部署一次，站点就能用了。
 
-自己部署的话：导入 GitHub 仓库（框架自动识别 Next.js）→ 按上面的向导配置 → 绑定域名，DNS 托管在 Vercel 时 HTTPS 证书自动签发。自部署用 `npm run build && npm run start`，`.env` 放在项目根目录。
+自己部署的话：导入 GitHub 仓库（框架自动识别 Next.js）→ 按下面的向导配置 → 绑定域名，DNS 托管在 Vercel 时 HTTPS 证书自动签发。自部署用 `npm run build && npm run start`，`.env` 放在项目根目录。
+
+### 在 Vercel 上选分支
+
+Vercel 的项目默认拿 `main` 当生产分支——**推 main 就重新部署线上站点**。
+如果你导入的是本仓库（而不是点上面的按钮），建议改成 `release`：
+
+**Project Settings → Environments → Production → Branch Tracking**，填 `release`，保存。
+
+之后的行为就清楚了：
+
+| 你做的事 | Vercel 的反应 |
+| --- | --- |
+| 推 `release` 分支 | 生产部署，访问你的正式域名 |
+| 推别的分支（`main` 等） | 预览部署，地址是 `xxx-git-分支名.vercel.app`，不影响正式站点 |
+| 合并 PR 到 `release` | 生产部署 |
+
+生产分支只有一个，随时能改。想临时部署某个分支或某次提交：
+**Deployments → Create Deployment**，可以填分支名、仓库 URL（`https://github.com/组织/仓库/tree/分支`）或具体的 commit SHA。
+
+**关于 tag**：Vercel 的自动部署不认 tag。想让某个 tag 触发部署，得自己搭 GitHub Actions
+（官方指南叫 "Can you deploy based on tags/releases on Vercel?"），要先关掉自动部署再手动调 CLI。
+本项目用 `release` 分支就够——它和 tag 指向的是同一份代码。
 
 数据库连接串是通用的：Atlas、自建、Railway、容器里的 MongoDB 都行。库名优先级 `MONGODB_DB_NAME` > 连接串路径里的名字 > `inslug`；同一集群跑多个站点时用不同库名区分，填一个不存在的库名，安装向导会自动建出来。
 
@@ -270,7 +292,8 @@ npm run dev
 npm run release 1.0.0
 ```
 
-它会把 `main` 的内容推成 `release` 分支、打上 `v1.0.0` 标签，并给出创建 Release 说明的链接。
-`release` 分支是 `main` 的镜像，不接受直接提交——要让改动出现在发布版里，合并进 `main` 再说。
+它会把 `main` 的内容推成 `release` 分支、打上 `v1.0.0` 标签，并**自动创建 GitHub Release**
+（更新说明取自上一个版本到这次的提交清单）。`release` 分支是 `main` 的镜像，不接受直接提交——
+要让改动出现在发布版里，合并进 `main` 再说。
 
 **提交信息用中文短句**，说清做了什么就行，不用套 Conventional Commits。
