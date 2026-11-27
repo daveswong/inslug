@@ -1,0 +1,6 @@
+# 打包时排除内部文件。
+# 任何人在 GitHub 上点「Download ZIP」、或用 git archive 打包时，
+# 都会自动跳过这些文件——AGENTS.md 是给 AI 助手看的内部协作说明，
+# 不该跟着程序分发给别人。
+AGENTS.md export-ignore
+.github/ export-ignore
