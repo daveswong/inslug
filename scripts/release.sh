@@ -32,11 +32,11 @@ git_push() {
     if git "$@"; then
       return 0
     fi
-    if [ "$attempt" -ge "$max" ]; then
-      echo "推送失败，重试 $max 次仍不通。检查网络或代理设置。" >&2
+    if [ "${attempt}" -ge "${max}" ]; then
+      echo "推送失败，重试 ${max} 次仍不通。检查网络或代理设置。" >&2
       return 1
     fi
-    echo "  推送没成功，第 $attempt 次重试…" >&2
+    echo "  推送没成功，第 ${attempt} 次重试…" >&2
     attempt=$((attempt + 1))
     sleep 3
   done
@@ -47,24 +47,24 @@ if ! git diff --quiet || ! git diff --cached --quiet; then
   exit 1
 fi
 
-if [ "$(git branch --show-current)" != "$DEV_BRANCH" ]; then
-  echo "请先切到 $DEV_BRANCH 分支再发布（改动都在那儿做）。" >&2
+if [ "$(git branch --show-current)" != "${DEV_BRANCH}" ]; then
+  echo "请先切到 ${DEV_BRANCH} 分支再发布（改动都在那儿做）。" >&2
   exit 1
 fi
 
-echo "==> 检查 $DEV_BRANCH 是否已推到远端"
-remote_dev="$(git_push ls-remote origin "refs/heads/$DEV_BRANCH" | cut -f1)"
+echo "==> 检查 ${DEV_BRANCH} 是否已推到远端"
+remote_dev="$(git_push ls-remote origin "refs/heads/${DEV_BRANCH}" | cut -f1)"
 local_head="$(git rev-parse HEAD)"
-if [ "$remote_dev" != "$local_head" ]; then
-  echo "$DEV_BRANCH 还没推到远端。先执行：git push origin $DEV_BRANCH" >&2
+if [ "${remote_dev}" != "${local_head}" ]; then
+  echo "${DEV_BRANCH} 还没推到远端。先执行：git push origin ${DEV_BRANCH}" >&2
   exit 1
 fi
 
-echo "==> 发布 $DEV_BRANCH → $PUBLISH_BRANCH"
-git_push push origin "HEAD:$PUBLISH_BRANCH" --force
+echo "==> 发布 ${DEV_BRANCH} → ${PUBLISH_BRANCH}"
+git_push push origin "HEAD:${PUBLISH_BRANCH}" --force
 
 echo
 echo "✅ 发布完成："
-echo "   $PUBLISH_BRANCH ← $DEV_BRANCH"
+echo "   ${PUBLISH_BRANCH} ← ${DEV_BRANCH}"
 echo
-echo "   用户部署的是 $PUBLISH_BRANCH；下次改动继续在 $DEV_BRANCH 上做。"
+echo "   用户部署的是 ${PUBLISH_BRANCH}；下次改动继续在 ${DEV_BRANCH} 上做。"
