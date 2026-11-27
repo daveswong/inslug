@@ -46,16 +46,19 @@ npx tsc --noEmit                   # 类型检查（需先 npm install）
 
 | 路径 | 职责 |
 |---|---|
-| `src/app/` | 首页、详情、search、write（server action）、login、settings、setup（四步向导）、reset、confirm/[token]、not-found |
+| `src/app/` | 首页、详情、search、write（server action）、login、settings、setup（五步向导）、reset、confirm/[token]、not-found |
 | `src/app/api/` | auth/{passkey,totp,recovery,logout}、setup/*、upload*（三套存储）、diag |
 | `src/app/rss.xml` `sitemap.xml` `robots.txt` | 已实现的 feed / SEO 路由 |
-| `src/components/` | BlockEditor、PostBody、SiteFooter、WriteFab、i18n-provider、各类设置表单组件 |
+| `src/components/` | BlockEditor、PostBody、SiteFooter、WriteFab、i18n-provider、install-hint、service-config-fields |
 | `src/lib/mongodb.ts` | 连接、建库、降级（`getDbOrNull` / `isDbConfigured` / `inspectDatabase` / `ensureDatabase`） |
 | `src/lib/posts.ts` | CRUD、搜索、分页、标签同步、可见性过滤 |
 | `src/lib/types.ts` | PostDoc / SettingsDoc / Visibility / DEFAULT_SETTINGS |
 | `src/lib/env-config.ts`、`env-store.ts` | `.env` 读写（文件优先于 process.env，3 秒缓存；Vercel 只读） |
 | `src/lib/service-config.ts` | 服务类配置（读 `.env`，不存数据库） |
 | `src/lib/i18n-core.ts` | SUPPORTED_LOCALES、字典回退、`{name}` 占位符 |
+| `src/lib/settings-file.ts` | 站点设置的「配置文件」后端（`config/settings.json`） |
+| `src/lib/safe-path.ts` | 站内跳转白名单（`?next=` 校验，防开放重定向） |
+| `src/lib/rate-limit.ts` | 落库限速（`$inc` 原子计数） |
 | `src/proxy.ts` | 只 matcher `/write`、`/settings`，只粗筛 cookie（Next 16 把 middleware 改名为 proxy） |
 | `scripts/` | `_db.mjs`、`test-connection.mjs`、`seed-demo.mjs`、`export-backup.mjs` |
 | `config/*.example.json` | 提交模板；实际 `database.json` / `locale.json` 被忽略 |
@@ -71,9 +74,12 @@ npx tsc --noEmit                   # 类型检查（需先 npm install）
    纯文字链接、不要图标；`getSettings()` 会把老的 `{github,x,email}` 对象转成数组，别删这个兼容。
 2a. 设置页四组平铺（站点信息 / 外观 / 社交链接 / 安全），**一个保存按钮**，
    前端只提交改过的字段（`site-form.tsx` 的 hidden 字段）；主题和界面语言各自独立保存，不进表单。
-3. 列表排序：置顶优先，其余 `sortDate = $ifNull(publishedAt, createdAt)` 倒序。
-   聚合里的 `$ifNull` 兼容老文章缺 `pinned` / `publishedAt`，**别简化掉**。
-4. slug 由 `makeSlug`（pinyin-pro + 随机后缀）生成，重名最多重试 5 次；已有文章 URL 必须兼容。
+3. 列表排序：置顶优先，其余按 `sortDate` 倒序。`sortDate` 按可见性分两种：
+   草稿用 `createdAt`，其余用 `$ifNull(publishedAt, createdAt)`。
+   草稿的 `publishedAt` 是保留着的（临时改草稿再改回来，时间不丢），
+   所以不能一律用 `$ifNull`。`$ifNull` 兼容老文章缺 `pinned` / `publishedAt`，**别简化掉**。
+4. slug 由 `makeSlug`（pinyin-pro + 随机后缀）生成，重名最多重试 6 次；
+   每个生成的 slug 都要检查一次（先查后生成的写法会漏掉最后一个）。已有文章 URL 必须兼容。
 5. 标签未被引用的自动删除；公开标签目录只列 public 文章用过的，防草稿内容泄露。
 6. 搜索匹配标题 + `plainText` + tag，正则已转义。发布距今 ≤ 6 个月显示 new。
 7. 编辑器只用排版类块（不含待办 / 折叠）；**不提供对齐按钮**——`textAlignment` 只是块属性，
@@ -86,12 +92,33 @@ npx tsc --noEmit                   # 类型检查（需先 npm install）
 11. `scripts/export-backup.mjs` 刻意不导出 `auth` / `passkeys` / `pending_changes`，别加进去。
 12. `AUTH_SECRET` 变更会让所有设备掉线 + 验证器重绑；`RP_ID` / `ORIGIN` 改了会让已绑定
     Passkey 失效。改这几项前先提示。
+13. **配置值一律用 `getEnvValue()` 读**，不要直接读 `process.env`：
+    向导把值写进 `.env` 后进程环境变量不会跟着变，两处口径不一致会导致
+    「会话用新密钥、加密用旧密钥」，验证器直接失效。`session.ts` 与 `secret-box.ts`
+    必须用同一个来源。
+14. **查不到 ≠ 没有**。`hasCredentials()` 遇到数据库异常要按「有凭据」处理（要求登录），
+    不能当成「没绑过」——那等于把密钥改写入口敞开。同理 `getAuth()` 要分
+    `totpBound`（库里有没有密文）和 `totpSecret`（能不能解开）：解不开是「绑过但坏了」，
+    当成「没绑过」会让换绑绕过邮件确认。
+15. **站内跳转目标要过白名单**（`safeInternalPath()`）：`?next=` 来自 URL，
+    直接拿去跳转就是开放重定向。
+16. **限速计数用 `$inc` 原子自增**，不要「读出来 +1 再写回去」——并发下会丢计数。
+17. `SETTINGS_STORE` 决定站点设置存 MongoDB 还是 `config/settings.json`。
+    文件后端要校验字段（手改的文件可能有 `postsPerPage: "abc"`），
+    写文件要「临时文件 + rename」保证原子，文件坏了要报错而不是静默回退默认值。
+18. **调试接口只在非生产环境开放**。Vercel 预览环境（`VERCEL_ENV=preview`）也算 dev；
+    用 `VERCEL_ENV` 判断，别只看 `NODE_ENV`——预览部署的 `NODE_ENV` 也是 production。
+19. 站点设置存 MongoDB 还是配置文件由 `.env` 的 `SETTINGS_STORE` 决定，部署时定；
+    **「重置配置」不会清它**（它选的是设置存哪儿，不是凭据）。
+20. **站点设置存在 `config/settings.json` 时，重置绝不碰那个文件**——
+    只有用户自己改或删才算数。重置只清 `.env` 里的配置项。
 
 ## 配置分两组，别混
 
 - **身份验证与启动组**（`.env` / Vercel 环境变量，只在 `/setup`、`/reset` 里改）：
   `MONGODB_URI`、`MONGODB_DB_NAME`、`AUTH_SECRET`、`RECOVERY_TOKEN`、`RP_ID`、`ORIGIN`、
-  `NEXT_PUBLIC_SITE_URL`。`AUTH_SECRET` / `RECOVERY_TOKEN` 由程序生成，不手写。
+  `SETTINGS_STORE`。`AUTH_SECRET` / `RECOVERY_TOKEN` 由程序生成，不手写。
+  `NEXT_PUBLIC_SITE_URL` 不在向导里，需要时手动加。
 - **服务类组**（也写 `.env`，只在 `/setup`、`/reset` 里改，设置页不提供入口）：
   `STORAGE_PROVIDER`（vercel-blob / s3 / local）、`MAIL_PROVIDER`（resend / smtp）及各自字段。
   没选中的那套不必填。Vercel+Blob 由平台注入 token，用户去 Blob 后台连 store 即可。
@@ -108,7 +135,7 @@ npx tsc --noEmit                   # 类型检查（需先 npm install）
 
 ## 文档同步
 
-README 已于 2026-11-26 全面重写、与代码对齐（安装向导五步、配置分组、可插拔存储、
+README 已于 2026-11-27 全面重写、与代码对齐（安装向导五步、配置分组、可插拔存储、
 RSS / sitemap / 404、目录结构、部署顺序）。**改功能时同步更新 README 与本文件**；
 README 与代码冲突时以代码为准，并顺手把文档修掉。
 

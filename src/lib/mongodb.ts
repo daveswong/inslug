@@ -77,8 +77,13 @@ const globalForMongo = globalThis as unknown as {
 export async function getDb(): Promise<Db> {
   const { uri, dbName } = resolveConfig();
 
-  // 连接串变了就重连（旧连接已经指向别的库了）
-  if (globalForMongo._mongoClient && globalForMongo._mongoUri !== uri) {
+  // 连接串或库名变了就重连：
+  // 连接串变了，旧连接指向别的库；库名变了，旧连接的 client 虽然对，
+  // 但下面 client.db() 用的是缓存里的旧库名，会写错库。
+  if (
+    globalForMongo._mongoClient &&
+    (globalForMongo._mongoUri !== uri || globalForMongo._mongoDbName !== dbName)
+  ) {
     const stale = globalForMongo._mongoClient;
     globalForMongo._mongoClient = undefined;
     globalForMongo._mongoDbName = undefined;
@@ -138,8 +143,9 @@ export type DatabaseStatus = {
 export async function inspectDatabase(): Promise<DatabaseStatus> {
   const { uri, dbName } = resolveConfig();
   const client = new MongoClient(uri);
-  await client.connect();
+  // connect() 也要放进 try：它在 try 外面抛错时，这个 client 就没人关了
   try {
+    await client.connect();
     const list = await client.db("admin").admin().listDatabases();
     const exists = list.databases.some((db) => db.name === dbName);
     const collections = (

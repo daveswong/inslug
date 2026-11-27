@@ -10,12 +10,6 @@ import type { Visibility } from "@/lib/types";
 import { deletePostAction, savePost } from "./actions";
 import { useT } from "@/components/i18n-provider";
 
-// BlockNote 依赖浏览器 API，关闭 SSR
-const BlockEditor = dynamic(() => import("@/components/BlockEditor"), {
-  ssr: false,
-  loading: () => <div className="notice">编辑器加载中…</div>,
-});
-
 type Props = {
   slug: string | null;
   initialTitle: string;
@@ -38,6 +32,13 @@ export default function WriteClient({
   storageProvider,
 }: Props) {
   const t = useT();
+  // BlockNote 依赖浏览器 API，关闭 SSR。
+  // dynamic 放在组件内部：模块作用域拿不到 t()，
+  // 加载提示就会变成固定的中文，英文界面下露出来。
+  const BlockEditor = dynamic(() => import("@/components/BlockEditor"), {
+    ssr: false,
+    loading: () => <div className="notice">{t("编辑器加载中…")}</div>,
+  });
   const VISIBILITY_OPTIONS: { value: Visibility; label: string }[] = [
     { value: "public", label: t("公开") },
     { value: "private", label: t("私有") },

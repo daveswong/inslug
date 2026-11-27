@@ -5,6 +5,7 @@ import { passkeyAddAllowed } from "@/lib/credentials";
 import { clientKey } from "@/lib/rate-limit";
 import { mailReady, requestPasskeyChange } from "@/lib/change-request";
 import { getT } from "@/lib/i18n";
+import { getEnvValue } from "@/lib/env-config";
 
 export async function POST(req: Request) {
   const t = await getT();
@@ -23,7 +24,7 @@ export async function POST(req: Request) {
 
   const result = await requestPasskeyChange({
     action: "add",
-    linkOrigin: process.env.ORIGIN || new URL(req.url).origin,
+    linkOrigin: getEnvValue("ORIGIN") || new URL(req.url).origin,
     ip: clientKey(req),
     ua: req.headers.get("user-agent") ?? "",
   });

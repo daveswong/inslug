@@ -15,6 +15,7 @@ import { openValue } from "@/lib/secret-box";
 import { formatDateTime } from "@/lib/time";
 import { getT } from "@/lib/i18n";
 import { performConfigReset } from "@/lib/config-reset";
+import { settingsStore } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -52,7 +53,7 @@ async function applyChange(formData: FormData) {
       getAuth().catch(() => null),
     ]);
     // 绝不能把最后一把钥匙删掉，否则连自己都进不去
-    if (keys.length <= 1 && !auth?.totpSecret) {
+    if (keys.length <= 1 && !auth?.totpBound) {
       redirect(`/confirm/${token}?state=failed`);
     }
     if (!(await deletePasskey(credentialId))) {
@@ -207,6 +208,15 @@ export default async function ConfirmPage({
                     ? t("授权 10 分钟内绑定一把新的 Passkey（还要本人在设备上确认）。")
                     : t("删除一把 Passkey。")}
             </p>
+
+            {/* 站点设置存在配置文件里时，明确说清那个文件不会被碰 */}
+            {doc.purpose === "config-reset" && settingsStore() === "file" && (
+              <p className="notice">
+                {t(
+                  "站点设置存在 config/settings.json 里，这个文件不会被重置。想清空的话自己删掉它。"
+                )}
+              </p>
+            )}
 
             <dl className="confirm-meta">
               <dt>{t("申请时间")}</dt>

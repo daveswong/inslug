@@ -85,7 +85,7 @@ export default function PasskeyManager({
       const data = await verifyRes.json();
       if (!verifyRes.ok) throw new Error(data.error ?? t("绑定失败"));
 
-      setStatus(`已绑定，现在共 ${data.count} 把。`);
+      setStatus(t("已绑定，现在共 {n} 把。", { n: data.count }));
       onBound?.();
     } catch (e) {
       setStatus("");
@@ -133,7 +133,7 @@ export default function PasskeyManager({
             <li key={key.credentialId}>
               <span>
                 {key.credentialId.slice(0, 12)}{t("… · 绑于")} {key.createdAt.slice(0, 10)}
-                {key.lastUsedAt && ` · 最近使用 ${key.lastUsedAt.slice(0, 10)}`}
+                {key.lastUsedAt && t(" · 最近使用 {date}", { date: key.lastUsedAt.slice(0, 10) })}
               </span>
               <button
                 className="btn btn-outline-light btn-plain"

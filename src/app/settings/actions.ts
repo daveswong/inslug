@@ -29,6 +29,11 @@ export async function saveSiteSettings(
     if (has("siteName")) {
       const siteName = value("siteName");
       if (!siteName) return { status: "error", message: t("站点名不能为空") };
+      // 上限跟安装向导那边一致：两条保存路径规则不一样的话，
+      // 用户能存进一个安装向导不接受的站点名。
+      if (siteName.length > 80) {
+        return { status: "error", message: t("站点名太长（最多 80 字）") };
+      }
       changes.siteName = siteName;
     }
     const textKeys = [
@@ -36,7 +41,14 @@ export async function saveSiteSettings(
       "seoDescription", "seoKeywords", "notifyEmail", "favicon", "ogImage",
     ] as const;
     for (const key of textKeys) {
-      if (has(key)) changes[key] = value(key);
+      if (!has(key)) continue;
+      const v = value(key);
+      // 通知邮箱格式跟安装向导那边一样校验，
+      // 不然能存进一个发不出信的地址，还没有任何提示。
+      if (key === "notifyEmail" && v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) {
+        return { status: "error", message: t("通知邮箱格式不对") };
+      }
+      changes[key] = v;
     }
     if (has("postsPerPage")) {
       const num = Number(value("postsPerPage"));

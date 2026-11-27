@@ -4,7 +4,7 @@ import ResetConfigButton from "./reset-config-button";
 import RecoveryTokenPanel from "./recovery-token-panel";
 import { isLoggedIn } from "@/lib/auth";
 import { getAuth } from "@/lib/credentials";
-import { getSettings } from "@/lib/settings";
+import { getSettings, settingsStore } from "@/lib/settings";
 import { listPasskeys } from "@/lib/passkey";
 import { mailReady } from "@/lib/change-request";
 import { canWriteEnvFile, getEnvValue } from "@/lib/env-config";
@@ -64,7 +64,7 @@ export default async function ResetPage() {
   const passkeyCount = (await listPasskeys()).length;
   let hasTotp = false;
   try {
-    hasTotp = !!(await getAuth()).totpSecret;
+    hasTotp = (await getAuth()).totpBound;
   } catch {
     hasTotp = false;
   }
@@ -84,7 +84,7 @@ export default async function ResetPage() {
         <h2 className="section-title">{t("当前状态")}</h2>
         <dl className="confirm-meta">
           <dt>Passkey</dt>
-          <dd>{passkeyCount > 0 ? `已绑定 ${passkeyCount} 把` : t("没有绑定")}</dd>
+          <dd>{passkeyCount > 0 ? t("已绑定 {n} 把", { n: passkeyCount }) : t("没有绑定")}</dd>
           <dt>{t("手机验证器")}</dt>
           <dd>{hasTotp ? t("已绑定") : t("未绑定")}</dd>
           <dt>{t("邮件确认")}</dt>
@@ -101,20 +101,28 @@ export default async function ResetPage() {
             "需要把配置推倒重来时用这个：会清掉下面这些配置项的值。站点设置、文章、已绑定的 Passkey 和验证器都不动。"
           )}
         </p>
+        {settingsStore() === "file" && (
+          <p className="notice">
+            {t(
+              "站点设置存在 config/settings.json 里，这个文件不在重置范围内——重置不会碰它。想清空的话自己删这个文件。"
+            )}
+          </p>
+        )}
         <ul className="config-checklist">
-          {CONFIG_KEYS.map((item) => (
-            <li key={item.key}>
-              <code>{item.key}</code>
-              <span>{t(item.label)}</span>
-              <span className="config-item-state">
-                {item.group === "auth"
-                  ? canWriteEnv
-                    ? t(".env 文件")
-                    : t("环境变量")
-                  : t("数据库")}
-              </span>
-            </li>
-          ))}
+          {/* SETTINGS_STORE 不列出来：重置不会清它（它选的是设置存哪儿，
+              不是凭据），列出来会让人以为会被清掉 */}
+          {CONFIG_KEYS.filter((item) => item.key !== "SETTINGS_STORE").map(
+            (item) => (
+              <li key={item.key}>
+                <code>{item.key}</code>
+                <span>{t(item.label)}</span>
+                <span className="config-item-state">
+                  {/* auth 和 service 两组都写在 .env 里 */}
+                  {canWriteEnv ? t(".env 文件") : t("环境变量")}
+                </span>
+              </li>
+            )
+          )}
         </ul>
         <ResetConfigButton envWritable={canWriteEnv} />
 

@@ -1,13 +1,16 @@
 "use client";
 
 /**
- * 设置页的图片字段：可以手填地址，也可以直接上传（直传 Vercel Blob），并显示预览。
+ * 设置页的图片字段：可以手填地址，也可以直接上传，并显示预览。
+ *
+ * 上传走 uploadImage() 按当前存储方案分派（Vercel Blob / S3 / 本地磁盘），
+ * 别在这里写死 Blob——自部署选了 local 或 s3 时会直接失败。
  *
  * 名字仍然是 name，所以外层表单的 server action 不用改。
  */
-import { useRef, useState } from "react";
-import { upload } from "@vercel/blob/client";
+import { useId, useRef, useState } from "react";
 import { useT } from "@/components/i18n-provider";
+import { uploadImage, type ClientStorageProvider } from "@/lib/upload-client";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 
@@ -15,6 +18,8 @@ type Props = {
   name: string;
   label: string;
   value: string;
+  /** 当前图片存储方案，决定上传走哪条路 */
+  provider: ClientStorageProvider;
   /** 预览框的比例，favicon 用正方形，分享图用 1200×630 */
   ratio?: "square" | "wide";
   hint?: string;
@@ -27,12 +32,14 @@ export default function ImageField({
   name,
   label,
   value,
+  provider,
   ratio = "square",
   hint,
   placeholder,
   onChange,
 }: Props) {
   const t = useT();
+  const inputId = useId();
   const [url, setUrlState] = useState(value);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -61,11 +68,8 @@ export default function ImageField({
     setError("");
     try {
       // 这里不压缩：favicon 要保持原格式，转成 webp 会让 Safari 认不出
-      const blob = await upload(file.name, file, {
-        access: "public",
-        handleUploadUrl: "/api/upload",
-      });
-      setUrl(blob.url);
+      const url = await uploadImage(file, provider);
+      setUrl(url);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "";
       // 上传接口在错误末尾带了稳定的英文标记，不受界面语言影响
@@ -85,11 +89,14 @@ export default function ImageField({
 
   return (
     <div className="field image-field">
-      <span className="field-label">{label}</span>
+      <label className="field-label" htmlFor={inputId}>
+        {label}
+      </label>
       {/* 右列容器：控件、说明、预览从上到下排，避免被栅格拆到左边去 */}
       <div className="image-field-body">
         <div className="image-field-row">
           <input
+            id={inputId}
             name={name}
             value={url}
             onChange={(e) => setUrl(e.target.value)}

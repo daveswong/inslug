@@ -16,6 +16,7 @@ import { verifyCode } from "@/lib/totp";
 import { clientKey } from "@/lib/rate-limit";
 import { mailReady, requestTotpChange } from "@/lib/change-request";
 import { getT } from "@/lib/i18n";
+import { getEnvValue } from "@/lib/env-config";
 
 export async function POST(req: Request) {
   const t = await getT();
@@ -48,8 +49,11 @@ export async function POST(req: Request) {
 
   const sealed = sealValue(secret);
 
-  // 首次绑定：直接生效
-  if (!auth.totpSecret) {
+  // 首次绑定：直接生效。
+  // 判断依据是「数据库里有没有密文」，不是「能不能解开」——
+  // 解不开说明密钥换过或密文损坏，那是「绑过但坏了」，
+  // 当成没绑过会让这次操作绕过邮件确认，直接覆盖掉原来的验证器。
+  if (!auth.totpBound) {
     await setTotpSecret(sealed);
     await startSession(); // sv 变了，顺手给当前浏览器换一张新票
     return NextResponse.json({ ok: true, bound: true });
@@ -66,7 +70,7 @@ export async function POST(req: Request) {
   const result = await requestTotpChange({
     action: "set",
     sealedSecret: sealed,
-    linkOrigin: process.env.ORIGIN || new URL(req.url).origin,
+    linkOrigin: getEnvValue("ORIGIN") || new URL(req.url).origin,
     ip: clientKey(req),
     ua: req.headers.get("user-agent") ?? "",
   });

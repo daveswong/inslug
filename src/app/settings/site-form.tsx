@@ -1,13 +1,22 @@
 "use client";
 
 // 站点设置：四组平铺，一个保存按钮，只提交改过的字段
-import { useActionState, useState, type ReactNode } from "react";
+import { useActionState, useEffect, useState, type ReactNode } from "react";
 import type { SettingsDoc, SocialLink } from "@/lib/types";
 import { saveSiteSettings, type SettingsState } from "./actions";
 import ImageField from "./image-field";
+import type { ClientStorageProvider } from "@/lib/upload-client";
 import { useT } from "@/components/i18n-provider";
 
 const initialState: SettingsState = { status: "idle", message: "" };
+
+/**
+ * 社交链接在表单里的样子。
+ *
+ * 多一个 id 只为渲染用，不进数据库——存的是 title / url 两个字段。
+ * 用它做 React 的 key，删掉中间一条时节点不会错位、焦点不会跳到别的链接上。
+ */
+type SocialRow = SocialLink & { id: string };
 
 type Values = {
   siteName: string;
@@ -21,10 +30,24 @@ type Values = {
   notifyEmail: string;
   favicon: string;
   ogImage: string;
-  social: SocialLink[];
+  social: SocialRow[];
 };
 
-function toValues(settings: SettingsDoc): Values {
+let socialSeq = 0;
+const nextSocialId = () => `social-${++socialSeq}`;
+
+/**
+ * 把设置转成表单的值。
+ *
+ * prev 用来沿用已有的 id：位置和内容都对得上就复用，
+ * 否则每次渲染都换新 key，输入框会失焦。
+ */
+function toValues(settings: SettingsDoc, prev?: Values): Values {
+  const social: SocialRow[] = settings.social.map((link, index) => {
+    const old = prev?.social[index];
+    if (old && old.title === link.title && old.url === link.url) return old;
+    return { ...link, id: nextSocialId() };
+  });
   return {
     siteName: settings.siteName,
     description: settings.description,
@@ -37,7 +60,7 @@ function toValues(settings: SettingsDoc): Values {
     notifyEmail: settings.notifyEmail ?? "",
     favicon: settings.favicon,
     ogImage: settings.ogImage,
-    social: settings.social as SocialLink[],
+    social,
   };
 }
 
@@ -47,21 +70,32 @@ type Props = {
   appearanceExtras?: ReactNode;
   /** 安全组里的 Passkey / 验证器管理（各自的操作，不进表单） */
   securityExtras?: ReactNode;
+  /** 当前图片存储方案，决定上传走哪条路 */
+  storageProvider: ClientStorageProvider;
 };
 
 export default function SettingsForm({
   settings,
   appearanceExtras,
   securityExtras,
+  storageProvider,
 }: Props) {
-  const t = useT();
-  const [state, action, pending] = useActionState(saveSiteSettings, initialState);
+const t = useT();
+const [state, action, pending] = useActionState(saveSiteSettings, initialState);
   const initial = toValues(settings);
-  const [values, setValues] = useState<Values>(initial);
+const [values, setValues] = useState<Values>(initial);
+
+  // 保存成功后服务端会把新的 settings 传回来（router.refresh）。
+  // 不同步的话 values 还是旧值，表单会一直显示「有未保存的改动」，
+  // 保存按钮也一直亮着，用户能反复点。
+  useEffect(() => {
+    setValues((prev) => toValues(settings, prev));
+  }, [settings]);
 
   const changed = (key: keyof Values) =>
     key === "social"
-      ? JSON.stringify(values.social) !== JSON.stringify(initial.social)
+      ? JSON.stringify(values.social.map(({ title, url }) => ({ title, url }))) !==
+        JSON.stringify(initial.social.map(({ title, url }) => ({ title, url })))
       : values[key] !== initial[key];
   const dirtyKeys = (Object.keys(initial) as (keyof Values)[]).filter(changed);
   const dirty = dirtyKeys.length > 0;
@@ -74,7 +108,11 @@ export default function SettingsForm({
       "social",
       values.social.map((link, i) => (i === index ? { ...link, [key]: value } : link))
     );
-  const addLink = () => set("social", [...values.social, { title: "", url: "" }]);
+  const addLink = () =>
+    set("social", [
+      ...values.social,
+      { id: nextSocialId(), title: "", url: "" },
+    ]);
   const removeLink = (index: number) =>
     set("social", values.social.filter((_, i) => i !== index));
 
@@ -86,7 +124,13 @@ export default function SettingsForm({
           key={key}
           type="hidden"
           name={key}
-          value={key === "social" ? JSON.stringify(values.social) : String(values[key])}
+          value={
+            key === "social"
+              ? JSON.stringify(
+                  values.social.map(({ title, url }) => ({ title, url }))
+                )
+              : String(values[key])
+          }
         />
       ))}
 
@@ -155,8 +199,9 @@ export default function SettingsForm({
         <div className="site-form">
           <ImageField
             name="_favicon"
-            label="favicon"
+            label={t("网站图标")}
             value={values.favicon}
+            provider={storageProvider}
             ratio="square"
             onChange={(v) => set("favicon", v)}
             placeholder={t("图片地址，留空用默认")}
@@ -165,6 +210,7 @@ export default function SettingsForm({
             name="_ogImage"
             label={t("分享图")}
             value={values.ogImage}
+            provider={storageProvider}
             ratio="wide"
             onChange={(v) => set("ogImage", v)}
             placeholder={t("图片地址，留空用默认渐变图标")}
@@ -197,20 +243,23 @@ export default function SettingsForm({
         <h2 className="section-title">{t("社交链接")}</h2>
         <div className="site-form">
           {values.social.map((link, index) => (
-            <div className="social-row" key={index}>
+            // key 用稳定的 id，不用下标：
+            // 下标作 key 时，删掉中间一条，React 会复用错误的 DOM 节点，
+            // 焦点会跳到不相干的那一条链接上。
+            <div className="social-row" key={link.id}>
               <input
                 className="search-input"
                 value={link.title}
                 onChange={(e) => updateLink(index, "title", e.target.value)}
                 placeholder={t("标题")}
-                aria-label={t("标题")}
+                aria-label={t("第 {n} 条社交链接的标题", { n: index + 1 })}
               />
               <input
                 className="search-input"
                 value={link.url}
                 onChange={(e) => updateLink(index, "url", e.target.value)}
                 placeholder="https://..."
-                aria-label="URL"
+                aria-label={t("第 {n} 条社交链接的地址", { n: index + 1 })}
               />
               <button
                 className="btn btn-outline-light btn-plain"
@@ -254,6 +303,7 @@ export default function SettingsForm({
         {state.message && (
           <span
             className={state.status === "error" ? "form-error form-msg" : "form-msg"}
+            role={state.status === "error" ? "alert" : "status"}
           >
             {state.message}
           </span>

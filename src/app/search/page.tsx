@@ -53,7 +53,7 @@ export default async function SearchPage({ searchParams }: Props) {
 
       <section className="section">
         <h2 className="section-title">
-          {query ? `“${query}” 的结果` : t("输入关键词")}
+          {query ? t("“{q}” 的结果", { q: query }) : t("输入关键词")}
         </h2>
         {!query ? (
           <p className="notice">{t("搜标题、正文或标签都可以。")}</p>

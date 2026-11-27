@@ -5,6 +5,7 @@ import { getAuth } from "@/lib/credentials";
 import { clientKey } from "@/lib/rate-limit";
 import { mailReady, requestTotpChange } from "@/lib/change-request";
 import { getT } from "@/lib/i18n";
+import { getEnvValue } from "@/lib/env-config";
 
 export async function POST(req: Request) {
   const t = await getT();
@@ -18,7 +19,7 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json({ error: t("数据库暂时不可用，稍后再试") }, { status: 503 });
   }
-  if (!auth.totpSecret) {
+  if (!auth.totpBound) {
     return NextResponse.json({ error: t("现在没有绑定验证器") }, { status: 400 });
   }
   if (!(await mailReady())) {
@@ -30,7 +31,7 @@ export async function POST(req: Request) {
 
   const result = await requestTotpChange({
     action: "disable",
-    linkOrigin: process.env.ORIGIN || new URL(req.url).origin,
+    linkOrigin: getEnvValue("ORIGIN") || new URL(req.url).origin,
     ip: clientKey(req),
     ua: req.headers.get("user-agent") ?? "",
   });

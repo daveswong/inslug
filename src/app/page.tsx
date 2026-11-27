@@ -1,4 +1,5 @@
 // 首页：站点信息 + 搜索 + 标签 + 文章时间线（全部来自数据库）
+import type { Metadata } from "next";
 import { listPosts, listTags } from "@/lib/posts";
 import { getSettings } from "@/lib/settings";
 import { isLoggedIn } from "@/lib/auth";
@@ -14,6 +15,44 @@ export const dynamic = "force-dynamic";
 type Props = {
   searchParams: Promise<{ page?: string; tag?: string }>;
 };
+
+/**
+ * 首页的规范地址。
+ *
+ * 要跟实际 URL 完全一致（分页和标签都用查询参数），否则搜索引擎会以为
+ * 分页页、标签页都是首页的重复，权重就分散了。
+ * 分页链接和这个函数共用一份逻辑，不会写岔。
+ */
+function canonicalHref(page: number, tag?: string): string {
+  const params = new URLSearchParams();
+  if (tag) params.set("tag", tag);
+  if (page > 1) params.set("page", String(page));
+  const qs = params.toString();
+  return qs ? `/?${qs}` : "/";
+}
+
+/**
+ * 首页的元信息。
+ *
+ * 规范地址要区分三种情况，不然搜索引擎会以为分页页和标签页都是首页的重复：
+ * - 第 1 页且没标签：/ 就是它自己
+ * - 第 N 页：/?page=N
+ * - 带标签：/?tag=xxx（翻页时 /?tag=xxx&page=N）
+ */
+export async function generateMetadata({
+  searchParams,
+}: Props): Promise<Metadata> {
+  const t = await getT();
+  const { page: pageParam, tag } = await searchParams;
+  const page = Math.max(1, Number(pageParam) || 1);
+  const url = canonicalHref(page, tag);
+
+  return {
+    title: tag ? t("标签：{tag}", { tag }) : undefined,
+    alternates: { canonical: url },
+    openGraph: { url },
+  };
+}
 
 export default async function Home({ searchParams }: Props) {
   const t = await getT();
@@ -37,13 +76,8 @@ export default async function Home({ searchParams }: Props) {
   ]);
   const totalPages = Math.max(1, Math.ceil(total / settings.postsPerPage));
 
-  const pageHref = (target: number) => {
-    const params = new URLSearchParams();
-    if (tag) params.set("tag", tag);
-    if (target > 1) params.set("page", String(target));
-    const qs = params.toString();
-    return qs ? `/?${qs}` : "/";
-  };
+  // 和 canonical 用同一份逻辑，链接和搜索引擎看到的地址永远一致
+  const pageHref = (target: number) => canonicalHref(target, tag);
 
   const socialLinks = settings.social.filter((link) => link.title && link.url);
 
@@ -73,7 +107,7 @@ export default async function Home({ searchParams }: Props) {
         {tags.length > 0 && (
           <div className="tag-list">
             {tags.map((name) => (
-              <a href={`/?tag=${encodeURIComponent(name)}`} key={name}>
+              <a href={canonicalHref(1, name)} key={name}>
                 {name}
               </a>
             ))}
@@ -82,7 +116,7 @@ export default async function Home({ searchParams }: Props) {
       </section>
 
       <section className="section">
-        <h2 className="section-title">{tag ? `标签：${tag}` : t("更新")}</h2>
+        <h2 className="section-title">{tag ? t("标签：{tag}", { tag }) : t("更新")}</h2>
         {items.length === 0 ? (
           <p className="notice">
             {tag ? t("这个标签下还没有文章。") : t("还没有文章。")}

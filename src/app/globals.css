@@ -422,7 +422,7 @@ a:hover {
 .totp-secret {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.9rem;
-  color: var(--fg);
+  color: var(--ink);
   word-break: break-all;
 }
 
@@ -446,7 +446,7 @@ a:hover {
 }
 
 .setup-steps li.current button {
-  color: var(--fg);
+  color: var(--ink);
   font-weight: 600;
 }
 
@@ -482,10 +482,6 @@ a:hover {
 }
 
 /* 密钥生成器：生成后把值摆出来让人复制或下载 */
-.secret-generator {
-  margin-top: 0.5rem;
-}
-
 .secret-list {
   list-style: none;
   margin: 0.75rem 0 0;
@@ -941,60 +937,6 @@ pre.secret-key {
 /* 详情页的 private / draft：和同行的"返回首页""编辑"同字号同色，只作为一段文字 */
 .post-state {
   color: var(--muted);
-}
-
-/* 附件列表 */
-.attachments {
-  margin-top: 2.5rem;
-}
-
-.attachment-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.attachment-list li {
-  display: flex;
-  align-items: baseline;
-  gap: 0.7rem;
-  padding: 0.4rem 0;
-  font-size: 0.92rem;
-}
-
-.attachment-size {
-  color: var(--muted);
-  font-size: 0.8rem;
-}
-
-.attachment-remove {
-  margin-left: auto;
-  font-size: 0.8rem;
-  color: var(--muted);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-}
-
-.attachment-remove:hover {
-  color: var(--link);
-}
-
-/* 写作页附件区 */
-.write-attachments {
-  margin-bottom: 1.5rem;
-}
-
-.write-att-add {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  margin-top: 0.7rem;
-}
-
-.write-att-add .search-input {
-  flex: 1 1 160px;
 }
 
 /* 写文章悬浮按钮（登录后可见） */
