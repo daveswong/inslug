@@ -149,24 +149,86 @@ Vercel 的 Storage 里还有个 Global Config（原 Edge Config），是个全�
 
 ## 部署与环境变量
 
-**推荐 Vercel**：把 GitHub 仓库导入 Vercel（框架自动识别 Next.js），按下面的向导一步步配，
-再绑定域名。DNS 托管在 Vercel 时 HTTPS 证书自动签发。
+### 从零到能访问：完整步骤
 
-自部署：`npm run build && npm run start`，`.env` 放在项目根目录。
+**第一步：在 Vercel 建项目**
 
-**数据库和图片存储得自己准备**：
+Vercel 控制台 → **Add New → Project** → 导入 `daveswong/inslog`。
+
+- **Framework Preset** 选 `Next.js`（一般自动识别）
+- **Root Directory** 留空（就是仓库根，别填 `src`）
+- **Build Command / Output Directory** 留空，让它自动
+
+点 **Deploy**。第一次部署不需要任何环境变量，程序会先把「站点还没配置好」那个页面显示出来——
+这是**设计如此，不是部署失败**。
+
+**第二步：配环境变量**
+
+打开你项目的 `https://你的域名/setup`（**新项目这一步免登录就能进**，因为站点上还没有任何凭据）。
+
+第 1 步会列出要填的东西：
+
+- **MONGODB_URI** —— MongoDB 连接串。新建集群见下面「数据库和图片存储」
+- **MONGODB_DB_NAME** —— 库名，可留空（默认 `inslog`，不存在会自动建）
+- **RP_ID / ORIGIN** —— 你的域名，`RP_ID` 是域名主体（`inslog.example.com`），
+  `ORIGIN` 是完整地址（`https://inslog.example.com`）
+- **AUTH_SECRET / RECOVERY_TOKEN** —— 点「生成」程序会给出
+
+填完点主按钮：
+
+- **Vercel** 上文件系统是只读的，点「生成 .env 文件」下载，
+  导入到 **Settings → Environment Variables**，然后**重新部署**
+- **自部署** 直接写进项目根目录的 `.env`，刷新即生效
+
+**第三步：重新部署后接着装**
+
+环境变量生效需要一次重新部署（Vercel 上会自动触发，或者去 Deployments 点 Redeploy）。
+部署完回到 `/setup`：
+
+第 2 步填通知邮箱 → 发确认信 → **点邮件里的链接** → 落在绑 Passkey 那一步 →
+绑两把钥匙（都能跳过）→ 完成 → 自动登录并进设置页。
+
+### 第一次打开看到什么
+
+| 你看到的 | 意思 | 怎么办 |
+| --- | --- | --- |
+| **「站点还没配置好 / 数据库连不上」** | 数据库还没配，**这是正常的** | 点「去安装向导」，从第 1 步填 `MONGODB_URI` |
+| **首页 404** | 部署没成功，或者 Root Directory 设错了 | 先访问 `/setup`：能打开说明部署是好的（路由问题），也 404 就是构建有问题，看下面的排查表 |
+| **Vercel 上显示部署失败（红色）** | 构建报错了 | Deployments → 点那个失败部署 → **Build Logs** 看第一行红色报错 |
+| **页面正常但没有文章** | 数据库连上了，只是还没写东西 | 正常，登录后去 `/write` 写第一篇 |
+| **一直跳回安装向导** | 安装最后一步没走完 | 走完向导的第 4 步「完成安装」 |
+
+### 出问题了怎么自查
+
+**先试这一招**：访问 `https://你的域名/setup`。
+
+- 它能打开 → 部署是好的，问题在数据或路由
+- 它也 404 → 部署本身有问题，去看 **Vercel → Deployments → 那个部署 → Build Logs**
+
+常见的几个：
+
+| 现象 | 多半是 | 怎么办 |
+| --- | --- | --- |
+| 改了环境变量没反应 | 环境变量**要重新部署才生效** | Vercel → Deployments → Redeploy |
+| 数据库连不上 | Atlas 的 IP 白名单 / 连接串错 | Atlas → Network Access 加 `0.0.0.0/0` 试；确认连接串里密码对 |
+| 构建失败，日志提到模块找不到 | 依赖没装上 | 看 Build Logs 里的 `npm install` 那一段 |
+| 构建失败，日志提到 Node 版本 | Vercel 用的 Node 版本不对 | Settings → Build & Development → Node.js Version 选 20 或 22 |
+| 邮件发不出去 | 发信密钥没配，或发信域名没验证 | 检查 `RESEND_API_KEY` / `SMTP_*`；Resend 要先验证域名 |
+| 图片传不上去 | 存储没配 | 检查 `STORAGE_PROVIDER` 和对应字段；Vercel Blob 要在项目里连上 store |
+| Passkey 报 "RP ID 无效" | `RP_ID` 跟当前域名对不上 | `/api/diag` 会直接告诉你服务器读到的 `RP_ID` 和当前域名差在哪 |
+
+`/api/diag` 只返回域名类信息（`rpId` / `origin` / 当前请求域名和匹配结论），
+**不返回密钥或连接串**。
+
+### 数据库和图片存储得自己准备
 
 - **MongoDB**——[MongoDB Atlas](https://www.mongodb.com/atlas) 免费额度就够用。
   建完集群，在 Network Access 里允许访问（或者 `0.0.0.0/0`），
   再建一个数据库用户，把连接串复制下来。
-- **图片存储**——三种都行：Vercel Blob（最省事，在 Vercel 商店里一键装）、
+- **图片存储**——三种都行，Vercel Blob（最省事，在 Vercel 商店里一键装）、
   任何 S3 兼容服务（R2 / MinIO / AWS S3），或者自建服务器上的本地磁盘。
 
-**要点：环境变量的改动要重新部署才生效。** 安装向导第 1 步会把要填的变量列成清单给你，
-照着填进 Vercel 的 Environment Variables，再重新部署一次，站点就能用了。
-变量列成清单给你，照着填进 Vercel 的 Environment Variables，再重新部署一次，站点就能用了。
-
-自己部署的话：导入 GitHub 仓库（框架自动识别 Next.js）→ 按下面的向导配置 → 绑定域名，DNS 托管在 Vercel 时 HTTPS 证书自动签发。自部署用 `npm run build && npm run start`，`.env` 放在项目根目录。
+自部署：`npm run build && npm run start`，`.env` 放在项目根目录。
 
 ### 在 Vercel 上选分支（Branch Tracking）
 
