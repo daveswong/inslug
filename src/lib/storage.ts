@@ -32,6 +32,15 @@ export const ALLOWED_IMAGE_TYPES = [
 
 export const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
 
+/**
+ * 附件的大小上限：50MB。
+ *
+ * 附件不比图片——CAD 模型（STEP / dxf）动辄几十 MB，
+ * 小型 zip 压缩包也要放得下。上限放在服务端和客户端各判一次，
+ * 光靠前端拦不住。
+ */
+export const MAX_ATTACHMENT_SIZE = 50 * 1024 * 1024; // 50MB
+
 export function isAllowedImageType(type: string): boolean {
   return ALLOWED_IMAGE_TYPES.includes(type);
 }
@@ -66,11 +75,12 @@ export async function localUploadDir(): Promise<string> {
 }
 
 /**
- * 本地磁盘：把图片写进 uploads 目录，返回站内地址。
+ * 本地磁盘：把文件写进 uploads 目录，返回站内地址。
  *
  * 文件名用随机串，避免撞名，也避免用户上传的文件名带路径。
+ * 图片和附件共用这一套。
  */
-export async function saveLocalImage(
+export async function saveLocalFile(
   file: File
 ): Promise<{ url: string }> {
   const dir = resolve(process.cwd(), await localUploadDir());
@@ -107,15 +117,31 @@ export function contentTypeByExt(path: string): string {
     ".avif": "image/avif",
     ".svg": "image/svg+xml",
     ".ico": "image/x-icon",
+    ".pdf": "application/pdf",
+    ".zip": "application/zip",
+    ".gz": "application/gzip",
+    ".txt": "text/plain; charset=utf-8",
+    ".csv": "text/csv; charset=utf-8",
+    ".json": "application/json",
+    ".step": "application/octet-stream",
+    ".stp": "application/octet-stream",
+    ".dxf": "application/dxf",
   };
   return map[ext] ?? "application/octet-stream";
 }
 
+/**
+ * 猜文件扩展名。
+ *
+ * 优先用原始文件名里的扩展名——附件的扩展名就是给人看的
+ * （.step / .dxf / .zip），不能被 mime 映射改掉。
+ * 只允许字母数字开头、长度有限，避免用户拿文件名做路径穿越。
+ */
 function fileExt(originalName: string, mime: string): string {
   const fromName = originalName.includes(".")
     ? originalName.slice(originalName.lastIndexOf(".")).toLowerCase()
     : "";
-  if (fromName && fromName.length <= 6 && /^\.[a-z0-9]+$/.test(fromName)) {
+  if (fromName && fromName.length <= 12 && /^\.[a-z0-9]+$/.test(fromName)) {
     return fromName;
   }
   const map: Record<string, string> = {
@@ -127,6 +153,9 @@ function fileExt(originalName: string, mime: string): string {
     "image/svg+xml": ".svg",
     "image/x-icon": ".ico",
     "image/vnd.microsoft.icon": ".ico",
+    "application/pdf": ".pdf",
+    "application/zip": ".zip",
+    "application/x-zip-compressed": ".zip",
   };
   return map[mime] ?? "";
 }
@@ -143,11 +172,15 @@ export type S3Ticket = {
 
 /**
  * 生成 S3 的预签名 POST 表单，浏览器拿它直接传到对象存储，不经过服务器。
+ *
+ * 图片和附件共用：附件不限制类型，只限制大小。
  */
 export async function createS3Ticket(input: {
   filename: string;
   contentType: string;
   size: number;
+  /** 大小上限，缺省按图片的 10MB */
+  maxSize?: number;
 }): Promise<S3Ticket> {
   const [endpoint, region, bucket, accessKeyId, secretAccessKey, publicUrl] =
     await Promise.all([
@@ -183,7 +216,7 @@ export async function createS3Ticket(input: {
     Expires: 300, // 表单 5 分钟内有效
     Fields: { "Content-Type": input.contentType },
     Conditions: [
-      ["content-length-range", 0, MAX_IMAGE_SIZE],
+      ["content-length-range", 0, input.maxSize ?? MAX_IMAGE_SIZE],
       ["eq", "$Content-Type", input.contentType],
     ],
   });

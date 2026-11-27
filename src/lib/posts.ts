@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 import { getDb } from "./mongodb";
 import { makeSlug } from "./slug";
-import type { PostDoc, Visibility } from "./types";
+import type { Attachment, PostDoc, Visibility } from "./types";
 
 /** 从 BlockNote 块里提取纯文本，供搜索使用 */
 function blocksToPlainText(blocks: unknown[]): string {
@@ -49,6 +49,7 @@ export async function createPost(input: {
   tags: string[];
   visibility: Visibility;
   pinned?: boolean;
+  attachments?: Attachment[];
 }): Promise<PostDoc> {
   const db = await getDb();
   const posts = db.collection<PostDoc>("posts");
@@ -75,6 +76,7 @@ export async function createPost(input: {
     publishedAt: publishedAtFor(input.visibility, null, now),
     createdAt: now,
     updatedAt: now,
+    attachments: input.attachments ?? [],
   };
   await posts.insertOne(doc as PostDoc & { _id: ObjectId });
   await syncTags(db, input.tags);
@@ -89,6 +91,7 @@ export async function updatePost(
     tags: string[];
     visibility: Visibility;
     pinned?: boolean;
+    attachments?: Attachment[];
   }
 ): Promise<PostDoc | null> {
   const db = await getDb();
@@ -114,6 +117,7 @@ export async function updatePost(
         pinned: input.pinned ?? false,
         publishedAt,
         updatedAt: now,
+        attachments: input.attachments ?? [],
       },
     }
   );
@@ -124,6 +128,7 @@ export async function updatePost(
     // plainText 是从 blocks 算出来的，input 里没有这个字段；
     // 不补上的话，返回的是旧值，跟库里实际写入的对不上
     plainText: blocksToPlainText(input.blocks),
+    attachments: input.attachments ?? [],
     publishedAt,
     updatedAt: now,
   } as PostDoc;
@@ -141,7 +146,11 @@ export async function getPostBySlug(
   const db = await getDb();
   const filter: Record<string, unknown> = { slug };
   if (!includeHidden) filter.visibility = "public";
-  return db.collection<PostDoc>("posts").findOne(filter);
+  const doc = await db.collection<PostDoc>("posts").findOne(filter);
+  if (!doc) return null;
+  // 老文章没有 attachments 字段，补成空数组，
+  // 免得渲染时到处写 ?. 和 ?? []
+  return { ...doc, attachments: doc.attachments ?? [] };
 }
 
 export async function listPosts(opts: {
@@ -179,6 +188,8 @@ export async function listPosts(opts: {
   const items = await collection
     .aggregate<PostDoc>([
       { $match: filter },
+      // 列表里用不到附件，先扔掉，省得白拉一堆 URL 回来
+      { $project: { attachments: 0 } },
       // 置顶的排在最前面，其余按显示日期倒序。
       // 用 $ifNull 把老文章缺字段的情况补成 false——否则 MongoDB 会把缺字段排成 null，
       // 布尔值和 null 混排会让顺序错乱。

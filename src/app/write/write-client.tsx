@@ -9,6 +9,8 @@ import type { Block } from "@blocknote/core";
 import type { Visibility } from "@/lib/types";
 import { deletePostAction, savePost } from "./actions";
 import { useT } from "@/components/i18n-provider";
+import AttachmentEditor from "./attachment-editor";
+import type { Attachment } from "@/lib/types";
 
 type Props = {
   slug: string | null;
@@ -19,6 +21,7 @@ type Props = {
   initialPinned: boolean;
   availableTags: string[];
   storageProvider: ClientStorageProvider;
+  initialAttachments: Attachment[];
 };
 
 export default function WriteClient({
@@ -30,6 +33,7 @@ export default function WriteClient({
   initialPinned,
   availableTags,
   storageProvider,
+  initialAttachments,
 }: Props) {
   const t = useT();
   // BlockNote 依赖浏览器 API，关闭 SSR。
@@ -54,6 +58,9 @@ export default function WriteClient({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [hint, setHint] = useState("");
+  const [attachments, setAttachments] = useState<Attachment[]>(
+    initialAttachments
+  );
 
   // 正文块只在保存时取一次，避免每次输入都触发父组件重渲染
   const blocksRef = useRef<Block[]>(initialBlocks);
@@ -85,6 +92,7 @@ export default function WriteClient({
       tags,
       visibility,
       pinned,
+      attachments,
     });
     if (!result.ok) {
       setSaving(false);
@@ -174,6 +182,12 @@ export default function WriteClient({
           }}
         />
       </div>
+
+      <AttachmentEditor
+        attachments={attachments}
+        provider={storageProvider}
+        onChange={setAttachments}
+      />
 
       {/* 先选可见性，按钮在它下面（都靠左），按钮文案跟着可见性变 */}
       <div className="write-actions">
