@@ -61,7 +61,7 @@ export default async function SettingsPage() {
       <h3 className="form-group">{t("手机验证器")}</h3>
       <TotpManager bound={bound} mailReady={canMail} />
       <p className="notice">
-        <a href="/reset">{t("两把钥匙都丢了？看恢复指引")}</a>
+        {t("两把钥匙都丢了？用紧急密钥从")}<a href="/login?recovery=1">{t("这里登录")}</a>{t("。")}
       </p>
     </>
   );

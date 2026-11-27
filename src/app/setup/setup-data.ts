@@ -1,9 +1,8 @@
 /**
- * 安装向导要用的数据，两个入口共用。
+ * 安装向导要用的数据。
  *
- * /setup 是首次安装，/reset 是恢复（两把钥匙都丢了之后重新配）。
- * 两条路走的是同一套流程，所以取数据的地方也该是同一份，
- * 不然改一处就容易漏另一处。
+ * 站点只保留首次安装向导（/setup）：配环境变量、检查通过即完成。
+ * 登录方式（邮箱、Passkey、验证器）都在首次登录后到设置页配。
  */
 import { getAuth, passkeyAddAllowed } from "@/lib/credentials";
 import { getSettings } from "@/lib/settings";

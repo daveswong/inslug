@@ -1,6 +1,8 @@
-// 登录页：Passkey 或手机验证器；两把钥匙都丢了才用紧急入口（?recovery=1）
+// 登录页：Passkey 或手机验证器；两把钥匙都没绑时直接显示紧急入口
 import { isLoggedIn } from "@/lib/auth";
+import { getAuth } from "@/lib/credentials";
 import { getSettings } from "@/lib/settings";
+import { listPasskeys } from "@/lib/passkey";
 import SiteFooter from "@/components/SiteFooter";
 import LoginForm from "./login-form";
 import { getT } from "@/lib/i18n";
@@ -17,6 +19,16 @@ export default async function LoginPage({ searchParams }: Props) {
   const loggedIn = await isLoggedIn();
   const settings = await getSettings();
 
+  // 没绑任何钥匙时（比如刚装完），直接把紧急入口摆出来，省得用户再去找入口。
+  // 查不到凭据状态时按「有钥匙」处理——不额外放开紧急入口，避免抖动误判。
+  let noKeysBound = false;
+  try {
+    const [keys, auth] = await Promise.all([listPasskeys(), getAuth()]);
+    noKeysBound = keys.length === 0 && !auth.totpBound;
+  } catch {
+    noKeysBound = false;
+  }
+
   return (
     <main className="site">
       <header className="site-head">
@@ -31,13 +43,15 @@ export default async function LoginPage({ searchParams }: Props) {
             )}
           </p>
         )}
-        <p className="notice"><a href="/reset">{t("进不去？看恢复指引")}</a></p>
+        <p className="notice">
+          {t("进不去就用紧急密钥：")}<a href="/login?recovery=1">{t("从这里登录")}</a>
+        </p>
       </header>
 
       <LoginForm
         loggedIn={loggedIn}
         next={next ?? "/"}
-        recovery={recovery === "1" || !settings.setupCompleted}
+        recovery={recovery === "1" || noKeysBound || !settings.setupCompleted}
         needsSetup={!settings.setupCompleted}
       />
 
