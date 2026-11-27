@@ -21,7 +21,7 @@ import { getEnvValue, isVercel, setEnvValues } from "@/lib/env-config";
 import { listPasskeys } from "@/lib/passkey";
 import { getSettings } from "@/lib/settings";
 import { getT } from "@/lib/i18n";
-import { ensureDatabase, type DatabaseStatus } from "@/lib/mongodb";
+import { ensureDatabase, hasDbConfig, type DatabaseStatus } from "@/lib/mongodb";
 
 export type ConfigSaveResult =
   | { ok: true; written: string[]; db?: DatabaseStatus }
@@ -38,6 +38,17 @@ export type ConfigSaveResult =
  *   这种情况一律按「有凭据」处理，即要求登录。
  */
 export async function hasCredentials(): Promise<boolean> {
+  // 连接串压根没配 → 全新部署，还在装站的起步阶段，允许免登录设置。
+  //
+  // 这跟「配了但连不上」必须分开：首次安装时数据库本来就连不上
+  // （MONGODB_URI 还没填进环境变量），如果一律按「有凭据」处理，
+  // 就会被要求登录——可这时还没有任何凭据，根本登录不了，死锁。
+  //
+  // 安全上站得住：要让这里返回 false，得先把 MONGODB_URI 从环境变量里抹掉，
+  // 那需要平台控制台的权限；有那权限的人本来就能改任何配置。
+  // 而且没有数据库时站点没有任何数据，改会话密钥也换不来东西。
+  if (!hasDbConfig()) return false;
+
   try {
     const [keys, auth, settings] = await Promise.all([
       listPasskeys(),

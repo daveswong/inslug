@@ -41,6 +41,8 @@ type Props = {
   loggedIn: boolean;
   /** 当前库的状态：存在还是刚建的 */
   dbStatus: DatabaseStatus | null;
+  /** 有没有配数据库地址 */
+  dbConfigured: boolean;
   /** 服务器上有没有生效的 RECOVERY_TOKEN（Vercel 上要导入 .env 并重新部署之后才有） */
   recoveryReady: boolean;
   /** 服务器实际读到的 Passkey 域名主体 */
@@ -74,6 +76,7 @@ export default function SetupWizard({
   onVercel,
   loggedIn,
   dbStatus,
+  dbConfigured,
   recoveryReady,
   rpId,
   origin,
@@ -275,6 +278,12 @@ export default function SetupWizard({
                     name: dbStatus.dbName,
                     n: String(dbStatus.postCount),
                   })}
+            </p>
+          ) : dbConfigured ? (
+            <p className="form-error">
+              {t(
+                "地址填了，但连不上。查两处：连接串里的用户名密码对不对，Atlas 的 Network Access 里有没有放行当前出口 IP（加上 0.0.0.0/0 最省事）。改完刷新本页就行，不用重新部署。"
+              )}
             </p>
           ) : (
             <p className="form-error">

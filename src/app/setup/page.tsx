@@ -59,6 +59,7 @@ export default async function SetupPage({ searchParams }: Props) {
     rpIdMatchesHost,
     originHost,
     dbStatus,
+    dbConfigured,
     serviceFeatures,
     manualAuthItems,
     generatedAuthItems,
@@ -95,6 +96,7 @@ export default async function SetupPage({ searchParams }: Props) {
         onVercel={isVercel()}
         loggedIn={loggedIn}
         dbStatus={dbStatus}
+          dbConfigured={dbConfigured}
         recoveryReady={recoveryReady}
         rpId={rpId}
         origin={origin}

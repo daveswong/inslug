@@ -79,6 +79,7 @@ export default async function ResetPage() {
     rpIdMatchesHost,
     originHost,
     dbStatus,
+    dbConfigured,
     serviceFeatures,
     manualAuthItems,
     generatedAuthItems,
@@ -115,6 +116,7 @@ export default async function ResetPage() {
           onVercel={isVercel()}
           loggedIn={loggedIn}
           dbStatus={dbStatus}
+          dbConfigured={dbConfigured}
           recoveryReady={hasRecovery}
           rpId={rpId}
           origin={origin}
