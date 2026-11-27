@@ -40,10 +40,15 @@ async function sendConfirmMail(input: {
   linkOrigin: string;
   ip: string;
   ua: string;
+  /**
+   * 收件人。不给就用设置里已存的通知邮箱。
+   * 安装向导第一次填邮箱时，设置里还空着，得显式指定。
+   */
+  to?: string;
 }): Promise<{ ok: true } | { error: string }> {
   const t = await getT();
   const settings = await getSettings();
-  const to = settings.notifyEmail.trim();
+  const to = (input.to ?? settings.notifyEmail).trim();
   if (!to) return { error: t("设置页还没填通知邮箱") };
 
   const created = await createPendingChange({
@@ -119,6 +124,39 @@ export async function requestTotpChange(input: {
     linkOrigin: input.linkOrigin,
     ip: input.ip,
     ua: input.ua,
+  });
+}
+
+/**
+ * 安装时确认通知邮箱。
+ *
+ * 装站点第一步只填邮箱，填完发这封信；点信里的链接才把邮箱写进设置，
+ * 然后接着往下装。这样做有两个好处：
+ * - 顺带验证了发信通道确实是通的（后面绑定验证器、换绑都靠它）
+ * - 邮箱是站长自己点链接确认过的，不存在填错收不到的情况
+ */
+export async function requestSetupEmail(input: {
+  email: string;
+  linkOrigin: string;
+  ip: string;
+  ua: string;
+}): Promise<{ ok: true } | { error: string }> {
+  const t = await getT();
+  const email = input.email.trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return { error: t("邮箱格式不对") };
+  }
+  return sendConfirmMail({
+    purpose: "setup-email",
+    payload: { email },
+    // 不带「确认」二字：邮件里链接文字是「确认{actionText}」，
+    // 写成「确认安装邮箱」会拼出「确认确认安装邮箱」
+    actionText: t("安装邮箱"),
+    consequence: t("确认后这个邮箱会存进站点设置，用来接收验证器变更等确认信。"),
+    linkOrigin: input.linkOrigin,
+    ip: input.ip,
+    ua: input.ua,
+    to: email,
   });
 }
 

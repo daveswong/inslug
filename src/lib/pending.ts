@@ -20,7 +20,9 @@ export type ChangePurpose =
   | "totp-disable"
   | "config-reset"
   | "passkey-add"
-  | "passkey-remove";
+  | "passkey-remove"
+  // 安装时确认通知邮箱：点链接才把邮箱写进设置，然后继续安装
+  | "setup-email";
 
 export interface PendingDoc {
   _id?: unknown;

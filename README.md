@@ -2,9 +2,7 @@
 
 一个基于 Node.js + Next.js 的 Blog web APP：让你专注于写作，让读者专注于阅读。
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fdaveswong%2Finslug%2Ftree%2Frelease&project-name=inslug&repository-name=inslug&stores=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22mongodbatlas%22%2C%22productSlug%22%3A%22atlas%22%2C%22protocol%22%3A%22storage%22%7D%2C%7B%22type%22%3A%22blob%22%2C%22access%22%3A%22public%22%7D%5D)
-
-点上面这个按钮就能得到自己的 inslug：MongoDB Atlas 和图片存储会自动建好，剩下的跟着首页的安装向导点几下就完事。想自己部署的话，看下面的[部署与环境变量](#部署与环境变量)。
+自己部署的话，看下面的[部署与环境变量](#部署与环境变量)和[安装流程](#安装流程)。
 
 **路径短、界面干净、默认安全。** 没有账号系统，没有密码，没有追踪，没有评论，没有推荐算法，
 没有弹窗和花哨的装饰。那些烦人的东西离使用者远一点，人才有心思专注在创作本身。
@@ -147,25 +145,48 @@ GitHub 账号**下，顺手建好 MongoDB Atlas 数据库和图片存储，然�
 
 自己部署的话：导入 GitHub 仓库（框架自动识别 Next.js）→ 按下面的向导配置 → 绑定域名，DNS 托管在 Vercel 时 HTTPS 证书自动签发。自部署用 `npm run build && npm run start`，`.env` 放在项目根目录。
 
-### 在 Vercel 上选分支
+### 在 Vercel 上选分支（Branch Tracking）
 
-Vercel 的项目默认拿 `main` 当生产分支——**推 main 就重新部署线上站点**。
-如果你导入的是本仓库（而不是点上面的按钮），建议改成 `release`：
+Vercel 的每个项目有且只有一个**生产分支**（Branch Tracking）。推它 → 生产部署；
+推别的分支 → 预览部署（各有一个 `xxx-git-分支名.vercel.app` 域名），**不影响正式站点**。
 
-**Project Settings → Environments → Production → Branch Tracking**，填 `release`，保存。
+在 **Project Settings → Environments → Production → Branch Tracking** 里改，随时能改。
 
-之后的行为就清楚了：
+#### 点上面那个按钮（Deploy with Vercel）会怎样
 
-| 你做的事 | Vercel 的反应 |
+Vercel 会把源仓库 **fork 到你自己的 GitHub 账号**下（不是复制一份孤立的副本），
+再从它建一个项目并部署。所以你的仓库里同时有 `main` 和 `release` 两个分支。
+
+部署完做一件事：**确认生产分支是 `release`**（Branch Tracking 里选它）。
+
+之后：
+
+| 发生什么 | 你的站点 |
 | --- | --- |
-| 推 `release` 分支 | 生产部署，访问你的正式域名 |
-| 推别的分支（`main` 等） | 预览部署，地址是 `xxx-git-分支名.vercel.app`，不影响正式站点 |
-| 合并 PR 到 `release` | 生产部署 |
+| inslug 维护者推 `main`（开发中） | **毫无影响**。`main` 只是你 fork 里的一个预览分支，Vercel 只会生成一个预览部署 |
+| inslug 发布新版本（`release` 更新） | 你的 fork 同步之后，Vercel 自动重新部署，你的新内容就上去了 |
 
-生产分支只有一个，随时能改。想临时部署某个分支或某次提交：
-**Deployments → Create Deployment**，可以填分支名、仓库 URL（`https://github.com/组织/仓库/tree/分支`）或具体的 commit SHA。
+也就是说：**开发者的开发动作不会打扰使用者**，只有正式发布的版本才会流出去。
 
-**关于 tag**：Vercel 的自动部署不认 tag。想让某个 tag 触发部署，得自己搭 GitHub Actions
+**「同步」这一步要你做一下**：GitHub 的 fork 不会自动跟着上游跑，
+在你自己仓库首页点一下 **Sync fork**（同步这个 fork），
+Vercel 收到推送就自动重新部署。你也可以不跟——那你的站点就一直停在你部署时的那一版，
+只是拿不到新功能，站点本身照常跑。
+
+#### 自己 import 仓库的话
+
+导入 `daveswong/inslug` 的话，Vercel 监听的是**这个仓库**，`release` 一更新就自动部署。
+但这样你没法往里推自己的改动（你没有写权限），而且维护者推 `main` 时，
+只要生产分支是 `release`，同样不会影响你。
+
+#### 临时部署某个分支或某次提交
+
+**Deployments → Create Deployment**，可以填分支名、仓库 URL
+（`https://github.com/组织/仓库/tree/分支`）或具体的 commit SHA。
+
+#### 关于 tag
+
+Vercel 的自动部署不认 tag。想让某个 tag 触发部署，得自己搭 GitHub Actions
 （官方指南叫 "Can you deploy based on tags/releases on Vercel?"），要先关掉自动部署再手动调 CLI。
 本项目用 `release` 分支就够——它和 tag 指向的是同一份代码。
 

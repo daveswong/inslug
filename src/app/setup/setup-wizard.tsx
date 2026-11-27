@@ -23,6 +23,8 @@ type Props = {
   passkeys: PasskeyView[];
   authorized: boolean;
   hasTotp: boolean;
+  /** 邮箱是否已经通过邮件链接确认过 */
+  initialEmailConfirmed: boolean;
   mailReady: boolean;
   completed: boolean;
   /** 身份验证与启动必需的变量（手填的那些） */
@@ -61,6 +63,7 @@ export default function SetupWizard({
   passkeys,
   authorized,
   hasTotp,
+  initialEmailConfirmed,
   mailReady,
   completed,
   authItems,
@@ -82,37 +85,48 @@ export default function SetupWizard({
   const t = useT();
   const STEPS = [
     t("服务器配置"),
-    t("站点信息"),
+    t("确认邮箱"),
     "Passkey",
     t("验证器"),
     t("完成"),
   ];
-  const LABELS = [t("已写入"), t("已保存"), t("已绑定"), t("已绑定"), ""];
+  const LABELS = [t("已写入"), t("已确认"), t("已绑定"), t("已绑定"), ""];
   const router = useRouter();
-  const [step, setStep] = useState(0);
+  // 邮箱已经确认过的（刚从确认链接回来，或之前就装过），
+  // 直接落在绑定 Passkey 那一步，不用再走一遍
+  const [step, setStep] = useState(initialEmailConfirmed ? 2 : 0);
   const [values, setValues] = useState<SiteValues>(initial);
-  const [siteSaved, setSiteSaved] = useState(false);
+  const [emailConfirmed, setEmailConfirmed] = useState(initialEmailConfirmed);
+  const [emailSent, setEmailSent] = useState(false);
+  // 用户主动跳过了哪一步。跳过了就要明确告诉他后果。
+  const [skipped, setSkipped] = useState<Record<number, boolean>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  const done = [true, siteSaved, passkeyCount > 0, hasTotp, false];
+  const done = [true, emailConfirmed, passkeyCount > 0, hasTotp, false];
 
-  const saveSite = async (event: React.FormEvent) => {
+  /**
+   * 填完邮箱，发一封确认信。
+   *
+   * 站点信息（站名、简介）不在这一步填了——装完到设置页再弄，
+   * 这里只确认邮箱，顺便验证发信通道确实是通的。
+   */
+  const sendConfirm = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (busy) return;
     setBusy(true);
     setError("");
     try {
-      const res = await fetch("/api/setup/site", {
+      const res = await fetch("/api/setup/email", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify({ email: values.notifyEmail.trim() }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? t("保存失败"));
-      setSiteSaved(true);
-      router.refresh();
+      if (!res.ok) throw new Error(data.error ?? t("发送失败"));
+      setEmailSent(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : t("保存失败"));
+      setError(e instanceof Error ? e.message : t("发送失败"));
     } finally {
       setBusy(false);
     }
@@ -125,7 +139,8 @@ export default function SetupWizard({
       const res = await fetch("/api/setup/complete", { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? t("保存失败"));
-      router.push("/");
+      // 装完直接进设置页填站点信息
+      router.push("/settings");
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : t("保存失败"));
@@ -138,7 +153,13 @@ export default function SetupWizard({
       <ol className="setup-steps">
         {STEPS.map((name, index) => (
           <li key={name} className={index === step ? "current" : ""}>
-            <button type="button" onClick={() => setStep(index)}>
+            <button
+              type="button"
+              // 第 1 步（确认邮箱）没过，不许点到后面的步骤——
+              // 否则「填邮箱发确认信」这一步就能被绕过去
+              disabled={index > 1 && !emailConfirmed}
+              onClick={() => setStep(index)}
+            >
               {index + 1}. {name}
               {index < 3 && done[index] && <span className="setup-done"> ✓</span>}
             </button>
@@ -246,14 +267,20 @@ export default function SetupWizard({
             </p>
           )}
 
-          {dbStatus && (
+          {dbStatus ? (
             <p className="notice">
               {dbStatus.created
-                ? t("数据库 {name} 已创建", { name: dbStatus.dbName })
-                : t("数据库 {name} 已存在，里面有 {n} 篇文章", {
+                ? t("数据库 {name} 已创建，连得上。", { name: dbStatus.dbName })
+                : t("数据库 {name} 连得上，里面有 {n} 篇文章。", {
                     name: dbStatus.dbName,
                     n: String(dbStatus.postCount),
                   })}
+            </p>
+          ) : (
+            <p className="form-error">
+              {t(
+                "数据库还没连上。配好 MONGODB_URI 再往下走——后面的确认邮件、钥匙绑定都靠它。"
+              )}
             </p>
           )}
         </>
@@ -261,49 +288,14 @@ export default function SetupWizard({
 
       {step === 1 && (
         <>
-          <h2 className="section-title">{t("站点信息")}</h2>
+          <h2 className="section-title">{t("确认邮箱")}</h2>
           <p className="notice">
-            
-            {t("填写站点信息；密钥只在服务端配置。")}
+            {t("填一个你常用的邮箱。我们会发一封确认信过去，点里面的链接就继续安装。")}
           </p>
-          <form className="setup-form" onSubmit={saveSite}>
-            <label className="field">
-              <span className="field-label">{t("站点名")}</span>
-              <input
-                className="search-input"
-                value={values.siteName}
-                onChange={(e) => {
-                  setValues({ ...values, siteName: e.target.value });
-                  setSiteSaved(false);
-                }}
-              />
-            </label>
-            <label className="field">
-              <span className="field-label">{t("简介")}</span>
-              <input
-                className="search-input"
-                value={values.description}
-                onChange={(e) => {
-                  setValues({ ...values, description: e.target.value });
-                  setSiteSaved(false);
-                }}
-                placeholder={t("一句话介绍这个站子")}
-              />
-            </label>
-            <label className="field">
-              <span className="field-label">{t("每页文章数")}</span>
-              <input
-                className="search-input"
-                type="number"
-                min={1}
-                max={50}
-                value={values.postsPerPage}
-                onChange={(e) => {
-                  setValues({ ...values, postsPerPage: Number(e.target.value) });
-                  setSiteSaved(false);
-                }}
-              />
-            </label>
+          <p className="notice">
+            {t("这个邮箱会用来接收验证器变更、恢复入口之类的确认信，装完也能在设置里改。")}
+          </p>
+          <form className="setup-form" onSubmit={sendConfirm}>
             <label className="field">
               <span className="field-label">{t("通知邮箱")}</span>
               <input
@@ -312,25 +304,42 @@ export default function SetupWizard({
                 value={values.notifyEmail}
                 onChange={(e) => {
                   setValues({ ...values, notifyEmail: e.target.value });
-                  setSiteSaved(false);
+                  setEmailSent(false);
                 }}
-                placeholder={t("更换或解绑验证器时收确认信")}
+                placeholder={t("你常用的邮箱")}
               />
             </label>
             <button
               className="btn btn-outline-light btn-plain"
               type="submit"
-              disabled={busy || !values.siteName}
+              disabled={busy || !values.notifyEmail.trim() || !dbStatus}
             >
-              
-              {t("保存站点信息")}
+              {busy ? t("发送中…") : t("发送确认邮件")}
             </button>
+            {!dbStatus && (
+              <p className="form-error">
+                {t("数据库还没连上，先回上一步把 MONGODB_URI 配好。")}
+              </p>
+            )}
           </form>
+          {emailSent && (
+            <p className="notice">
+              {t("确认信已发出：去邮箱点一下里面的链接，接着往下装。链接 10 分钟内有效。")}
+            </p>
+          )}
+          <p className="notice">
+            {t("站点名、简介这些装完再填也不迟，装完到设置页里改。")}
+          </p>
         </>
       )}
 
       {step === 2 && (
         <>
+          {skipped[2] && (
+            <p className="notice">
+              {t("已跳过 Passkey。之后只能用 .env 里的 RECOVERY_TOKEN 登录，随时可以回来补。")}
+            </p>
+          )}
           <h2 className="section-title">{t("绑定 Passkey")}</h2>
           <p className="notice">
             
@@ -343,11 +352,27 @@ export default function SetupWizard({
             mailReady={mailReady}
             onBound={() => router.refresh()}
           />
+          {passkeyCount === 0 && !skipped[2] && (
+            <div className="setup-nav">
+              <button
+                className="btn btn-outline-light btn-plain"
+                type="button"
+                onClick={() => setSkipped({ ...skipped, 2: true })}
+              >
+                {t("跳过，之后再说")}
+              </button>
+            </div>
+          )}
         </>
       )}
 
       {step === 3 && (
         <>
+          {skipped[3] && (
+            <p className="notice">
+              {t("已跳过验证器。之后只能用 .env 里的 RECOVERY_TOKEN 登录，随时可以回来补。")}
+            </p>
+          )}
           <h2 className="section-title">{t("绑定手机验证器")}</h2>
           <p className="notice">
             
@@ -359,6 +384,17 @@ export default function SetupWizard({
             mailReady={mailReady}
             onBound={() => router.refresh()}
           />
+          {!hasTotp && !skipped[3] && (
+            <div className="setup-nav">
+              <button
+                className="btn btn-outline-light btn-plain"
+                type="button"
+                onClick={() => setSkipped({ ...skipped, 3: true })}
+              >
+                {t("跳过，之后再说")}
+              </button>
+            </div>
+          )}
         </>
       )}
 
@@ -368,10 +404,12 @@ export default function SetupWizard({
           <p className="notice">
             {completed
               ? t("已完成初始化，这里供复查。")
-              : t("两把钥匙齐了，以后可在设置里随时改。")}
+              : t("接下来去设置页填站点信息（站名、简介、SEO），随时可以改。")}
           </p>
-          {!hasTotp && (
-            <p className="notice">{t("验证器还没绑，建议回到第 4 步。")}</p>
+          {(!hasTotp || passkeyCount === 0) && (
+            <p className="notice">
+              {t("两把钥匙没配齐：以后只能用 .env 里的 RECOVERY_TOKEN 登录，建议去设置里补上。")}
+            </p>
           )}
           <button
             className="btn btn-outline-light btn-plain"
@@ -380,7 +418,7 @@ export default function SetupWizard({
             disabled={busy}
           >
             
-            {t("完成安装，回首页")}
+            {t("完成安装，去设置页")}
           </button>
         </>
       )}
@@ -402,6 +440,9 @@ export default function SetupWizard({
           <button
             className="btn btn-outline-light btn-plain"
             type="button"
+            // 第 1 步是确认邮箱：没收到确认信就不许往下走，
+            // 否则「填邮箱发确认信」这一步就形同虚设
+            disabled={step === 1 && !emailConfirmed}
             onClick={() => setStep(step + 1)}
           >
             
