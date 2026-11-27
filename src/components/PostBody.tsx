@@ -21,7 +21,10 @@ export default function PostBody({ blocks }: { blocks: Block[] }) {
 function ReadonlyEditor({ blocks }: { blocks: Block[] }) {
   const [dark, setDark] = useState(false);
   const editor = useCreateBlockNote({
-    initialContent: blocks as PartialBlock[],
+    // BlockNote 的 initialContent 不能是空数组（传 [] 会抛错），
+    // 空文章传 undefined，让它自己生成一个空段落。
+    initialContent:
+      blocks.length > 0 ? (blocks as PartialBlock[]) : undefined,
   });
 
   useEffect(() => {
