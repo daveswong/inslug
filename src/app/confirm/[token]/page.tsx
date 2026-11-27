@@ -7,10 +7,9 @@ import { consumePendingChange, readPendingChange } from "@/lib/pending";
 import {
   authorizePasskeyAdd,
   bumpSessionVersion,
-  getAuth,
   setTotpSecret,
 } from "@/lib/credentials";
-import { deletePasskey, listPasskeys } from "@/lib/passkey";
+import { deletePasskey } from "@/lib/passkey";
 import { openValue } from "@/lib/secret-box";
 import { formatDateTime } from "@/lib/time";
 import { getT } from "@/lib/i18n";
@@ -46,15 +45,8 @@ async function applyChange(formData: FormData) {
   } else if (doc.purpose === "passkey-remove") {
     const credentialId = String(doc.payload.credentialId ?? "");
     if (!credentialId) redirect(`/confirm/${token}?state=failed`);
-    const [keys, auth] = await Promise.all([
-      listPasskeys(),
-      getAuth().catch(() => null),
-    ]);
-    // 绝不能把最后一把钥匙删掉，否则连自己都进不去。
-    // 带上具体原因，别让它跟「链接过期」混成同一句误导人的提示。
-    if (keys.length <= 1 && !auth?.totpBound) {
-      redirect(`/confirm/${token}?state=failed&reason=last-key`);
-    }
+    // 最后一把也允许删：风险已在发起删除时提示过。
+    // 删光后还能用 RECOVERY_TOKEN（存服务端配置）从紧急入口进来。
     if (!(await deletePasskey(credentialId))) {
       redirect(`/confirm/${token}?state=failed`);
     }
@@ -72,11 +64,11 @@ export default async function ConfirmPage({
   searchParams,
 }: {
   params: Promise<{ token: string }>;
-  searchParams: Promise<{ state?: string; reason?: string }>;
+  searchParams: Promise<{ state?: string }>;
 }) {
   const t = await getT();
   const { token } = await params;
-  const { state: result, reason } = await searchParams;
+  const { state: result } = await searchParams;
   const { state, doc } = await readPendingChange(token);
 
   const isDone = result === "done";
@@ -116,18 +108,7 @@ export default async function ConfirmPage({
           </>
         )}
 
-        {!isDone && isFailed && reason === "last-key" && (
-          <>
-            <p className="notice">
-              {t(
-                "这是最后一把钥匙，而且还没绑手机验证器——删了你就进不来了，所以没有执行。请先在设置页绑定验证器，再来删除这把 Passkey。"
-              )}
-            </p>
-            <p className="notice"><a href="/settings">{t("去设置页")}</a></p>
-          </>
-        )}
-
-        {!isDone && isFailed && reason !== "last-key" && (
+        {!isDone && isFailed && (
           <>
             <p className="notice">{t("这个链接已经失效：可能已被使用，或超过 10 分钟。")}</p>
             <p className="notice">{t("到设置页重新发起一次即可。")}</p>

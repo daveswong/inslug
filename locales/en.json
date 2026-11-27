@@ -454,9 +454,9 @@
   "安装完成。请用 .env 里的 RECOVERY_TOKEN 登录，然后到站点设置里配置通知邮箱和身份验证（Passkey、验证器）。": "Setup is complete. Sign in with RECOVERY_TOKEN from .env, then go to site settings to set up your notification email and sign-in methods (Passkey, authenticator).",
   "配置完成后会跳到登录页。首次请用 .env 里的 RECOVERY_TOKEN 从紧急入口进入。": "Once configured you'll be taken to the sign-in page. For the first time, use RECOVERY_TOKEN from .env via the emergency entry.",
   "回到本页点「检查配置，完成安装」，通过后会跳到登录页。": "Back on this page, click Check configuration and finish setup — you'll go to the sign-in page once it passes.",
-  "这是最后一把钥匙，而且还没绑手机验证器——删了你就进不来了，所以没有执行。请先在设置页绑定验证器，再来删除这把 Passkey。": "This is your last key and you haven't bound an authenticator yet — deleting it would lock you out, so nothing was changed. Bind an authenticator in settings first, then delete this Passkey.",
   "进不去就用紧急密钥：": "If you can't sign in, use the recovery key: ",
   "从这里登录": "Sign in here",
   "两把钥匙都丢了？用紧急密钥从": "Lost both keys? Sign in with the recovery key ",
-  "这里登录": "here"
+  "这里登录": "here",
+  "这是最后一把 Passkey，删掉后如果没有绑定手机验证器，就只能用 RECOVERY_TOKEN 从紧急入口登录。确定继续？需要邮件确认后才会生效。": "This is your last Passkey. If no authenticator is bound, you'll only be able to sign in with RECOVERY_TOKEN via the emergency entry after deleting it. Continue? Deletion takes effect after email confirmation."
 }

@@ -103,7 +103,11 @@ export default function PasskeyManager({
   };
 
   const remove = async (credentialId: string) => {
-    if (!window.confirm(t("确定删除这把 Passkey？需要邮件确认后才会生效。"))) return;
+    const lastOne = passkeys.length <= 1;
+    const tip = lastOne
+      ? t("这是最后一把 Passkey，删掉后如果没有绑定手机验证器，就只能用 RECOVERY_TOKEN 从紧急入口登录。确定继续？需要邮件确认后才会生效。")
+      : t("确定删除这把 Passkey？需要邮件确认后才会生效。");
+    if (!window.confirm(tip)) return;
     setBusy(true);
     setError("");
     setStatus("");
