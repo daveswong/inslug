@@ -1,16 +1,16 @@
 /**
  * 绑定验证器。
  *
- * 首次绑定（库里还没有 secret）：验过 6 位码就直接生效。
- * 换绑（已经有一把）：验过码之后还要过邮件确认，确认页点「确认执行」才写库。
- *
- * 为什么规则不一样：危险的不是「多一把钥匙」，是「换掉/拿走已有的钥匙」。
- * 首次绑定时账号上只有 Passkey，多绑一把 TOTP 不会让操作者失去任何东西；
- * 换绑则会让旧验证器立刻失效，所以要多一道确认。
+ * 验过 6 位码后**一律发确认邮件**，点邮件里的链接才真正生效。
+ * 首次绑定和换绑走同一条路：
+ * - 换绑：旧验证器会立刻失效，多一道确认是必须的
+ * - 首次绑定：同样是给账号加一把钥匙，走一样的流程更一致，
+ *   也免得「码验过了就生效」——万一这个码是被别人看到的
+ *   （比如你把手机屏幕亮给别人看），对方就能直接绑一把自己的验证器
  */
 import { NextResponse } from "next/server";
-import { isLoggedIn, startSession } from "@/lib/auth";
-import { getAuth, setTotpSecret } from "@/lib/credentials";
+import { isLoggedIn } from "@/lib/auth";
+import { getAuth } from "@/lib/credentials";
 import { sealValue } from "@/lib/secret-box";
 import { verifyCode } from "@/lib/totp";
 import { clientKey } from "@/lib/rate-limit";
@@ -37,7 +37,10 @@ export async function POST(req: Request) {
   }
 
   if (!verifyCode(secret, code, null).ok) {
-    return NextResponse.json({ error: t("验证码不对，确认手机时间和内容后再试") }, { status: 401 });
+    return NextResponse.json(
+      { error: t("验证码不对。手机上的那条必须对应本页显示的密钥，重新扫一次二维码。") },
+      { status: 401 }
+    );
   }
 
   let auth;
@@ -49,24 +52,15 @@ export async function POST(req: Request) {
 
   const sealed = sealValue(secret);
 
-  // 首次绑定：直接生效。
-  // 判断依据是「数据库里有没有密文」，不是「能不能解开」——
-  // 解不开说明密钥换过或密文损坏，那是「绑过但坏了」，
-  // 当成没绑过会让这次操作绕过邮件确认，直接覆盖掉原来的验证器。
-  if (!auth.totpBound) {
-    await setTotpSecret(sealed);
-    await startSession(); // sv 变了，顺手给当前浏览器换一张新票
-    return NextResponse.json({ ok: true, bound: true });
-  }
-
-  // 换绑：先发确认信
+  // 没配好邮件通道就动不了手：绑定必须能被邮件确认
   if (!(await mailReady())) {
     return NextResponse.json(
-      { error: t("还没配好邮件确认，暂时不能更换验证器") },
+      { error: t("还没配好邮件确认，暂时不能绑定验证器") },
       { status: 503 }
     );
   }
 
+  // 首次绑定和换绑都发确认信，确认页才真正写库
   const result = await requestTotpChange({
     action: "set",
     sealedSecret: sealed,

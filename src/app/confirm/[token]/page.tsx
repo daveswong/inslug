@@ -15,7 +15,7 @@ import { openValue } from "@/lib/secret-box";
 import { formatDateTime } from "@/lib/time";
 import { getT } from "@/lib/i18n";
 import { performConfigReset } from "@/lib/config-reset";
-import { settingsStore } from "@/lib/settings";
+import { saveSettings, settingsStore } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +25,14 @@ async function applyChange(formData: FormData) {
   const doc = await consumePendingChange(token);
   if (!doc) redirect(`/confirm/${token}?state=failed`);
 
-  if (doc.purpose === "totp-set") {
+  if (doc.purpose === "setup-email") {
+    // 安装第一步：确认邮箱。点链接才写进设置，然后接着往下装。
+    const email = String(doc.payload.email ?? "").trim();
+    if (!email) redirect(`/confirm/${token}?state=failed`);
+    await saveSettings({ notifyEmail: email });
+    // 回到安装向导，从绑定 Passkey 那一步接着走
+    redirect(`/setup?email=confirmed`);
+  } else if (doc.purpose === "totp-set") {
     const sealed = String(doc.payload.sealedSecret ?? "");
     // 先自己解一遍：AUTH_SECRET 若在申请和确认之间变过，密文就打不开了，
     // 这时候写库等于把验证器静默弄失效，不如直接报失败让人重来。

@@ -53,6 +53,12 @@ export default function TotpManager({
   const confirmBind = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!setup) return;
+    // 位数不对就当场说清楚。以前按钮直接置灰，点了跟没点一样，
+    // 用户根本不知道是哪里不对。
+    if (code.length !== 6) {
+      setError(t("验证码是 6 位数字，现在只输入了 {n} 位。", { n: code.length }));
+      return;
+    }
     setBusy(true);
     setError("");
     setStatus("");
@@ -61,6 +67,8 @@ export default function TotpManager({
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ secret: setup.secret, code }),
+        // 请求挂住时给个说法，不然页面看起来就是没反应
+        signal: AbortSignal.timeout(20000),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? t("绑定失败"));
@@ -80,7 +88,11 @@ export default function TotpManager({
         }
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : t("绑定失败"));
+      if (e instanceof DOMException && e.name === "TimeoutError") {
+        setError(t("请求超时了，服务器没在 20 秒内回应。稍后再试一次。"));
+      } else {
+        setError(e instanceof Error ? e.message : t("绑定失败"));
+      }
     } finally {
       setBusy(false);
     }
@@ -115,22 +127,27 @@ export default function TotpManager({
           
           {t("扫不了就把这串密钥手输进去：")}<code className="totp-secret">{setup.grouped}</code>
         </p>
+        <p className="notice">
+          {t("手机上要留的必须是这一条。重新生成密钥后，旧的条目就作废了，验证码要对上这一串。")}
+        </p>
 
         <form className="login-form totp-form" onSubmit={confirmBind}>
           <input
             className="search-input"
             type="text"
             inputMode="numeric"
-            maxLength={6}
             value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+            onChange={(e) =>
+              // 只留数字；粘贴带空格的码也能用
+              setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+            }
             placeholder={t("验证器上显示的 6 位码")}
             aria-label={t("6 位验证码")}
           />
           <button
             className="btn btn-outline-light btn-plain"
             type="submit"
-            disabled={busy || code.length !== 6}
+            disabled={busy}
           >
             {bound ? t("验证并请求更换") : t("验证并绑定")}
           </button>
@@ -189,11 +206,16 @@ export default function TotpManager({
             className="btn btn-outline-light btn-plain"
             type="button"
             onClick={begin}
-            disabled={busy}
+            disabled={busy || !mailReady}
           >
             
             {t("绑定验证器")}
           </button>
+          {!mailReady && (
+            <p className="notice">
+              {t("绑定验证器需要邮件确认。请先配置服务端发信，并在站点设置里填好通知邮箱。")}
+            </p>
+          )}
         </>
       )}
 

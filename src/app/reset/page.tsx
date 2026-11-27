@@ -7,9 +7,12 @@ import { getAuth } from "@/lib/credentials";
 import { getSettings, settingsStore } from "@/lib/settings";
 import { listPasskeys } from "@/lib/passkey";
 import { mailReady } from "@/lib/change-request";
-import { canWriteEnvFile, getEnvValue } from "@/lib/env-config";
+import { canWriteEnvFile, getEnvValue, isVercel } from "@/lib/env-config";
+import { canWriteSettingsFile } from "@/lib/settings-file";
 import { CONFIG_KEYS } from "@/lib/config-keys";
 import { getT } from "@/lib/i18n";
+import SetupWizard from "@/app/setup/setup-wizard";
+import { getSetupData } from "@/app/setup/setup-data";
 
 export const dynamic = "force-dynamic";
 
@@ -60,18 +63,27 @@ export default async function ResetPage() {
     );
   }
 
-  const settings = await getSettings();
-  const passkeyCount = (await listPasskeys()).length;
-  let hasTotp = false;
-  try {
-    hasTotp = (await getAuth()).totpBound;
-  } catch {
-    hasTotp = false;
-  }
-  const canMail = await mailReady().catch(() => false);
+  // 恢复流程和首次安装走同一套向导：第一步都是配环境变量，
+  // 然后确认数据库、确认邮箱、绑两把钥匙。所以数据也共用一份。
+  const {
+    settings,
+    passkeys,
+    passkeyCount,
+    authorized,
+    hasTotp,
+    mailReady: canMail,
+    recoveryReady: hasRecovery,
+    rpId,
+    origin,
+    requestHost,
+    rpIdMatchesHost,
+    originHost,
+    dbStatus,
+    serviceFeatures,
+    manualAuthItems,
+    generatedAuthItems,
+  } = await getSetupData();
   const canWriteEnv = canWriteEnvFile();
-  const token = getEnvValue("RECOVERY_TOKEN") ?? "";
-  const hasRecovery = token.length >= 16;
 
   return (
     <main className="site">
@@ -79,6 +91,39 @@ export default async function ResetPage() {
         <h1 className="site-title">{t("恢复指引")}</h1>
         <p className="site-desc">{t("当前状态与下一步。只显示配置是否存在，不显示任何密钥内容。")}</p>
       </header>
+
+      <section className="section">
+        <SetupWizard
+          initial={{
+            siteName: settings.siteName,
+            description: settings.description,
+            notifyEmail: settings.notifyEmail,
+            postsPerPage: settings.postsPerPage,
+          }}
+          passkeyCount={passkeyCount}
+          passkeys={passkeys}
+          authorized={authorized}
+          hasTotp={hasTotp}
+          initialEmailConfirmed={settings.notifyEmail.trim().length > 0}
+          mailReady={canMail}
+          completed={settings.setupCompleted}
+          authItems={manualAuthItems}
+          generatedAuthItems={generatedAuthItems}
+          serviceFeatures={serviceFeatures}
+          envWritable={canWriteEnv}
+          fileWritable={canWriteSettingsFile()}
+          onVercel={isVercel()}
+          loggedIn={loggedIn}
+          dbStatus={dbStatus}
+          recoveryReady={hasRecovery}
+          rpId={rpId}
+          origin={origin}
+          requestHost={requestHost}
+          rpIdMatchesHost={rpIdMatchesHost}
+          originHost={originHost}
+          credentialProbeFailed={false}
+        />
+      </section>
 
       <section className="section">
         <h2 className="section-title">{t("当前状态")}</h2>
