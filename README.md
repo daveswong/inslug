@@ -19,11 +19,10 @@
 
 | 分支 | 给谁 | 说明 |
 | --- | --- | --- |
-| `main` | 开发者 | 最新代码，随时在改 |
-| `release` | 使用者 | 正式发布的版本。上面那个部署按钮用的就是它 |
-| `v1.x.0` | 使用者 | 版本标记，对应某个 `release` 提交，可在 Releases 页看更新说明 |
+| `main` | 使用者 | 正式发布的版本。用户部署的就是它 |
+| `nightly` | 开发者 | 开发分支，改动都在这儿做，测通了才发到 `main` |
 
-直接 clone 仓库默认拿到 `main`（最新但未必是发布版）。要发布版就切 `release` 分支，或去 [Releases](https://github.com/daveswong/inslug/releases) 下对应版本的源码包。
+直接 clone 仓库默认拿到 `main`，那就是发布版。开发的话切 `nightly` 分支。
 
 ## 现在能用的
 
@@ -179,20 +178,20 @@ Vercel 的每个项目有且只有一个**生产分支**（Branch Tracking）。
 #### 让使用者的站点跟着 inslug 的正式版走
 
 想让别人部署出来的东西始终是 inslug 的正式版（而不是某个开发中的状态），
-办法是**把生产分支设成 `release`**（Branch Tracking 里选它）。`release` 分支是 inslug
-每次发布时的内容，跟 `main`（开发中的东西）分开。
+办法是**把生产分支设成 `main`**（Branch Tracking 里选它）。`main` 分支是 inslug
+每次发布时的内容，`nightly` 是开发中的东西，两者分开。
 
 两种装法都适用：
 
 **① Fork（推荐，保留自己的改动空间）**
 
 在 GitHub 上 fork `daveswong/inslug`，Vercel 导入**你的 fork**。
-你的 fork 里同时有 `main` 和 `release` 两个分支，生产分支设成 `release`。
+你的 fork 里同时有 `main` 和 `nightly` 两个分支，生产分支设成 `main`。
 
 | 发生什么 | 使用者的站点 |
 | --- | --- |
-| inslug 维护者推 `main`（开发中） | **毫无影响**。`main` 只是 fork 里的一个预览分支，Vercel 只会生成一个预览部署 |
-| inslug 发布新版本（`release` 更新） | fork 同步之后，Vercel 自动重新部署，新内容就上去了 |
+| inslug 维护者推 `nightly`（开发中） | **毫无影响**。`nightly` 只是 fork 里的一个预览分支，Vercel 只会生成一个预览部署 |
+| inslug 发布新版本（`main` 更新） | fork 同步之后，Vercel 自动重新部署，新内容就上去了 |
 
 **「同步」这一步要使用者自己做一下**：GitHub 的 fork 不会自动跟着上游跑，
 在 fork 首页点一下 **Sync fork**，Vercel 收到推送就自动重新部署。
@@ -200,9 +199,9 @@ Vercel 的每个项目有且只有一个**生产分支**（Branch Tracking）。
 
 **② 直接 import inslug 仓库**
 
-Vercel 监听的是 `daveswong/inslug` 本身，`release` 一更新就自动部署，用不着做任何同步。
-代价是使用者没法往仓库里推自己的改动（没有写权限），而且维护者推 `main` 时，
-只要生产分支是 `release`，同样不会影响使用者的站点。
+Vercel 监听的是 `daveswong/inslug` 本身，`main` 一更新就自动部署，用不着做任何同步。
+代价是使用者没法往仓库里推自己的改动（没有写权限），而且维护者推 `nightly` 时，
+只要生产分支是 `main`，同样不会影响使用者的站点。
 
 #### 临时部署某个分支或某次提交
 
@@ -211,9 +210,10 @@ Vercel 监听的是 `daveswong/inslug` 本身，`release` 一更新就自动部�
 
 #### 关于 tag
 
-Vercel 的自动部署不认 tag。想让某个 tag 触发部署，得自己搭 GitHub Actions
-（官方指南叫 "Can you deploy based on tags/releases on Vercel?"），要先关掉自动部署再手动调 CLI。
-本项目用 `release` 分支就够——它和 tag 指向的是同一份代码。
+本项目不打 tag，版本记录就落在 commit 历史里。Vercel 的自动部署本来也不认 tag——
+想让某个 tag 触发部署得自己搭 GitHub Actions（官方指南叫
+"Can you deploy based on tags/releases on Vercel?"），要先关掉自动部署再手动调 CLI。
+用 `main` 分支就够。
 
 数据库连接串是通用的：Atlas、自建、Railway、容器里的 MongoDB 都行。库名优先级 `MONGODB_DB_NAME` > 连接串路径里的名字 > `inslug`；同一集群跑多个站点时用不同库名区分，填一个不存在的库名，安装向导会自动建出来。
 
@@ -334,14 +334,14 @@ npm install
 npm run dev
 ```
 
-改动走 `main`。发布由维护者用一条命令完成：
+改动走 `nightly`，测通了再发到 `main`。发布由维护者用一条命令完成：
 
 ```bash
-npm run release 1.0.0
+npm run release
 ```
 
-它会把 `main` 的内容推成 `release` 分支、打上 `v1.0.0` 标签，并**自动创建 GitHub Release**
-（更新说明取自上一个版本到这次的提交清单）。`release` 分支是 `main` 的镜像，不接受直接提交——
-要让改动出现在发布版里，合并进 `main` 再说。
+它只做一件事：把 `nightly` 的内容 force push 到 `main`。不打 tag，也不建 GitHub Release——
+版本记录就落在 commit 历史里。`main` 是 `nightly` 的镜像，不接受直接提交：
+要改东西就在 `nightly` 上改，测通了再发布。
 
 **提交信息用中文短句**，说清做了什么就行，不用套 Conventional Commits。
