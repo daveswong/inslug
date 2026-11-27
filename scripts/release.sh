@@ -71,7 +71,7 @@ if [ "$(git branch --show-current)" != "main" ]; then
 fi
 
 echo "==> 检查 main 是否已推到远端"
-remote_main="$(git ls-remote origin refs/heads/main | cut -f1)"
+remote_main="$(git_push ls-remote origin refs/heads/main | cut -f1)"
 local_main="$(git rev-parse HEAD)"
 if [ "$remote_main" != "$local_main" ]; then
   echo "main 还没推到远端。先执行：git push origin main" >&2
