@@ -2,10 +2,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import PostBody from "@/components/PostBody";
+import AttachmentList from "@/components/AttachmentList";
 import SiteFooter from "@/components/SiteFooter";
 import InstallHint from "@/components/install-hint";
 import { getPostBySlug } from "@/lib/posts";
 import { isDbConfigured } from "@/lib/mongodb";
+import { getStorageProvider } from "@/lib/storage";
 import { isLoggedIn } from "@/lib/auth";
 import { formatDate, postDisplayDate } from "@/lib/post-utils";
 import type { PostDoc } from "@/lib/types";
@@ -62,6 +64,8 @@ export default async function PostPage({ params }: Props) {
   if (!post) notFound();
 
   const date = formatDate(postDisplayDate(post));
+  // 附件下载链接要按存储方案拼（强制下载参数各家不一样）
+  const storageProvider = await getStorageProvider();
 
   return (
     <main className="site">
@@ -92,6 +96,11 @@ export default async function PostPage({ params }: Props) {
         </header>
 
         <PostBody blocks={post.blocks} />
+
+        <AttachmentList
+          attachments={post.attachments ?? []}
+          provider={storageProvider}
+        />
       </article>
 
       <SiteFooter />

@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { isLoggedIn } from "@/lib/auth";
 import { getT } from "@/lib/i18n";
 import {
+  MAX_ATTACHMENT_SIZE,
   MAX_IMAGE_SIZE,
   createS3Ticket,
   isAllowedImageType,
@@ -15,7 +16,7 @@ export async function POST(req: Request) {
 
   if (!(await isLoggedIn())) {
     return NextResponse.json(
-      { error: `${t("登录后才能上传图片")} [UNAUTHORIZED]` },
+      { error: `${t("登录后才能上传文件")} [UNAUTHORIZED]` },
       { status: 401 }
     );
   }
@@ -24,6 +25,7 @@ export async function POST(req: Request) {
     filename?: string;
     contentType?: string;
     size?: number;
+    kind?: string;
   } | null;
 
   if (!body?.filename || !body.contentType) {
@@ -32,15 +34,23 @@ export async function POST(req: Request) {
       { status: 400 }
     );
   }
-  if (!isAllowedImageType(body.contentType)) {
+
+  // 附件不限类型，只卡大小；图片仍然只收图片类型
+  const isAttachment = body.kind === "attachment";
+  if (!isAttachment && !isAllowedImageType(body.contentType)) {
     return NextResponse.json(
       { error: `${t("只支持图片文件")} [BAD_TYPE]` },
       { status: 400 }
     );
   }
-  if (typeof body.size === "number" && body.size > MAX_IMAGE_SIZE) {
+  const maxSize = isAttachment ? MAX_ATTACHMENT_SIZE : MAX_IMAGE_SIZE;
+  if (typeof body.size === "number" && body.size > maxSize) {
     return NextResponse.json(
-      { error: `${t("图片过大，请压缩后再传")} [TOO_LARGE]` },
+      {
+        error: isAttachment
+          ? `${t("附件太大，单个不能超过 50MB")} [TOO_LARGE]`
+          : `${t("图片过大，请压缩后再传")} [TOO_LARGE]`,
+      },
       { status: 400 }
     );
   }
@@ -50,6 +60,7 @@ export async function POST(req: Request) {
       filename: body.filename,
       contentType: body.contentType,
       size: body.size ?? 0,
+      maxSize,
     });
     return NextResponse.json(ticket);
   } catch (err) {

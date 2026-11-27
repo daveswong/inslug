@@ -426,5 +426,12 @@
   "站点设置存在 config/settings.json 里，这个文件不在重置范围内——重置不会碰它。想清空的话自己删这个文件。": "Site settings live in config/settings.json; that file is out of the reset's scope — it will not be touched. Delete it yourself if you want to clear the settings.",
   "站点设置存在 config/settings.json 里，这个文件不会被重置。想清空的话自己删掉它。": "Site settings live in config/settings.json; this file will not be reset. Delete it yourself if you want to clear the settings.",
   "第 {n} 条社交链接的标题": "Title of social link {n}",
-  "第 {n} 条社交链接的地址": "URL of social link {n}"
+  "第 {n} 条社交链接的地址": "URL of social link {n}",
+  "附件": "Attachments",
+  "上传附件": "Upload attachment",
+  "删除附件 {name}": "Remove attachment {name}",
+  "不限文件类型，单个最大 50MB。文章末尾会列出这些文件供下载。": "Any file type, up to 50 MB each. They are listed at the end of the article for readers to download.",
+  "附件太大，单个不能超过 50MB": "Attachment too large — 50 MB max per file",
+  "登录后才能上传文件": "Sign in before uploading files",
+  "附件信息不对，保存失败": "Invalid attachment data; save failed"
 }

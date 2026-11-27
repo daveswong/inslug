@@ -1,11 +1,12 @@
-// 本地磁盘存储：图片由服务器写入 uploads 目录
+// 本地磁盘存储：文件由服务器写入 uploads 目录
 import { NextResponse } from "next/server";
 import { isLoggedIn } from "@/lib/auth";
 import { getT } from "@/lib/i18n";
 import {
+  MAX_ATTACHMENT_SIZE,
   MAX_IMAGE_SIZE,
   isAllowedImageType,
-  saveLocalImage,
+  saveLocalFile,
 } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
@@ -15,16 +16,19 @@ export async function POST(req: Request) {
 
   if (!(await isLoggedIn())) {
     return NextResponse.json(
-      { error: `${t("登录后才能上传图片")} [UNAUTHORIZED]` },
+      { error: `${t("登录后才能上传文件")} [UNAUTHORIZED]` },
       { status: 401 }
     );
   }
 
   let file: File | null = null;
+  let kind = "image";
   try {
     const form = await req.formData();
     const entry = form.get("file");
     if (entry instanceof File) file = entry;
+    const kindEntry = form.get("kind");
+    if (typeof kindEntry === "string") kind = kindEntry;
   } catch {
     file = null;
   }
@@ -35,21 +39,29 @@ export async function POST(req: Request) {
       { status: 400 }
     );
   }
-  if (!isAllowedImageType(file.type)) {
+
+  // 附件不限类型，只卡大小；图片仍然只收图片类型
+  const isAttachment = kind === "attachment";
+  if (!isAttachment && !isAllowedImageType(file.type)) {
     return NextResponse.json(
       { error: `${t("只支持图片文件")} [BAD_TYPE]` },
       { status: 400 }
     );
   }
-  if (file.size > MAX_IMAGE_SIZE) {
+  const maxSize = isAttachment ? MAX_ATTACHMENT_SIZE : MAX_IMAGE_SIZE;
+  if (file.size > maxSize) {
     return NextResponse.json(
-      { error: `${t("图片过大，请压缩后再传")} [TOO_LARGE]` },
+      {
+        error: isAttachment
+          ? `${t("附件太大，单个不能超过 50MB")} [TOO_LARGE]`
+          : `${t("图片过大，请压缩后再传")} [TOO_LARGE]`,
+      },
       { status: 400 }
     );
   }
 
   try {
-    const saved = await saveLocalImage(file);
+    const saved = await saveLocalFile(file);
     return NextResponse.json(saved);
   } catch (err) {
     const message = err instanceof Error ? err.message : t("上传失败");
