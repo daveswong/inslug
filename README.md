@@ -194,6 +194,7 @@ Vercel 控制台 → **Add New → Project** → 导入 `daveswong/inslog`。
 | --- | --- | --- |
 | **「站点还没配置好 / 数据库连不上」** | 数据库还没配，**这是正常的** | 点「去安装向导」，从第 1 步填 `MONGODB_URI` |
 | **首页 404** | 部署没成功，或者 Root Directory 设错了 | 先访问 `/setup`：能打开说明部署是好的（路由问题），也 404 就是构建有问题，看下面的排查表 |
+| **404 `DEPLOYMENT_NOT_FOUND`** | 一次成功的构建都没有，域名指到空处 | Deployments 页点 **Redeploy**；再确认 Settings → Git 连的分支还在 |
 | **Vercel 上显示部署失败（红色）** | 构建报错了 | Deployments → 点那个失败部署 → **Build Logs** 看第一行红色报错 |
 | **页面正常但没有文章** | 数据库连上了，只是还没写东西 | 正常，登录后去 `/write` 写第一篇 |
 | **一直跳回安装向导** | 安装最后一步没走完 | 走完向导的第 4 步「完成安装」 |
@@ -209,6 +210,7 @@ Vercel 控制台 → **Add New → Project** → 导入 `daveswong/inslog`。
 
 | 现象 | 多半是 | 怎么办 |
 | --- | --- | --- |
+| **页面显示 `404 DEPLOYMENT_NOT_FOUND`** | 域名指向了一次**不存在的部署**：这个项目一次成功的构建都没有 | Deployments 页看有没有绿色的成功部署；没有就点 **Redeploy** 触发一次；再看看 Settings → Git 里连的分支是不是已经被删了（比如 `release`） |
 | 改了环境变量没反应 | 环境变量**要重新部署才生效** | Vercel → Deployments → Redeploy |
 | 数据库连不上 | Atlas 的 IP 白名单 / 连接串错 | Atlas → Network Access 加 `0.0.0.0/0` 试；确认连接串里密码对 |
 | 构建失败，日志提到模块找不到 | 依赖没装上 | 看 Build Logs 里的 `npm install` 那一段 |
