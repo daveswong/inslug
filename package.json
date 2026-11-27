@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "backup": "node scripts/export-backup.mjs"
+    "backup": "node scripts/export-backup.mjs",
+    "release": "bash scripts/release.sh"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1177.0",

@@ -2,6 +2,10 @@
 
 一个基于 Node.js + Next.js 的 Blog web APP：让你专注于写作，让读者专注于阅读。
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fdaveswong%2Finslug%2Ftree%2Frelease&project-name=inslug&repository-name=inslug&stores=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22mongodbatlas%22%2C%22productSlug%22%3A%22atlas%22%2C%22protocol%22%3A%22storage%22%7D%2C%7B%22type%22%3A%22blob%22%2C%22access%22%3A%22public%22%7D%5D)
+
+点上面这个按钮就能得到自己的 inslug：MongoDB Atlas 和图片存储会自动建好，剩下的跟着首页的安装向导点几下就完事。想自己部署的话，看下面的[部署与环境变量](#部署与环境变量)。
+
 **路径短、界面干净、默认安全。** 没有账号系统，没有密码，没有追踪，没有评论，没有推荐算法，
 没有弹窗和花哨的装饰。那些烦人的东西离使用者远一点，人才有心思专注在创作本身。
 
@@ -14,6 +18,16 @@
 不做社交、不做统计。想让别人看到你的文字，把文章发布出去就行；除此之外，它不替你做任何决定。
 
 **没有主题模板，也不会有。** 外观就这一套，刻意不让人把精力花在折腾博客的样子上——这是设计取舍，不是待办。
+
+## 分支与版本
+
+| 分支 | 给谁 | 说明 |
+| --- | --- | --- |
+| `main` | 开发者 | 最新代码，随时在改 |
+| `release` | 使用者 | 正式发布的版本。上面那个部署按钮用的就是它 |
+| `v1.x.0` | 使用者 | 版本标记，对应某个 `release` 提交，可在 Releases 页看更新说明 |
+
+直接 clone 仓库默认拿到 `main`（最新但未必是发布版）。要发布版就切 `release` 分支，或去 [Releases](https://github.com/daveswong/inslug/releases) 下对应版本的源码包。
 
 ## 现在能用的
 
@@ -125,7 +139,13 @@ Vercel 的 Storage 里还有个 Global Config（原 Edge Config），是个全�
 
 ## 部署与环境变量
 
-推荐 Vercel：导入 GitHub 仓库（框架自动识别 Next.js）→ 按上面的向导配置 → 绑定域名，DNS 托管在 Vercel 时 HTTPS 证书自动签发。自部署用 `npm run build && npm run start`，`.env` 放在项目根目录。
+**最省事的一条路**：点 README 顶部的 Deploy 按钮。Vercel 会把 `release` 分支克隆到**你自己的
+GitHub 账号**下，顺手建好 MongoDB Atlas 数据库和图片存储，然后你跟着首页的安装向导走完剩下几步。
+
+要点：部署完之后还有一步——Vercel 的环境变量改动要重新部署才生效。向导第 1 步会把要填的
+变量列成清单给你，照着填进 Vercel 的 Environment Variables，再重新部署一次，站点就能用了。
+
+自己部署的话：导入 GitHub 仓库（框架自动识别 Next.js）→ 按上面的向导配置 → 绑定域名，DNS 托管在 Vercel 时 HTTPS 证书自动签发。自部署用 `npm run build && npm run start`，`.env` 放在项目根目录。
 
 数据库连接串是通用的：Atlas、自建、Railway、容器里的 MongoDB 都行。库名优先级 `MONGODB_DB_NAME` > 连接串路径里的名字 > `inslug`；同一集群跑多个站点时用不同库名区分，填一个不存在的库名，安装向导会自动建出来。
 
@@ -234,3 +254,23 @@ public/                        # 图标
 本项目采用 [MIT License](./LICENSE)，并附加一条要求：**任何公开部署都必须保留指向本项目源码仓库的可见链接**，让更多人能找到并使用它。该链接位于页脚，独立于站点自己的内容与社媒链接，也不在站点设置中修改。
 
 > 链接位置在 `src/components/SiteFooter.tsx`，全站共用，改一处即可。
+
+## 参与开发
+
+```bash
+git clone https://github.com/daveswong/inslug.git
+cd inslug
+npm install
+npm run dev
+```
+
+改动走 `main`。发布由维护者用一条命令完成：
+
+```bash
+npm run release 1.0.0
+```
+
+它会把 `main` 的内容推成 `release` 分支、打上 `v1.0.0` 标签，并给出创建 Release 说明的链接。
+`release` 分支是 `main` 的镜像，不接受直接提交——要让改动出现在发布版里，合并进 `main` 再说。
+
+**提交信息用中文短句**，说清做了什么就行，不用套 Conventional Commits。
