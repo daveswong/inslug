@@ -60,6 +60,94 @@ git_push() {
   done
 }
 
+/**
+ * 拿 GitHub 的访问令牌。
+ *
+ * 优先用环境变量 GITHUB_TOKEN；没有的话问 git 的凭据助手
+ * （你平时 push 能用，说明那儿存着）。
+ */
+get_github_token() {
+  if [ -n "${GITHUB_TOKEN:-}" ]; then
+    echo "$GITHUB_TOKEN"
+    return 0
+  fi
+  printf 'protocol=https\nhost=github.com\n\n' | git credential fill 2>/dev/null |
+    sed -n 's/^password=//p' | head -1
+}
+
+/**
+ * 自动写更新说明：上一个版本到这次的提交清单。
+ *
+ * 提交信息本身就是中文短句，直接拿来当说明最省事，
+ * 也比 GitHub 的自动生成（英文）好用。
+ */
+build_notes() {
+  local tag="$1"
+  local previous=""
+  # 找上一个 tag（排除刚打的这个）
+  previous="$(git tag --sort=-v:refname | grep -vx "$tag" | head -1)"
+
+  local range
+  if [ -n "$previous" ]; then
+    range="$previous..HEAD"
+  else
+    range="HEAD"
+  fi
+
+  local count
+  count="$(git rev-list --count "$range" 2>/dev/null || echo 0)"
+
+  local notes=""
+  notes+="## 更新内容"
+  notes+=$'\n\n'
+  if [ "$count" -gt 0 ]; then
+    notes+="共 $count 次提交。"$'\n\n'
+    notes+="$(git log "$range" --no-merges --pretty=format:'- %s')"
+    notes+=$'\n'
+  else
+    notes+="本次没有新的提交内容。"$'\n'
+  fi
+
+  # 改了哪些文件，给人一个大概的范围
+  if [ -n "$previous" ]; then
+    local files
+    files="$(git diff --name-only "$previous..HEAD" | wc -l | tr -d ' ')"
+    notes+=$'\n'
+    notes+="改动文件：$files 个。"
+  fi
+
+  echo "$notes"
+}
+
+# 调 GitHub API 创建 Release，带上自动生成的说明
+create_release() {
+  local tag="$1" version="$2" notes="$3"
+  local token
+  token="$(get_github_token)"
+  if [ -z "$token" ]; then
+    echo "拿不到 GitHub 令牌（设 GITHUB_TOKEN 环境变量，或让 git 凭据助手能取到）。" >&2
+    return 1
+  fi
+
+  local payload
+  payload="$(printf '{"tag_name":"%s","name":"%s","body":%s,"draft":false,"prerelease":false}' \
+    "$tag" "$tag" "$(printf '%s' "$notes" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))')")"
+
+  local response
+  response="$(curl -sS --max-time 60 -X POST \
+    -H "Authorization: Bearer $token" \
+    -H "Accept: application/vnd.github+json" \
+    -H "Content-Type: application/json" \
+    -d "$payload" \
+    "https://api.github.com/repos/$REPO_SLUG/releases" 2>&1)"
+
+  # 200 或 201 都算成功（201 = 新建）
+  case "$response" in
+    *'"id"'*) return 0 ;;
+    *) echo "$response" >&2; return 1 ;;
+  esac
+}
+
 if ! git diff --quiet || ! git diff --cached --quiet; then
   echo "工作区还有没提交的改动，先提交或 stash 再发布。" >&2
   exit 1
@@ -90,10 +178,20 @@ echo "==> 打 tag $tag"
 git tag -a "$tag" -m "发布 $version"
 git_push push origin "$tag"
 
+echo "==> 生成更新说明"
+notes="$(build_notes "$tag")"
+
+echo "==> 创建 GitHub Release"
+if ! create_release "$tag" "$version" "$notes"; then
+  echo "Release 没创建成功。手动补一下：" >&2
+  echo "   https://github.com/$REPO_SLUG/releases/new?tag=$tag" >&2
+  exit 1
+fi
+
 echo
 echo "✅ 发布完成："
 echo "   release 分支 → $RELEASE_BRANCH"
 echo "   tag         → $tag"
+echo "   更新说明    → 已自动写到 GitHub Release"
 echo
-echo "接下来去 GitHub 写更新说明："
-echo "   https://github.com/$REPO_SLUG/releases/new?tag=$tag"
+echo "   https://github.com/$REPO_SLUG/releases/tag/$tag"
