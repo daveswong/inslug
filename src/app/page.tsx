@@ -48,7 +48,13 @@ export async function generateMetadata({
   const url = canonicalHref(page, tag);
 
   return {
-    title: tag ? t("标签：{tag}", { tag }) : undefined,
+    // 带标签时给「标签：xxx」，不带时**整个 title 字段都不写**，
+    // 让它继承 layout 里的站点名。
+    //
+    // 别写成 title: undefined——显式给 undefined 会被当成「本页明确不要标题」，
+    // 把继承来的 default 覆盖掉，结果 <title> 和 og:title 整个消失，
+    // 浏览器标签页只剩网址。
+    ...(tag ? { title: t("标签：{tag}", { tag }) } : {}),
     alternates: { canonical: url },
     openGraph: { url },
   };
