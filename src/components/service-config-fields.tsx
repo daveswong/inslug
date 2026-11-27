@@ -22,6 +22,8 @@ export type ServiceField = {
 export type ServiceFeature = {
   id: string;
   title: string;
+  /** 区块标题下的补充说明，可空 */
+  note?: string;
   /** provider 选择器对应的配置键，如 STORAGE_PROVIDER */
   choiceKey: string;
   /** 当前生效的方案 */
@@ -60,6 +62,8 @@ export default function ServiceConfigFields({
         return (
           <fieldset className="provider-block" key={feature.id}>
             <legend className="provider-title">{feature.title}</legend>
+
+            {feature.note && <p className="field-hint">{feature.note}</p>}
 
             <label className="field">
               <span className="field-label">{t("用哪种")}</span>

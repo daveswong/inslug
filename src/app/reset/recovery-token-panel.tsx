@@ -59,7 +59,7 @@ export default function RecoveryTokenPanel() {
             </button>
           </div>
           <p className="notice">
-            {t("进去后立刻重新绑定 Passkey 和验证器，再把这把临时密钥删掉。")}
+            {t("进去后立刻重新绑定 Passkey 和验证器。")}
           </p>
         </>
       )}

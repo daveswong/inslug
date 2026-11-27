@@ -35,7 +35,7 @@
 - **站点设置**：四组平铺——站点信息（基本信息 + SEO）/ 外观（主题、界面语言、图片地址、每页文章数、页脚）/ 社交链接（自定义标题 + 网址，条数不限）/ 安全（通知邮箱、Passkey、验证器）。一个保存按钮，只提交改过的字段；主题和界面语言独立、点一下即生效。
 - **对外输出**：RSS 2.0、`sitemap.xml`、`robots.txt`、自定义 404 都已实现，RSS 与 sitemap 只输出 public 文章；SEO 元信息、canonical、og、分享图齐全。
 - **可插拔服务**：图片与附件 `vercel-blob` / `s3` / `local`，发信 `resend` / `smtp`，都在安装向导里选方案、填字段、写进 `.env`；正文里的图片和附件都只存 URL。
-- **安装与恢复**：`/setup` 五步向导（配环境变量 → 确认数据库 → 发确认邮件 → 绑两把钥匙 → 完成），`/reset` 走同一套流程并多一块「当前状态」和「重置配置」；`/api/diag` 域名诊断；`npm run backup` 导出文章与设置。
+- **安装与恢复**：`/setup` 五步向导（配环境变量 → 确认数据库 → 发确认邮件 → 绑两把钥匙 → 完成），`/reset` 走同一套流程并多一块「当前状态」和「重置配置」；`npm run backup` 导出文章与设置。
 - **不娇气**：数据库还没配好时首页 / 文章页显示安装提示，`rss.xml` 与 `sitemap.xml` 返回 503，而不是抛 500；`MONGODB_DB_NAME` 指向一个还不存在的库时，安装向导会自动建出来。
 
 ## 本地跑起来
@@ -98,7 +98,7 @@ Vercel 上的完整顺序：
 **`/reset` 走同一套流程**——两把钥匙都丢了时，在 `/reset` 页一样是：配环境变量 → 确认数据库 → 发确认邮件 → 绑两把钥匙 → 完成。
 它还多一块「当前状态」和「重置配置」，方便你先看清自己现在有什么。
 
-改这几项前先想清楚：`RP_ID` / `ORIGIN` 改了会让已绑定的 Passkey 失效；`AUTH_SECRET` 改了会让所有设备掉线、验证器要重绑；`MONGODB_URI` 改了会立刻重连数据库，页面可能短暂打不开。`/api/diag` 只返回 `rpId` / `origin` / 当前请求域名和匹配结论，不返回密钥或连接串。
+改这几项前先想清楚：`RP_ID` / `ORIGIN` 改了会让已绑定的 Passkey 失效——填之前对照当前域名（安装页会显示服务器读到的值和当前域名）；`AUTH_SECRET` 改了会让所有设备掉线、验证器要重绑；`MONGODB_URI` 改了会立刻重连数据库，页面可能短暂打不开。
 
 **凭据不会留在前端。** 向导里的配置表单只用来生成或写入 `.env`：值不会注入正在运行的进程，已配置的密钥不回显，站点设置页完全不碰这些。站点初始化之后，再改这些配置只能走安装 / 重置引导，且必须先登录。
 
@@ -109,9 +109,28 @@ Vercel 上的完整顺序：
 | 组 | 内容 | 什么时候能改 |
 | --- | --- | --- |
 | 身份验证与启动 | `MONGODB_URI`、`MONGODB_DB_NAME`、`RP_ID`、`ORIGIN`（手填）+ `AUTH_SECRET`、`RECOVERY_TOKEN`（程序生成）+ `SETTINGS_STORE`（存哪儿） | 只在安装 / 重置引导里 |
-| 服务类 | 图片存储（`STORAGE_PROVIDER` + 各方案字段）、发信（`MAIL_PROVIDER` + 各方案字段） | 只在安装 / 重置引导里改；非 Vercel 改完约 3 秒生效，Vercel 要重新部署 |
+| 服务类 | 文件存储（`STORAGE_PROVIDER` + 各方案字段）、发信（`MAIL_PROVIDER` + 各方案字段） | 只在安装 / 重置引导里改；非 Vercel 改完约 3 秒生效，Vercel 要重新部署 |
 
 服务类可插拔：先选方案，再只填这个方案要的字段，没选的那套不参与也不必填。默认走最省事的那条（Vercel Blob + Resend）。它不存数据库——改乱了在服务端 `.env` 里一眼能查到、改回来。Vercel 上若选 Vercel Blob，连接 store 时勾上「Add a read-write token env var」，token 由平台自动注入，不用填。
+
+### 环境变量一律视为机密
+
+**所有环境变量都不安全、都不能泄露**，不分级别、没有"无所谓"的项。它们只存在服务端（`.env` 或 Vercel 环境变量），**绝对不要泄漏，也不要在任何其它地方保存**——不写进文章、注释、截图、聊天记录、公开仓库或任何在线文档，只留在服务端配置里。
+
+涉及的全部变量：
+
+- 身份验证与启动：`MONGODB_URI`、`MONGODB_DB_NAME`、`RP_ID`、`ORIGIN`、`AUTH_SECRET`、`RECOVERY_TOKEN`、`SETTINGS_STORE`
+- 发信：`MAIL_PROVIDER`、`RESEND_API_KEY`、`RESEND_FROM`、`SMTP_HOST`、`SMTP_PORT`、`SMTP_USER`、`SMTP_PASSWORD`、`SMTP_FROM`、`SMTP_SECURE`
+- 文件存储：`STORAGE_PROVIDER`、`BLOB_READ_WRITE_TOKEN`、`S3_ENDPOINT`、`S3_REGION`、`S3_BUCKET`、`S3_ACCESS_KEY_ID`、`S3_SECRET_ACCESS_KEY`、`S3_PUBLIC_URL`、`LOCAL_UPLOAD_DIR`
+
+其中 `MONGODB_URI`、`AUTH_SECRET`、`RECOVERY_TOKEN` 以及发信 / 存储的密钥类项泄漏后果最直接：能拖走整个数据库、伪造登录态、绕过两把钥匙进门、盗用发信或刷存储流量。但其余项同样不要外泄——域名、库名、方案选择这些信息拼在一起，会帮别人把站点摸清楚。
+
+几条硬规矩：
+
+- 已配置项在页面上**只显示「已配置」，绝不回显值**——前端看不到，也就不可能从页面源码里漏出去。
+- `.env` 和 `config/*.json` 都在 `.gitignore` 里，提交前确认没有把这些文件带进去。环境变量一旦进了公开仓库，就等于已经泄漏，要立刻轮换。
+- 不要把这些值发到聊天、邮件、工单里求助；真要请人排查，只描述现象，不要贴原文。
+- 生成 `AUTH_SECRET` / `RECOVERY_TOKEN` 时程序只在那一次显示，当场存进密码管理器；之后服务端配置是唯一副本。
 
 ### 站点设置存在哪儿
 
@@ -143,7 +162,7 @@ Vercel 的 Storage 里还有个 Global Config（原 Edge Config），是个全�
 ## 恢复与重置
 
 - 进不去先看 `/reset`：未登录只给通用步骤、不泄露任何状态；登录后按实际状态列出 Passkey 数量、验证器 / 邮件确认 / 紧急密钥是否就绪，并给出下一步。
-- 两把钥匙都丢了：`/reset` 页面能生成一把临时密钥（只生成、不写文件、不回显已有配置），自己填进服务端 `.env` 或 Vercel 环境变量 → 生效后用 `/login?recovery=1` 进门 → 立刻重绑 Passkey 和验证器 → 删掉这把临时密钥（删了就没有兜底）。只有能改服务器配置的人才是站点拥有者，别人拿到密钥也没用。
+- 两把钥匙都丢了：`/reset` 页面能生成一把临时密钥（只生成、不写文件、不回显已有配置），自己填进服务端 `.env` 或 Vercel 环境变量 → 生效后用 `/login?recovery=1` 进门 → 立刻重绑 Passkey 和验证器。这把密钥存在服务端配置里、不在数据库——能读到它就等于整站已经失守，所以不必也没必要"用后删除"，留着当长期兜底即可。只有能改服务器配置的人才是站点拥有者，别人拿到密钥也没用。
 - 彻底清空凭据：删数据库 `auth` 集合的 `admin` 文档等于解绑验证器，删 `passkeys` 集合等于清空所有 Passkey，再从 `/setup` 重来。
 - 「重置配置」要过邮件确认：清掉 auth 组和 service 组在 `.env` 里的键；**站点设置、文章、标签、已绑定的 Passkey 与验证器都不动**。Vercel 上程序删不掉的环境变量，会在确认后逐个列出，由你手动去控制台删除。
 
@@ -222,10 +241,7 @@ Vercel 控制台 → **Add New → Project** → 导入 `daveswong/inslog`。
 | 构建失败，日志提到 Node 版本 | Vercel 用的 Node 版本不对 | Settings → Build & Development → Node.js Version 选 20 或 22 |
 | 邮件发不出去 | 发信密钥没配，或发信域名没验证 | 检查 `RESEND_API_KEY` / `SMTP_*`；Resend 要先验证域名 |
 | 图片传不上去 | 存储没配 | 检查 `STORAGE_PROVIDER` 和对应字段；Vercel Blob 要在项目里连上 store |
-| Passkey 报 "RP ID 无效" | `RP_ID` 跟当前域名对不上 | `/api/diag` 会直接告诉你服务器读到的 `RP_ID` 和当前域名差在哪 |
-
-`/api/diag` 只返回域名类信息（`rpId` / `origin` / 当前请求域名和匹配结论），
-**不返回密钥或连接串**。
+| Passkey 报 "RP ID 无效" | `RP_ID` 跟当前域名对不上 | 打开 `/setup`，第一步底部会显示服务器读到的 `RP_ID` / `ORIGIN` 和当前域名，按它改 |
 
 ### 数据库和图片存储得自己准备
 

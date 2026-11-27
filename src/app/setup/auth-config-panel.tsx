@@ -259,6 +259,13 @@ export default function AuthConfigPanel({
         </>
       )}
 
+      <h3 className="form-group">{t("邮件与文件存储")}</h3>
+      <ServiceConfigFields
+        features={serviceFeatures}
+        values={serviceValues}
+        onChange={setServiceValues}
+      />
+
       <h3 className="form-group">{t("密钥")}</h3>
       <p className="notice">
         {t(
@@ -304,13 +311,6 @@ export default function AuthConfigPanel({
           ))}
         </ul>
       )}
-
-      <h3 className="form-group">{t("邮件与图片存储")}</h3>
-      <ServiceConfigFields
-        features={serviceFeatures}
-        values={serviceValues}
-        onChange={setServiceValues}
-      />
 
       {status && <p className="notice">{status}</p>}
       {error && <p className="form-error">{error}</p>}

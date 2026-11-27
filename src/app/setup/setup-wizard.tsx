@@ -9,6 +9,7 @@ import type { DatabaseStatus } from "@/lib/mongodb";
 import { useT } from "@/components/i18n-provider";
 import type { ServiceFeature } from "@/components/service-config-fields";
 import AuthConfigPanel, { type GeneratedItem } from "./auth-config-panel";
+import { checkSetupReady } from "./config-actions";
 
 type SiteValues = {
   siteName: string;
@@ -147,6 +148,28 @@ export default function SetupWizard({
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : t("保存失败"));
+      setBusy(false);
+    }
+  };
+
+  /** 第 1 步的「检查配置」按钮：读服务端实时配置，好了就进下一步，没好就提示缺什么 */
+  const checkConfig = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      const res = await checkSetupReady();
+      if (!res.ok) {
+        setError(
+          t("还有必填配置没生效：{items}。填好后请先保存，再往下走。", {
+            items: res.missing.join("、"),
+          })
+        );
+        return;
+      }
+      setStep(1);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("检查配置失败"));
+    } finally {
       setBusy(false);
     }
   };
@@ -449,13 +472,13 @@ export default function SetupWizard({
           <button
             className="btn btn-outline-light btn-plain"
             type="button"
-            // 第 1 步是确认邮箱：没收到确认信就不许往下走，
-            // 否则「填邮箱发确认信」这一步就形同虚设
-            disabled={step === 1 && !emailConfirmed}
-            onClick={() => setStep(step + 1)}
+            // 第 1 步先「检查配置」：没配好不许往下走；
+            // 第 2 步是确认邮箱：没收到确认信也不许往下走
+            disabled={busy || (step === 1 && !emailConfirmed)}
+            onClick={() => (step === 0 ? void checkConfig() : setStep(step + 1))}
           >
             
-            {t("下一步")}
+            {step === 0 ? t("检查配置") : t("下一步")}
           </button>
         )}
         {done[step] && <span className="notice">{LABELS[step]}</span>}

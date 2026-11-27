@@ -54,7 +54,7 @@ export default async function ResetPage() {
             </li>
           </ol>
           <p className="notice">
-            {t("进去后立刻重新绑定 Passkey 和验证器，再把这把临时密钥删掉。")}
+            {t("进去后立刻重新绑定 Passkey 和验证器。")}
           </p>
         </section>
 
@@ -205,7 +205,7 @@ export default async function ResetPage() {
         {!hasRecovery && (
           <p className="notice">
             
-            {t("建议临时配置一把紧急密钥")} <code>RECOVERY_TOKEN</code>{t("：两把钥匙都丢时用它进门， 用完之后删掉。")}
+            {t("建议配置一把紧急密钥")} <code>RECOVERY_TOKEN</code>{t("：两把钥匙都丢时用它进门。")}
           </p>
         )}
         {passkeyCount > 0 && hasTotp && canMail && hasRecovery && (

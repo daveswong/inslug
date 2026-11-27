@@ -11,7 +11,7 @@ import { safeInternalPath } from "@/lib/safe-path";
  *
  * 没有密码了——密码能猜、能撞、能忘，换来的安全性还不如一把 Passkey。
  * 紧急入口（登录页加 ?recovery=1）只在两把钥匙都丢了时用，密钥在环境变量
- * RECOVERY_TOKEN 里，进来之后应当立刻重新绑定验证器并把这个变量删掉。
+ * RECOVERY_TOKEN 里（存在服务端 .env 或 Vercel 后台，不在数据库），进来之后应立刻重新绑定两把钥匙。
  */
 
 type Props = {
@@ -176,7 +176,7 @@ export default function LoginForm({
                   "第一次安装还没有任何钥匙，用这个进门：填安装向导生成的 .env 里的 RECOVERY_TOKEN。进去之后立刻绑定 Passkey 和验证器。"
                 )
               : t(
-                  "两把钥匙都不在手上的时候用这个：填环境变量 RECOVERY_TOKEN 的值。 进来之后立刻重新绑定验证器，然后去 Vercel 把这个变量删掉。"
+                  "两把钥匙都不在手上的时候用这个：填环境变量 RECOVERY_TOKEN 的值。进来之后立刻重新绑定 Passkey 和验证器。"
                 )}
           </p>
           <form className="login-form" onSubmit={loginWithRecoveryKey}>
