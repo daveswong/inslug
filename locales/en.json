@@ -367,7 +367,6 @@
   "配置尚未生效：Vercel 需导入 .env 并重新部署，之后紧急登录才可用。": "Not active yet: on Vercel, import .env and redeploy before emergency sign-in works.",
   "填好各项，下载生成的 .env。": "Fill in the fields, then download the generated .env.",
   "重新部署并等待完成。": "Redeploy and wait for it to finish.",
-  "用 RECOVERY_TOKEN 从紧急入口登录，继续第 2 步。": "Sign in with RECOVERY_TOKEN via emergency entry, then continue to step 2.",
   "按当前域名，应填：{host}": "For the current domain, use: {host}",
   "改成当前站点的域名，不带协议。": "Use this site's domain, without the scheme.",
   "ORIGIN 与当前域名不符，确认邮件链接会指向别处。应填 https://{host}": "ORIGIN does not match this domain, so confirmation links point elsewhere. Use https://{host}",
@@ -447,7 +446,6 @@
   "安装邮箱": "the setup email address",
   "数据库 {name} 已创建，连得上。": "Database {name} created and reachable.",
   "数据库 {name} 连得上，里面有 {n} 篇文章。": "Database {name} is reachable. It has {n} post(s).",
-  "数据库还没连上。配好 MONGODB_URI 再往下走——后面的确认邮件、钥匙绑定都靠它。": "The database isn't reachable yet. Set MONGODB_URI first — email confirmation and key binding both depend on it.",
   "数据库还没连上，先回上一步把 MONGODB_URI 配好。": "The database isn't reachable yet. Go back and set MONGODB_URI.",
   "已跳过 Passkey。之后只能用 .env 里的 RECOVERY_TOKEN 登录，随时可以回来补。": "Passkey skipped. Until you add one, you can only sign in with RECOVERY_TOKEN from .env.",
   "已跳过验证器。之后只能用 .env 里的 RECOVERY_TOKEN 登录，随时可以回来补。": "Authenticator skipped. Until you add one, you can only sign in with RECOVERY_TOKEN from .env.",
@@ -468,5 +466,6 @@
   "：两把钥匙都丢时用它进门。": ": use it to get in if you lose both keys.",
   "两把钥匙都不在手上的时候用这个：填环境变量 RECOVERY_TOKEN 的值。进来之后立刻重新绑定 Passkey 和验证器。": "Use this when neither key is available: enter the RECOVERY_TOKEN environment value. Rebind your Passkey and authenticator right after signing in.",
   "这一步可以先跳过：Vercel 上在项目后台 Storage 里连一个 Blob store，令牌会自动注入，重新部署即可。": "You can skip this for now: on Vercel, connect a Blob store under Storage in the project dashboard — the token is injected automatically. Then redeploy.",
-  "非 Vercel 环境建议现在就配好：以后再补要改服务器上的 .env 并重启，比较麻烦。文章的图片和附件都要用它。": "Outside Vercel, it's best to set this up now: adding it later means editing .env on the server and restarting. Article images and attachments both rely on it."
+  "非 Vercel 环境建议现在就配好：以后再补要改服务器上的 .env 并重启，比较麻烦。文章的图片和附件都要用它。": "Outside Vercel, it's best to set this up now: adding it later means editing .env on the server and restarting. Article images and attachments both rely on it.",
+  "回到本页点「检查配置」，通过后会直接进入下一步。": "Back on this page, click Check configuration — you'll move to the next step once it passes."
 }

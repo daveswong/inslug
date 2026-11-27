@@ -256,7 +256,7 @@ export default function SetupWizard({
               </li>
               <li>{t("重新部署并等待完成。")}</li>
               <li>
-                {t("用 RECOVERY_TOKEN 从紧急入口登录，继续第 2 步。")}
+                {t("回到本页点「检查配置」，通过后会直接进入下一步。")}
               </li>
             </ol>
           )}
@@ -302,18 +302,14 @@ export default function SetupWizard({
                     n: String(dbStatus.postCount),
                   })}
             </p>
-          ) : dbConfigured ? (
-            <p className="form-error">
-              {t(
-                "地址填了，但连不上。查两处：连接串里的用户名密码对不对，Atlas 的 Network Access 里有没有放行当前出口 IP（加上 0.0.0.0/0 最省事）。改完刷新本页就行，不用重新部署。"
-              )}
-            </p>
           ) : (
-            <p className="form-error">
-              {t(
-                "数据库还没连上。配好 MONGODB_URI 再往下走——后面的确认邮件、钥匙绑定都靠它。"
-              )}
-            </p>
+            dbConfigured && (
+              <p className="form-error">
+                {t(
+                  "地址填了，但连不上。查两处：连接串里的用户名密码对不对，Atlas 的 Network Access 里有没有放行当前出口 IP（加上 0.0.0.0/0 最省事）。改完刷新本页就行，不用重新部署。"
+                )}
+              </p>
+            )
           )}
         </>
       )}
