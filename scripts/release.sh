@@ -40,6 +40,26 @@ tag="v$version"
 
 cd "$(dirname "$0")/.."
 
+# 推送加重试。
+# 走代理时 git 的连接偶尔会失败（CONNECT tunnel failed / 502），
+# 而 curl 同样的地址是好的——像是 TLS 指纹被中间设备区别对待。
+# 这种抖动重试一次通常就好，不用因此中断发布。
+git_push() {
+  local max=5 attempt=1
+  while true; do
+    if git "$@"; then
+      return 0
+    fi
+    if [ "$attempt" -ge "$max" ]; then
+      echo "推送失败，重试 $max 次仍不通。检查网络或代理设置。" >&2
+      return 1
+    fi
+    echo "  推送没成功，第 $attempt 次重试…" >&2
+    attempt=$((attempt + 1))
+    sleep 3
+  done
+}
+
 if ! git diff --quiet || ! git diff --cached --quiet; then
   echo "工作区还有没提交的改动，先提交或 stash 再发布。" >&2
   exit 1
@@ -64,11 +84,11 @@ if git rev-parse "$tag" >/dev/null 2>&1; then
 fi
 
 echo "==> 重建 release 分支（内容 = main）"
-git push origin "HEAD:$RELEASE_BRANCH" --force
+git_push push origin "HEAD:$RELEASE_BRANCH" --force
 
 echo "==> 打 tag $tag"
 git tag -a "$tag" -m "发布 $version"
-git push origin "$tag"
+git_push push origin "$tag"
 
 echo
 echo "✅ 发布完成："
