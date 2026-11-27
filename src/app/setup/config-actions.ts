@@ -21,7 +21,12 @@ import { getEnvValue, isVercel, setEnvValues } from "@/lib/env-config";
 import { listPasskeys } from "@/lib/passkey";
 import { getSettings } from "@/lib/settings";
 import { getT } from "@/lib/i18n";
-import { ensureDatabase, hasDbConfig, type DatabaseStatus } from "@/lib/mongodb";
+import {
+  ensureDatabase,
+  hasDbConfig,
+  hasDbNameConfigured,
+  type DatabaseStatus,
+} from "@/lib/mongodb";
 import { isMailConfigured } from "@/lib/mail";
 
 export type ConfigSaveResult =
@@ -124,8 +129,9 @@ export async function saveAuthConfig(
  * 读服务端实时配置（getEnvValue / isMailConfigured），而不是前端输入框里的草稿——
  * 填了没保存就放行，等于把「先配好发信再确认邮箱」这道关白设了。
  *
- * 图片存储不算必填；库名、SETTINGS_STORE 有默认值也不算。
- * 返回缺项的 label（中文原文），前端再过语言包翻译。
+ * 图片存储不算必填；SETTINGS_STORE 有默认值也不算。
+ * 库名必须明确指定（MONGODB_DB_NAME 或连接串路径）——否则会连到默认库、
+ * 读到同一个集群里其它站点的数据。返回缺项的 label（中文原文），前端再翻译。
  */
 export async function checkSetupReady(): Promise<{
   ok: boolean;
@@ -145,6 +151,8 @@ export async function checkSetupReady(): Promise<{
   for (const { key, label } of required) {
     if (!(getEnvValue(key) ?? "").trim()) missing.push(t(label));
   }
+  // 库名：MONGODB_DB_NAME 或连接串路径，两者都没有就拦住
+  if (!hasDbNameConfigured()) missing.push(t("库名"));
 
   // 发信通道：resend 要 apiKey+from，smtp 要 host+from，按当前 provider 判断
   if (!(await isMailConfigured().catch(() => false))) {

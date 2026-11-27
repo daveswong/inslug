@@ -71,7 +71,7 @@ export const CONFIG_KEYS: ConfigKey[] = [
     key: "MONGODB_DB_NAME",
     group: "auth",
     label: "库名",
-    hint: "同一个 MongoDB 集群里可以跑多个站点，用不同的库名区分。留空用 inslog；填一个还不存在的库名，安装时会自动建出来。",
+    hint: "同一个 MongoDB 集群里可以跑多个站点，用不同的库名区分。必须明确填一个——留空会连到默认库，可能读到同集群里别的站点的数据。填一个还不存在的库名，安装时会自动建出来。",
     secret: false,
   },
   {

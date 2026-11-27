@@ -6,7 +6,8 @@ import { getEnvValue } from "./env-config";
 /**
  * 数据库连接：
  * - 运行时配置里的 MONGODB_URI（引导程序写进 .env，或部署时注入的环境变量）
- * - 库名：MONGODB_DB_NAME > 连接串里的路径 > 默认 inslog
+ * - 库名：MONGODB_DB_NAME > 连接串里的路径；两者都没有就报错，不猜默认值
+ *   （猜默认值会悄悄连到同 cluster 里的别的库，读到别人站点的凭据）
  * - 本地开发读 config/database.json（被 gitignore，不提交）
  *
  * 全局缓存 client，避免 serverless 冷启动时重复建连。
@@ -43,10 +44,13 @@ function resolveConfig(): DbConfig {
   // 没指定就用连接串里带的路径，再没有才用默认值
   const envDbName = getEnvValue("MONGODB_DB_NAME");
   if (envUri) {
-    return {
-      uri: envUri,
-      dbName: envDbName || dbNameFromUri(envUri) || "inslog",
-    };
+    const dbName = envDbName || dbNameFromUri(envUri);
+    if (!dbName) {
+      throw new Error(
+        "缺少库名：请在环境变量里设置 MONGODB_DB_NAME，或在连接串末尾带上库名。不指定库名会连到默认库，可能读到同一个集群里其它站点的数据。"
+      );
+    }
+    return { uri: envUri, dbName };
   }
 
   // 本地从配置文件读
@@ -57,10 +61,11 @@ function resolveConfig(): DbConfig {
     );
     const cfg = JSON.parse(raw);
     if (!cfg.uri) throw new Error("database.json 缺少 uri");
-    return {
-      uri: cfg.uri,
-      dbName: envDbName || cfg.dbName || dbNameFromUri(cfg.uri) || "inslog",
-    };
+    const dbName = envDbName || cfg.dbName || dbNameFromUri(cfg.uri);
+    if (!dbName) {
+      throw new Error("database.json 缺少 dbName：请指定库名，不要让它猜默认值");
+    }
+    return { uri: cfg.uri, dbName };
   } catch {
     throw new Error(
       "未找到数据库配置：请在设置里填写 MONGODB_URI，或填写 config/database.json"
@@ -98,7 +103,7 @@ export async function getDb(): Promise<Db> {
     globalForMongo._mongoClient = client.connect();
   }
   const client = await globalForMongo._mongoClient;
-  return client.db(globalForMongo._mongoDbName || "inslog");
+  return client.db(globalForMongo._mongoDbName!);
 }
 
 /** 数据库当前是否连得上。页面用它决定「数据库还没配好」时的降级展示 */
@@ -112,25 +117,47 @@ export async function isDbConfigured(): Promise<boolean> {
 }
 
 /**
- * 有没有配数据库连接串——不管连不连得上。
- *
- * 跟 isDbConfigured() 的区别很要紧：
- * - isDbConfigured() 是「现在连得上吗」，连不上也返回 false
- * - 这个是「配了地址吗」，只看有没有配
- *
- * 首次安装的免登录判断靠这个：连接串压根没配，说明还在装站的起步阶段，
- * 允许免登录设置；配了却连不上，那可能是数据库权限出问题，
- * 此时按「已经有凭据」处理，要求登录。
+ * 库名是否已明确指定：MONGODB_DB_NAME，或连接串末尾的路径。
+ * 安装校验和门禁判断共用这一个口径，避免「能进安装页却过不了检查」。
  */
-export function hasDbConfig(): boolean {
-  if (getEnvValue("MONGODB_URI")?.trim()) return true;
+export function hasDbNameConfigured(): boolean {
+  const envDbName = getEnvValue("MONGODB_DB_NAME")?.trim();
+  if (envDbName) return true;
+  const envUri = getEnvValue("MONGODB_URI")?.trim();
+  if (envUri) return Boolean(dbNameFromUri(envUri));
   try {
     const raw = readFileSync(
       join(process.cwd(), "config", "database.json"),
       "utf8"
     );
     const cfg = JSON.parse(raw);
-    return Boolean(cfg?.uri?.trim());
+    return Boolean(cfg?.dbName?.trim() || (cfg?.uri?.trim() && dbNameFromUri(cfg.uri)));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * 有没有把数据库配完整（连接串 + 库名）——不管连不连得上。
+ *
+ * 跟 isDbConfigured() 的区别很要紧：
+ * - isDbConfigured() 是「现在连得上吗」，连不上也返回 false
+ * - 这个是「地址 + 库名都指定了吗」，只看有没有配
+ *
+ * 库名必须一起算：只配了连接串却没指定库名时，程序会连到默认库——
+ * 那可能是同一个集群里别的站点，读到它的凭据就被误判成「已初始化」，
+ * 直接从安装向导门外被弹去登录。库名没配就该当「还没配好」，放行安装。
+ */
+export function hasDbConfig(): boolean {
+  const envUri = getEnvValue("MONGODB_URI")?.trim();
+  if (envUri) return hasDbNameConfigured();
+  try {
+    const raw = readFileSync(
+      join(process.cwd(), "config", "database.json"),
+      "utf8"
+    );
+    const cfg = JSON.parse(raw);
+    return Boolean(cfg?.uri?.trim()) && hasDbNameConfigured();
   } catch {
     return false;
   }

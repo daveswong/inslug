@@ -181,7 +181,7 @@ Vercel 控制台 → **Add New → Project** → 导入 `daveswong/inslog`。
 第 1 步会列出要填的东西：
 
 - **MONGODB_URI** —— MongoDB 连接串。新建集群见下面「数据库和图片存储」
-- **MONGODB_DB_NAME** —— 库名，可留空（默认 `inslog`，不存在会自动建）
+- **MONGODB_DB_NAME** —— 库名，必须明确填（不填会连到默认库、可能读到同集群里别的站点的数据；填一个还不存在的库名会自动建。也可在连接串末尾带库名代替）
 - **RP_ID / ORIGIN** —— 你的域名，`RP_ID` 是域名主体（`inslog.example.com`），
   `ORIGIN` 是完整地址（`https://inslog.example.com`）
 - **AUTH_SECRET / RECOVERY_TOKEN** —— 点「生成」程序会给出

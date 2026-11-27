@@ -52,8 +52,7 @@ export default function TotpManager({
     }
   };
 
-  const confirmBind = async (event: React.FormEvent) => {
-    event.preventDefault();
+  const confirmBind = async () => {
     if (!setup) return;
     // 位数不对就当场说清楚。以前按钮直接置灰，点了跟没点一样，
     // 用户根本不知道是哪里不对。
@@ -133,7 +132,12 @@ export default function TotpManager({
           {t("手机上要留的必须是这一条。重新生成密钥后，旧的条目就作废了，验证码要对上这一串。")}
         </p>
 
-        <form className="login-form totp-form" onSubmit={confirmBind}>
+        {/*
+          这里不能用 <form>：本组件被塞进设置页的 <form action={saveSiteSettings}> 里，
+          内层 form 会被浏览器丢弃，里面的 submit 按钮和回车都去提交外层表单，
+          于是输验证码 / 粘贴到一半就把整页刷掉了。改用普通 div + 点击绑定。
+        */}
+        <div className="login-form totp-form">
           <input
             className="search-input"
             type="text"
@@ -143,12 +147,19 @@ export default function TotpManager({
               // 只留数字；粘贴带空格的码也能用
               setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
             }
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                void confirmBind();
+              }
+            }}
             placeholder={t("验证器上显示的 6 位码")}
             aria-label={t("6 位验证码")}
           />
           <button
             className="btn btn-outline-light btn-plain"
-            type="submit"
+            type="button"
+            onClick={confirmBind}
             disabled={busy}
           >
             {bound ? t("验证并请求更换") : t("验证并绑定")}
@@ -162,7 +173,7 @@ export default function TotpManager({
             
             {t("取消")}
           </button>
-        </form>
+        </div>
 
         {error && <p className="form-error">{error}</p>}
       </div>
