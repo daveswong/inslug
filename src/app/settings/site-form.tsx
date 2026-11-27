@@ -232,7 +232,7 @@ const [values, setValues] = useState<Values>(initial);
               name="_footerText"
               value={values.footerText}
               onChange={(e) => set("footerText", e.target.value)}
-              placeholder={t("留空用默认页脚")}
+              placeholder={t("留空则显示 © 2026。填了就整段替换它。")}
             />
           </label>
         </div>

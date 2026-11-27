@@ -462,5 +462,6 @@
   "已跳过验证器。之后只能用 .env 里的 RECOVERY_TOKEN 登录，随时可以回来补。": "Authenticator skipped. Until you add one, you can only sign in with RECOVERY_TOKEN from .env.",
   "两把钥匙没配齐：以后只能用 .env 里的 RECOVERY_TOKEN 登录，建议去设置里补上。": "Both keys aren't set up. You'll only be able to sign in with RECOVERY_TOKEN from .env — add them in settings.",
   "接下来去设置页填站点信息（站名、简介、SEO），随时可以改。": "Next, fill in the site details (name, description, SEO) in settings. You can change them any time.",
-  "跳过，之后再说": "Skip for now"
+  "跳过，之后再说": "Skip for now",
+  "留空则显示 © 2026。填了就整段替换它。": "Leave empty for © 2026. Anything you type replaces it entirely."
 }
