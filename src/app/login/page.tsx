@@ -8,12 +8,12 @@ import { getT } from "@/lib/i18n";
 export const dynamic = "force-dynamic";
 
 type Props = {
-  searchParams: Promise<{ next?: string; recovery?: string }>;
+  searchParams: Promise<{ next?: string; recovery?: string; welcome?: string }>;
 };
 
 export default async function LoginPage({ searchParams }: Props) {
   const t = await getT();
-  const { next, recovery } = await searchParams;
+  const { next, recovery, welcome } = await searchParams;
   const loggedIn = await isLoggedIn();
   const settings = await getSettings();
 
@@ -24,6 +24,13 @@ export default async function LoginPage({ searchParams }: Props) {
           <a href="/">{t("登录")}</a>
         </h1>
         <p className="site-desc">{t("只有这里需要身份：写文章和站点设置。")}</p>
+        {welcome === "1" && (
+          <p className="notice">
+            {t(
+              "安装完成。请用 .env 里的 RECOVERY_TOKEN 登录，然后到站点设置里配置通知邮箱和身份验证（Passkey、验证器）。"
+            )}
+          </p>
+        )}
         <p className="notice"><a href="/reset">{t("进不去？看恢复指引")}</a></p>
       </header>
 

@@ -47,6 +47,7 @@ export default function LoginForm({
   };
 
   const loginWithPasskey = async () => {
+    if (busy) return;
     setBusy(true);
     setError("");
     try {
@@ -79,6 +80,7 @@ export default function LoginForm({
 
   const loginWithCode = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (busy) return;
     setBusy(true);
     setError("");
     try {
@@ -99,6 +101,7 @@ export default function LoginForm({
 
   const loginWithRecoveryKey = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (busy) return;
     setBusy(true);
     setError("");
     try {

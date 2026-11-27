@@ -358,7 +358,6 @@
   "安全": "Security",
   "社交链接格式不对": "Invalid social links format",
   "留空表示不改": "Leave blank to keep the current value",
-  "配置服务器、站点与登录方式。": "Configure the server, site, and sign-in.",
   "Vercel 不能写文件：下载 .env 后导入环境变量，再重新部署。": "Vercel is read-only: download .env, import it as environment variables, then redeploy.",
   "写入项目根目录的 .env，不进 Git。": "Written to .env in the project root; not committed to Git.",
   "后面几步需要登录。首次请用 .env 里的 RECOVERY_TOKEN 从紧急入口进入。": "Later steps need sign-in. First time, use RECOVERY_TOKEN from .env via emergency sign-in.",
@@ -456,7 +455,6 @@
   "地址填了，但连不上。查两处：连接串里的用户名密码对不对，Atlas 的 Network Access 里有没有放行当前出口 IP（加上 0.0.0.0/0 最省事）。改完刷新本页就行，不用重新部署。": "The address is set but the connection fails. Check two things: the username and password in the connection string, and whether Atlas's Network Access allows your current IP (adding 0.0.0.0/0 is easiest). Refresh this page afterwards — no redeploy needed.",
   "还有必填配置没生效：{items}。填好后请先保存，再往下走。": "Required settings are not active yet: {items}. Save them first, then continue.",
   "检查配置失败": "Failed to check configuration",
-  "检查配置": "Check configuration",
   "邮件与文件存储": "Mail and file storage",
   "文件存储令牌": "File storage token",
   "文件存储方式": "File storage",
@@ -467,5 +465,11 @@
   "两把钥匙都不在手上的时候用这个：填环境变量 RECOVERY_TOKEN 的值。进来之后立刻重新绑定 Passkey 和验证器。": "Use this when neither key is available: enter the RECOVERY_TOKEN environment value. Rebind your Passkey and authenticator right after signing in.",
   "这一步可以先跳过：Vercel 上在项目后台 Storage 里连一个 Blob store，令牌会自动注入，重新部署即可。": "You can skip this for now: on Vercel, connect a Blob store under Storage in the project dashboard — the token is injected automatically. Then redeploy.",
   "非 Vercel 环境建议现在就配好：以后再补要改服务器上的 .env 并重启，比较麻烦。文章的图片和附件都要用它。": "Outside Vercel, it's best to set this up now: adding it later means editing .env on the server and restarting. Article images and attachments both rely on it.",
-  "回到本页点「检查配置」，通过后会直接进入下一步。": "Back on this page, click Check configuration — you'll move to the next step once it passes."
+  "检查配置，完成安装": "Check configuration and finish setup",
+  "检查中…": "Checking…",
+  "配置服务器的运行环境变量。": "Configure the server's runtime environment variables.",
+  "安装完成。请用 .env 里的 RECOVERY_TOKEN 登录，然后到站点设置里配置通知邮箱和身份验证（Passkey、验证器）。": "Setup is complete. Sign in with RECOVERY_TOKEN from .env, then go to site settings to set up your notification email and sign-in methods (Passkey, authenticator).",
+  "配置完成后会跳到登录页。首次请用 .env 里的 RECOVERY_TOKEN 从紧急入口进入。": "Once configured you'll be taken to the sign-in page. For the first time, use RECOVERY_TOKEN from .env via the emergency entry.",
+  "回到本页点「检查配置，完成安装」，通过后会跳到登录页。": "Back on this page, click Check configuration and finish setup — you'll go to the sign-in page once it passes.",
+  "这是最后一把钥匙，而且还没绑手机验证器——删了你就进不来了，所以没有执行。请先在设置页绑定验证器，再来删除这把 Passkey。": "This is your last key and you haven't bound an authenticator yet — deleting it would lock you out, so nothing was changed. Bind an authenticator in settings first, then delete this Passkey."
 }

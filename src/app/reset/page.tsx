@@ -95,26 +95,12 @@ export default async function ResetPage() {
 
       <section className="section">
         <SetupWizard
-          initial={{
-            siteName: settings.siteName,
-            description: settings.description,
-            notifyEmail: settings.notifyEmail,
-            postsPerPage: settings.postsPerPage,
-          }}
-          passkeyCount={passkeyCount}
-          passkeys={passkeys}
-          authorized={authorized}
-          hasTotp={hasTotp}
-          initialEmailConfirmed={settings.notifyEmail.trim().length > 0}
-          mailReady={canMail}
-          completed={settings.setupCompleted}
           authItems={manualAuthItems}
           generatedAuthItems={generatedAuthItems}
           serviceFeatures={serviceFeatures}
           envWritable={canWriteEnv}
           fileWritable={canWriteSettingsFile()}
           onVercel={isVercel()}
-          loggedIn={loggedIn}
           dbStatus={dbStatus}
           dbConfigured={dbConfigured}
           recoveryReady={hasRecovery}

@@ -7,6 +7,7 @@
  * 更换 / 解绑：验过新码后还要过邮件确认，因为这两件事会让已有的钥匙失效
  */
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useT } from "@/components/i18n-provider";
 
 type Setup = { secret: string; grouped: string; qrSvg: string };
@@ -21,6 +22,7 @@ export default function TotpManager({
   onBound?: () => void;
 }) {
   const t = useT();
+  const router = useRouter();
   const [setup, setSetup] = useState<Setup | null>(null);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
@@ -80,12 +82,12 @@ export default function TotpManager({
         setStatus(t("已绑定。以后可以用这个验证器的 6 位码登录。"));
         reset();
         if (onBound) {
-          // 向导里：让服务端重读绑定状态，别整页刷新（会丢掉当前步骤）
           onBound();
-        } else {
-          // 设置页里：会话版本变了，刷新一下拿新票
-          setTimeout(() => window.location.reload(), 1200);
         }
+        // 让服务端重读绑定状态即可。整页 reload 会把下面的成功提示
+        // 和二维码 state 一起冲掉，看起来像「绑了又没绑」。
+        // 会话版本变化由 verify 接口签名的新 cookie 处理，不需要 reload。
+        router.refresh();
       }
     } catch (e) {
       if (e instanceof DOMException && e.name === "TimeoutError") {

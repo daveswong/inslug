@@ -1,9 +1,9 @@
-// 首次安装向导：先配服务器的运行环境变量，再配站点信息和两把钥匙
+// 首次安装向导：配置服务器的运行环境变量，配齐即安装完成
 import { redirect } from "next/navigation";
 import SiteFooter from "@/components/SiteFooter";
 import { isLoggedIn } from "@/lib/auth";
 import { isDbConfigured } from "@/lib/mongodb";
-import { canWriteEnvFile, getEnvValue, isVercel } from "@/lib/env-config";
+import { canWriteEnvFile, isVercel } from "@/lib/env-config";
 import { canWriteSettingsFile } from "@/lib/settings-file";
 import SetupWizard from "./setup-wizard";
 import { getSetupData } from "./setup-data";
@@ -13,15 +13,8 @@ import { getT } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
-type Props = {
-  searchParams: Promise<{ email?: string }>;
-};
-
-export default async function SetupPage({ searchParams }: Props) {
+export default async function SetupPage() {
   const t = await getT();
-  const { email: emailFlag } = await searchParams;
-  // 从确认邮件链接跳回来时带着标记：邮箱已经确认过了
-  const emailConfirmed = emailFlag === "confirmed";
   const loggedIn = await isLoggedIn();
 
   // 站点上还没有任何登录凭据时，第 1 步（服务器配置）必须能免登录打开：
@@ -46,12 +39,6 @@ export default async function SetupPage({ searchParams }: Props) {
   }
 
   const {
-    settings,
-    passkeys,
-    passkeyCount,
-    authorized,
-    hasTotp,
-    mailReady: canMail,
     recoveryReady,
     rpId,
     origin,
@@ -70,33 +57,19 @@ export default async function SetupPage({ searchParams }: Props) {
       <header className="site-head">
         <h1 className="site-title">{t("首次安装")}</h1>
         <p className="site-desc">
-          {t("配置服务器、站点与登录方式。")}
+          {t("配置服务器的运行环境变量。")}
         </p>
       </header>
 
       <SetupWizard
-        initial={{
-          siteName: settings.siteName,
-          description: settings.description,
-          notifyEmail: settings.notifyEmail,
-          postsPerPage: settings.postsPerPage,
-        }}
-        passkeyCount={passkeyCount}
-        passkeys={passkeys}
-        authorized={authorized}
-        hasTotp={hasTotp}
-        initialEmailConfirmed={emailConfirmed || settings.notifyEmail.trim().length > 0}
-        mailReady={canMail}
-        completed={settings.setupCompleted}
         authItems={manualAuthItems}
         generatedAuthItems={generatedAuthItems}
         serviceFeatures={serviceFeatures}
         envWritable={canWriteEnvFile()}
         fileWritable={canWriteSettingsFile()}
         onVercel={isVercel()}
-        loggedIn={loggedIn}
         dbStatus={dbStatus}
-          dbConfigured={dbConfigured}
+        dbConfigured={dbConfigured}
         recoveryReady={recoveryReady}
         rpId={rpId}
         origin={origin}

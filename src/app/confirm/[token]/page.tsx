@@ -59,9 +59,10 @@ async function applyChange(formData: FormData) {
       listPasskeys(),
       getAuth().catch(() => null),
     ]);
-    // 绝不能把最后一把钥匙删掉，否则连自己都进不去
+    // 绝不能把最后一把钥匙删掉，否则连自己都进不去。
+    // 带上具体原因，别让它跟「链接过期」混成同一句误导人的提示。
     if (keys.length <= 1 && !auth?.totpBound) {
-      redirect(`/confirm/${token}?state=failed`);
+      redirect(`/confirm/${token}?state=failed&reason=last-key`);
     }
     if (!(await deletePasskey(credentialId))) {
       redirect(`/confirm/${token}?state=failed`);
@@ -80,11 +81,16 @@ export default async function ConfirmPage({
   searchParams,
 }: {
   params: Promise<{ token: string }>;
-  searchParams: Promise<{ state?: string; cleared?: string; manual?: string }>;
+  searchParams: Promise<{
+    state?: string;
+    reason?: string;
+    cleared?: string;
+    manual?: string;
+  }>;
 }) {
   const t = await getT();
   const { token } = await params;
-  const { state: result, cleared, manual } = await searchParams;
+  const { state: result, reason, cleared, manual } = await searchParams;
   const { state, doc } = await readPendingChange(token);
 
   const isDone = result === "done";
@@ -170,7 +176,18 @@ export default async function ConfirmPage({
           </>
         )}
 
-        {!isDone && isFailed && (
+        {!isDone && isFailed && reason === "last-key" && (
+          <>
+            <p className="notice">
+              {t(
+                "这是最后一把钥匙，而且还没绑手机验证器——删了你就进不来了，所以没有执行。请先在设置页绑定验证器，再来删除这把 Passkey。"
+              )}
+            </p>
+            <p className="notice"><a href="/settings">{t("去设置页")}</a></p>
+          </>
+        )}
+
+        {!isDone && isFailed && reason !== "last-key" && (
           <>
             <p className="notice">{t("这个链接已经失效：可能已被使用，或超过 10 分钟。")}</p>
             <p className="notice">{t("到设置页重新发起一次即可。")}</p>
