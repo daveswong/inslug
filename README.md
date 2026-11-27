@@ -137,10 +137,21 @@ Vercel 的 Storage 里还有个 Global Config（原 Edge Config），是个全�
 
 ## 部署与环境变量
 
-**最省事的一条路**：点 README 顶部的 Deploy 按钮。Vercel 会把 `release` 分支克隆到**你自己的
-GitHub 账号**下，顺手建好 MongoDB Atlas 数据库和图片存储，然后你跟着首页的安装向导走完剩下几步。
+**推荐 Vercel**：把 GitHub 仓库导入 Vercel（框架自动识别 Next.js），按下面的向导一步步配，
+再绑定域名。DNS 托管在 Vercel 时 HTTPS 证书自动签发。
 
-要点：部署完之后还有一步——Vercel 的环境变量改动要重新部署才生效。向导第 1 步会把要填的
+自部署：`npm run build && npm run start`，`.env` 放在项目根目录。
+
+**数据库和图片存储得自己准备**：
+
+- **MongoDB**——[MongoDB Atlas](https://www.mongodb.com/atlas) 免费额度就够用。
+  建完集群，在 Network Access 里允许访问（或者 `0.0.0.0/0`），
+  再建一个数据库用户，把连接串复制下来。
+- **图片存储**——三种都行：Vercel Blob（最省事，在 Vercel 商店里一键装）、
+  任何 S3 兼容服务（R2 / MinIO / AWS S3），或者自建服务器上的本地磁盘。
+
+**要点：环境变量的改动要重新部署才生效。** 安装向导第 1 步会把要填的变量列成清单给你，
+照着填进 Vercel 的 Environment Variables，再重新部署一次，站点就能用了。
 变量列成清单给你，照着填进 Vercel 的 Environment Variables，再重新部署一次，站点就能用了。
 
 自己部署的话：导入 GitHub 仓库（框架自动识别 Next.js）→ 按下面的向导配置 → 绑定域名，DNS 托管在 Vercel 时 HTTPS 证书自动签发。自部署用 `npm run build && npm run start`，`.env` 放在项目根目录。
@@ -152,32 +163,33 @@ Vercel 的每个项目有且只有一个**生产分支**（Branch Tracking）。
 
 在 **Project Settings → Environments → Production → Branch Tracking** 里改，随时能改。
 
-#### 点上面那个按钮（Deploy with Vercel）会怎样
+#### 让使用者的站点跟着 inslug 的正式版走
 
-Vercel 会把源仓库 **fork 到你自己的 GitHub 账号**下（不是复制一份孤立的副本），
-再从它建一个项目并部署。所以你的仓库里同时有 `main` 和 `release` 两个分支。
+想让别人部署出来的东西始终是 inslug 的正式版（而不是某个开发中的状态），
+办法是**把生产分支设成 `release`**（Branch Tracking 里选它）。`release` 分支是 inslug
+每次发布时的内容，跟 `main`（开发中的东西）分开。
 
-部署完做一件事：**确认生产分支是 `release`**（Branch Tracking 里选它）。
+两种装法都适用：
 
-之后：
+**① Fork（推荐，保留自己的改动空间）**
 
-| 发生什么 | 你的站点 |
+在 GitHub 上 fork `daveswong/inslug`，Vercel 导入**你的 fork**。
+你的 fork 里同时有 `main` 和 `release` 两个分支，生产分支设成 `release`。
+
+| 发生什么 | 使用者的站点 |
 | --- | --- |
-| inslug 维护者推 `main`（开发中） | **毫无影响**。`main` 只是你 fork 里的一个预览分支，Vercel 只会生成一个预览部署 |
-| inslug 发布新版本（`release` 更新） | 你的 fork 同步之后，Vercel 自动重新部署，你的新内容就上去了 |
+| inslug 维护者推 `main`（开发中） | **毫无影响**。`main` 只是 fork 里的一个预览分支，Vercel 只会生成一个预览部署 |
+| inslug 发布新版本（`release` 更新） | fork 同步之后，Vercel 自动重新部署，新内容就上去了 |
 
-也就是说：**开发者的开发动作不会打扰使用者**，只有正式发布的版本才会流出去。
+**「同步」这一步要使用者自己做一下**：GitHub 的 fork 不会自动跟着上游跑，
+在 fork 首页点一下 **Sync fork**，Vercel 收到推送就自动重新部署。
+不同步也没关系——站点照常跑，只是停留在部署时的那一版，拿不到新功能。
 
-**「同步」这一步要你做一下**：GitHub 的 fork 不会自动跟着上游跑，
-在你自己仓库首页点一下 **Sync fork**（同步这个 fork），
-Vercel 收到推送就自动重新部署。你也可以不跟——那你的站点就一直停在你部署时的那一版，
-只是拿不到新功能，站点本身照常跑。
+**② 直接 import inslug 仓库**
 
-#### 自己 import 仓库的话
-
-导入 `daveswong/inslug` 的话，Vercel 监听的是**这个仓库**，`release` 一更新就自动部署。
-但这样你没法往里推自己的改动（你没有写权限），而且维护者推 `main` 时，
-只要生产分支是 `release`，同样不会影响你。
+Vercel 监听的是 `daveswong/inslug` 本身，`release` 一更新就自动部署，用不着做任何同步。
+代价是使用者没法往仓库里推自己的改动（没有写权限），而且维护者推 `main` 时，
+只要生产分支是 `release`，同样不会影响使用者的站点。
 
 #### 临时部署某个分支或某次提交
 
