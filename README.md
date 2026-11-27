@@ -80,13 +80,14 @@ Vercel 上的完整顺序：
 
 ## 配置分两组
 
-| 组 | 内容 | 存哪 | 什么时候能改 |
-| --- | --- | --- | --- |
-| 身份验证与启动 | `MONGODB_URI`、`MONGODB_DB_NAME`、`RP_ID`、`ORIGIN`（手填）+ `AUTH_SECRET`、`RECOVERY_TOKEN`（程序生成） | `.env` 文件 / Vercel 环境变量 | 只在安装 / 重置引导里 |
-| 服务类 | 图片存储（`STORAGE_PROVIDER` + 各方案字段）、发信（`MAIL_PROVIDER` + 各方案字段） | 同一个 `.env` | 只在安装 / 重置引导里改；非 Vercel 改完约 3 秒生效，Vercel 要重新部署 |
-| 存储位置 | `SETTINGS_STORE` | 同一个 `.env` | 只在安装 / 重置引导里；决定站点设置存在哪儿 |
+两组都写进同一个地方：项目根目录的 `.env` 文件（Vercel 上是环境变量）。
 
-服务类可插拔：先选方案，再只填这个方案要的字段，没选的那套不参与也不必填。默认走最省事的那条（Vercel Blob + Resend）。它不存数据库——改乱了在服务端 `.env` 里一眼能查到、改回来。Vercel 上若选 Vercel Blob，token 由平台自动注入，不用填，去 Blob 后台把 store 连上即可。
+| 组 | 内容 | 什么时候能改 |
+| --- | --- | --- |
+| 身份验证与启动 | `MONGODB_URI`、`MONGODB_DB_NAME`、`RP_ID`、`ORIGIN`（手填）+ `AUTH_SECRET`、`RECOVERY_TOKEN`（程序生成）+ `SETTINGS_STORE`（存哪儿） | 只在安装 / 重置引导里 |
+| 服务类 | 图片存储（`STORAGE_PROVIDER` + 各方案字段）、发信（`MAIL_PROVIDER` + 各方案字段） | 只在安装 / 重置引导里改；非 Vercel 改完约 3 秒生效，Vercel 要重新部署 |
+
+服务类可插拔：先选方案，再只填这个方案要的字段，没选的那套不参与也不必填。默认走最省事的那条（Vercel Blob + Resend）。它不存数据库——改乱了在服务端 `.env` 里一眼能查到、改回来。Vercel 上若选 Vercel Blob，连接 store 时勾上「Add a read-write token env var」，token 由平台自动注入，不用填。
 
 ### 站点设置存在哪儿
 
@@ -102,6 +103,8 @@ Vercel 上的完整顺序：
 在安装向导第 1 步就能选。选之前程序会确认当前平台能不能写文件：Vercel 的文件系统只读，所以那边只提供 MongoDB；自部署（自有服务器 / Docker）两个都能选。选完写在 `.env` 的 `SETTINGS_STORE` 里，部署时定好，程序不猜。
 
 切换后端不会自动搬运数据——从 `mongodb` 切到 `file` 时，站点设置会变成默认值（因为文件里还没有）；反方向同理。要保留原来的内容，先把旧地方的值抄过来。
+
+**「重置配置」不会碰 `config/settings.json`**：它只清 `.env` 里的配置项，`SETTINGS_STORE` 本身也在重置范围之外（它是「设置存哪儿」的选择，不是凭据）。想清空配置文件里的设置，自己删那个文件。
 
 ### 为什么没有 Global Config
 
@@ -142,7 +145,7 @@ MongoDB 的部署方式有三条，按需要挑：
 
 ### 环境变量速查
 
-前七项由安装向导填写或生成，后两项可选、需要时手动加：
+前六项由安装向导填写或生成，`SETTINGS_STORE` 可选，后两项需要时手动加：
 
 | 变量 | 说明 |
 | --- | --- |
@@ -152,9 +155,9 @@ MongoDB 的部署方式有三条，按需要挑：
 | `RECOVERY_TOKEN` | 紧急入口密钥，程序生成，进门全靠它 |
 | `RP_ID` | Passkey 域名主体，如 `inslog.example.com`，**必须与正式域名一致** |
 | `ORIGIN` | 站点完整地址，如 `https://inslog.example.com`，确认邮件链接按它拼 |
-| `SETTINGS_STORE` | 站点设置存哪儿：`mongodb`（默认）或 `file`。部署时定，见上一节 |
+| `SETTINGS_STORE` | 站点设置存哪儿：`mongodb`（默认）或 `file`。部署时定，见上一节；「重置配置」不会清它 |
 | `NEXT_PUBLIC_SITE_URL` | 可选。canonical / 分享图 / RSS 用；不填则回退到 `ORIGIN`。向导不生成，需要时手动加 |
-| `UI_LANGUAGE` | 可选。部署期默认界面语言（`zh-CN` / `en`）；日常在设置页切，不用碰它 |
+| `UI_LANGUAGE` | 可选。部署期默认界面语言（`zh-CN` / `en`），也可写进 `config/locale.json`；日常在设置页切，不用碰它 |
 
 ### 服务类（安装向导第 1 步填写，写进 .env）
 
@@ -189,21 +192,25 @@ inslog 的图片是**浏览器直传**的（要生成给前端的 client token�
 src/
   app/
     page.tsx                  # 首页：站点信息 + 搜索 + 标签 + 文章时间线
+    layout.tsx                # 外壳 + SEO 元信息
+    globals.css               # 全部样式（CSS 变量支持夜览模式）
     posts/[slug]/             # 文章详情
     search/  write/  login/   # 站内搜索 / 写作（server action）/ 登录
     settings/                 # 四组平铺的设置表单；Passkey、验证器、主题、语言在这里
     setup/  reset/            # 首次安装向导 / 恢复指引
     confirm/[token]/          # 邮件确认页（凭据变更真正生效的地方）
+    uploads/[...path]/        # 本地存储方案下的图片回读
     not-found.tsx             # 自定义 404
     rss.xml/  sitemap.xml/  robots.txt/
     api/                      # auth/*（passkey、totp、recovery、logout）、setup/*、upload*（三套存储）、diag
-  components/                 # BlockEditor、PostBody、SiteFooter、WriteFab、i18n-provider、各类设置表单
-  lib/                         # mongodb / posts / settings / auth / session / passkey / totp /
-                               # secret-box / pending / change-request / env-store / service-config / i18n-core …
+  components/                 # BlockEditor、PostBody、SiteFooter、WriteFab、i18n-provider、install-hint、service-config-fields
+  lib/                         # mongodb / posts / settings / settings-file / auth / session / passkey / totp /
+                               # secret-box / pending / change-request / env-store / env-config / service-config /
+                               # storage / mail / rate-limit / site-url / safe-path / i18n-core …
   proxy.ts                     # 只粗筛 /write 与 /settings 的 cookie，验签留给页面层 isLoggedIn()
-config/*.example.json          # 配置模板（提交）；实际 database.json / locale.json 被忽略
-locales/*.json                 # 界面语言包
-scripts/                       # 连通测试 / 演示数据 / 导出备份
+config/*.example.json          # 配置模板（提交）；实际 database.json / locale.json / settings.json 被忽略
+locales/*.json                 # 界面语言包（键是中文原文）
+scripts/                       # 连通测试 / 演示数据 / 导出备份（_db.mjs 是共用连接模块）
 public/                        # 图标
 ```
 

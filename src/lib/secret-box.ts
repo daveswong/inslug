@@ -1,4 +1,5 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
+import { getEnvValue } from "./env-config";
 
 /**
  * 落库敏感值的对称加密（AES-256-GCM）。
@@ -6,10 +7,14 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:
  * 目前只用来保护 TOTP 的 secret：数据库里存明文 secret 等于把第二因素一起送出去，
  * 拿到它就能算出任意时刻的验证码。密钥由 AUTH_SECRET 派生，所以换 AUTH_SECRET
  * 会让已存的 secret 解不开（等价于验证器失效，需要重新绑定）。
+ *
+ * 密钥来源必须和 session.ts 一致（都用 getEnvValue）：
+ * 引导程序把 AUTH_SECRET 写进 .env 后，进程环境变量不会跟着变——
+ * 两处取值口径不一致会导致「会话用新密钥、加密用旧密钥」，验证器直接失效。
  */
 
 function key(): Buffer {
-  const raw = process.env.AUTH_SECRET;
+  const raw = getEnvValue("AUTH_SECRET");
   if (!raw) throw new Error("缺少 AUTH_SECRET 环境变量");
   // 任意长度的 AUTH_SECRET 都压成 32 字节，AES-256 要这个长度
   return createHash("sha256").update(raw).digest();

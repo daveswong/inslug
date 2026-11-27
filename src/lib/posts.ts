@@ -31,11 +31,15 @@ function blocksToPlainText(blocks: unknown[]): string {
   return parts.join(" ");
 }
 
-/** 定稿时间：public 和 private 都算定稿，draft 为 null */
+/**
+ * 定稿时间：public 和 private 都算定稿，draft 为 null。
+ *
+ * 改成草稿时不能把原来的定稿时间抹掉：文章临时改草稿再改回来时，
+ * 原始发布时间应该还在，不然 RSS 和 sitemap 的时间会变成「改回来的那一刻」。
+ */
 function publishedAtFor(v: Visibility, existing: Date | null, now: Date): Date | null {
-  if (v === "draft") return null;
-  if (v === "public") return existing ?? now;
-  // private：首次设为私有时记时间，之后保留
+  // draft 也保留已有时间：只是不再对外展示，不销毁记录
+  if (v === "draft") return existing;
   return existing ?? now;
 }
 
@@ -50,9 +54,13 @@ export async function createPost(input: {
   const posts = db.collection<PostDoc>("posts");
   const now = new Date();
 
-  // 随机后缀碰撞概率极低，但重名标题仍然检查一遍，绝不让两篇文章共用一个地址
+  // 随机后缀碰撞概率极低，但重名标题仍然检查一遍，绝不让两篇文章共用一个地址。
+  // 注意循环写法：每生成一个 slug 都要检查一次，
+  // 原来那种「先判断再生成」的写法会漏掉最后一次生成的那个。
   let slug = makeSlug(input.title);
-  for (let i = 0; i < 5 && (await posts.findOne({ slug })); i++) {
+  for (let attempt = 0; attempt < 6; attempt++) {
+    const clash = await posts.findOne({ slug });
+    if (!clash) break;
     slug = makeSlug(input.title);
   }
 
@@ -113,6 +121,9 @@ export async function updatePost(
   return {
     ...existing,
     ...input,
+    // plainText 是从 blocks 算出来的，input 里没有这个字段；
+    // 不补上的话，返回的是旧值，跟库里实际写入的对不上
+    plainText: blocksToPlainText(input.blocks),
     publishedAt,
     updatedAt: now,
   } as PostDoc;
@@ -173,7 +184,16 @@ export async function listPosts(opts: {
       // 布尔值和 null 混排会让顺序错乱。
       {
         $addFields: {
-          sortDate: { $ifNull: ["$publishedAt", "$createdAt"] },
+          // 草稿按创建时间排，其余按定稿时间排。
+          // 草稿的 publishedAt 现在是保留着的（临时改草稿再改回来，时间不丢），
+          // 所以这里要按 visibility 分开取，不能直接用 $ifNull。
+          sortDate: {
+            $cond: [
+              { $eq: ["$visibility", "draft"] },
+              "$createdAt",
+              { $ifNull: ["$publishedAt", "$createdAt"] },
+            ],
+          },
           isPinned: { $ifNull: ["$pinned", false] },
         },
       },

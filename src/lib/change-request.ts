@@ -1,4 +1,4 @@
-import { createPendingChange, type ChangePurpose } from "./pending";
+import { createPendingChange, deletePendingChange, type ChangePurpose } from "./pending";
 import { sendMail, isMailConfigured } from "./mail";
 import { getT } from "./i18n";
 import { getSettings } from "./settings";
@@ -14,6 +14,22 @@ export async function mailReady(): Promise<boolean> {
   if (!(await isMailConfigured())) return false;
   const settings = await getSettings();
   return settings.notifyEmail.trim().length > 0;
+}
+
+/**
+ * HTML 转义。
+ *
+ * 邮件里有几处内容来自请求头（来源 IP、User-Agent）和站点配置，
+ * 直接拼进 HTML 就等于允许注入链接、标签和追踪图片——
+ * 而这封信是发到站长邮箱的，攻击者能在里面放一个仿冒的「确认」链接。
+ */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 async function sendConfirmMail(input: {
@@ -58,14 +74,14 @@ async function sendConfirmMail(input: {
   ].join("\n");
 
   const html = `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.7;color:#111">
-  <p>有人在 inslog 请求${input.actionText}。</p>
-  <p><a href="${url}" style="color:#1a4fa0">确认${input.actionText}</a></p>
+  <p>有人在 inslog 请求${escapeHtml(input.actionText)}。</p>
+  <p><a href="${escapeHtml(url)}" style="color:#1a4fa0">确认${escapeHtml(input.actionText)}</a></p>
   <p style="color:#888;font-size:13px">链接 10 分钟内有效，只能用一次。</p>
-  <p style="color:#888;font-size:13px">${input.consequence}</p>
+  <p style="color:#888;font-size:13px">${escapeHtml(input.consequence)}</p>
   <p style="color:#888;font-size:13px;border-top:1px solid #e6e6e6;padding-top:12px;margin-top:20px">
-    申请时间：${when}<br>
-    来源 IP：${input.ip}<br>
-    设备：${device}
+    申请时间：${escapeHtml(when)}<br>
+    来源 IP：${escapeHtml(input.ip)}<br>
+    设备：${escapeHtml(device)}
   </p>
   <p style="color:#888;font-size:13px">如果不是你本人操作，忽略这封邮件即可，凭据不会改变。</p>
 </div>`;
@@ -73,6 +89,10 @@ async function sendConfirmMail(input: {
   try {
     await sendMail({ to, subject: `inslog：确认${input.actionText}`, text, html });
   } catch (error) {
+    // 邮件没发出去就把那条待确认记录删掉：
+    // 留着的话它白占「10 分钟 3 封」的配额，用户重试会立刻被限流，
+    // 而那条记录对应的链接根本没送到任何人手里。
+    await deletePendingChange(created.token).catch(() => undefined);
     return {
       error: error instanceof Error ? error.message : t("确认邮件发送失败"),
     };

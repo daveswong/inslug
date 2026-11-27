@@ -27,7 +27,16 @@ export type ConfigSaveResult =
   | { ok: true; written: string[]; db?: DatabaseStatus }
   | { ok: false; error: string };
 
-/** 站点上是否已经存在任何登录凭据 */
+/**
+ * 站点上是否已经存在任何登录凭据。
+ *
+ * 返回三态而不是布尔值，因为「查不到」有两种完全不同的含义：
+ * - 有凭据：站点已初始化，必须登录才能改配置
+ * - 确实没有：新部署，允许免登录设置（这是唯一的后门）
+ * - 查不到（数据库连不上）：**不能当成「没有」**——
+ *   否则数据库一抖动，任意访客就能改掉会话密钥和紧急密钥，直接接管站点。
+ *   这种情况一律按「有凭据」处理，即要求登录。
+ */
 export async function hasCredentials(): Promise<boolean> {
   try {
     const [keys, auth, settings] = await Promise.all([
@@ -36,11 +45,13 @@ export async function hasCredentials(): Promise<boolean> {
       getSettings(),
     ]);
     if (keys.length > 0) return true;
-    if (auth.totpSecret) return true;
+    // 用 totpBound 而不是 totpSecret：密钥换过导致解不开时，
+    // 数据库里的密文还在，那依然是「已绑定」，不能当成没绑过。
+    if (auth.totpBound) return true;
     return settings.setupCompleted;
   } catch {
-    // 数据库连不上：本来就没有任何凭据
-    return false;
+    // 查不到不等于没有：按「有凭据」处理，宁可拦住也不放行
+    return true;
   }
 }
 

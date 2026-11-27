@@ -2,9 +2,12 @@
  * 可以引导配置的变量清单。
  *
  * 分两组：
- * - auth：身份验证与启动必需（数据库、会话密钥、紧急密钥、Passkey 域名、站点地址）。
- *   只在安装 / 重置引导里设置，设置页不提供修改入口——改了等于换锁。
- * - service：邮件与图片存储的凭据。部署之后随时可改，存数据库。
+ * - auth：身份验证与启动必需（数据库、会话密钥、紧急密钥、Passkey 域名、站点地址、
+ *   站点设置存在哪儿）。只在安装 / 重置引导里设置，设置页不提供修改入口——改了等于换锁。
+ * - service：邮件与图片存储的凭据。同样只在安装 / 重置引导里设置。
+ *
+ * 两组都写进同一个地方：项目根目录的 .env 文件（Vercel 上是环境变量）。
+ * 早先服务类存过数据库，现在也改成了 .env——改乱了在服务端一眼能查到、改回来。
  *
  * service 组里再按「功能块」分：图片存储、邮件。每个功能块有一个 provider 选择器，
  * 选了哪个 provider 就只显示它的那几个字段——不选的那套不参与，也不必填。
@@ -13,6 +16,26 @@
  */
 
 export type ConfigGroup = "auth" | "service";
+
+/**
+ * 传给前端的配置项。
+ *
+ * 已配置的项只显示「已配置」，不把值回显到前端——这些是数据库密码和密钥，
+ * 显示出来等于公开。
+ */
+export type ConfigField = {
+  key: string;
+  label: string;
+  hint: string;
+  secret: boolean;
+  configured: boolean;
+  /** 枚举型配置：给候选项，渲染成下拉 */
+  options?: { value: string; label: string }[];
+  /** 当前生效的值；下拉的初始选中项用它 */
+  value?: string;
+  /** 由程序生成，不用手填 */
+  generated?: boolean;
+};
 
 /** service 组里的功能块 */
 export type ConfigFeature = "storage" | "mail";

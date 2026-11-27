@@ -36,6 +36,17 @@ export default async function SetupPage() {
   }
   const configStepOpen = !hasAny;
 
+  // 数据库连得上、但读凭据失败（权限不足之类）：这时不能免登录，
+  // 否则等于把密钥改写入口敞开。给站长一句说明，别让人以为页面坏了。
+  let credentialProbeFailed = false;
+  if (dbOk && hasAny) {
+    try {
+      await listPasskeys();
+    } catch {
+      credentialProbeFailed = true;
+    }
+  }
+
   if (!loggedIn && !configStepOpen) {
     redirect("/login?next=%2Fsetup");
   }
@@ -55,7 +66,7 @@ export default async function SetupPage() {
 
   let hasTotp = false;
   try {
-    hasTotp = !!(await getAuth()).totpSecret;
+    hasTotp = (await getAuth()).totpBound;
   } catch {
     hasTotp = false;
   }
@@ -144,6 +155,7 @@ export default async function SetupPage() {
         requestHost={requestHost}
         rpIdMatchesHost={rpIdMatchesHost}
         originHost={originHost}
+        credentialProbeFailed={credentialProbeFailed}
       />
 
       <SiteFooter />

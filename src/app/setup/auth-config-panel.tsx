@@ -13,7 +13,7 @@
  */
 import { useState, useTransition } from "react";
 import { useT } from "@/components/i18n-provider";
-import type { ConfigField } from "@/components/config-fields";
+import type { ConfigField } from "@/lib/config-keys";
 import ServiceConfigFields, {
   type ServiceFeature,
 } from "@/components/service-config-fields";

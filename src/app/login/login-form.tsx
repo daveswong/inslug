@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { startAuthentication } from "@simplewebauthn/browser";
 import { useT } from "@/components/i18n-provider";
+import { safeInternalPath } from "@/lib/safe-path";
 
 /**
  * 登录：Passkey 与验证器二选一。
@@ -36,8 +37,11 @@ export default function LoginForm({
   const [error, setError] = useState("");
 
   const go = () => {
+    // next 来自 URL，必须先过站内白名单：
+    // 否则 /login?next=https://evil.com 就是开放重定向，登录后被带走。
+    const safe = safeInternalPath(next, "/");
     // 只有目标是首页时才改道；从中间件跳来的 ?next=/settings 保持原样
-    const target = needsSetup && (next === "/" || next === "") ? "/setup" : next;
+    const target = needsSetup && (safe === "/" || safe === "") ? "/setup" : safe;
     router.replace(target);
     router.refresh();
   };

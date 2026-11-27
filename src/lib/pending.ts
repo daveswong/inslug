@@ -56,7 +56,12 @@ export async function createPendingChange(input: {
   const col = await collection();
   const now = Date.now();
 
+  // 限速按「用途 + 来源」分别算：
+  // 不分用途的话，某个用途连发 3 封就会把换绑、解绑、重置全堵上 10 分钟；
+  // 不分来源的话，一个人发满了别人也发不了。
   const recent = await col.countDocuments({
+    purpose: input.purpose,
+    ip: input.ip,
     createdAt: { $gte: new Date(now - RATE_WINDOW_MS) },
   });
   if (recent >= RATE_MAX) {
@@ -75,15 +80,28 @@ export async function createPendingChange(input: {
     ua: input.ua,
   });
 
-  // 顺手清掉一天前的旧记录，集合不会无限长
+  // 顺手清掉过期记录：记录本来就 10 分钟就失效，
+  // 留 24 小时只是让集合白白变大，还会让上面的计数窗口算不准。
   await col
-    .deleteMany({ createdAt: { $lt: new Date(now - 24 * 60 * 60 * 1000) } })
+    .deleteMany({ expiresAt: { $lt: new Date(now) } })
     .catch(() => undefined);
 
   return { token };
 }
 
 export type PendingState = "ok" | "used" | "expired" | "missing";
+
+/**
+ * 删掉一条待确认记录。
+ *
+ * 用于「邮件没发出去」的情况：记录留着既没人能点（链接没送到），
+ * 又占着「10 分钟 3 封」的配额，用户重试会立刻被限流。
+ */
+export async function deletePendingChange(token: string): Promise<void> {
+  if (!token) return;
+  const col = await collection();
+  await col.deleteOne({ tokenHash: hashToken(token) });
+}
 
 export interface PendingLookup {
   state: PendingState;

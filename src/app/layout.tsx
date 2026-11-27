@@ -4,6 +4,7 @@ import WriteFab from "@/components/WriteFab";
 import { isLoggedIn } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { getSettings } from "@/lib/settings";
+import { siteOrigin } from "@/lib/site-url";
 import "./globals.css";
 
 /** 站点级元信息全部来自设置，不在代码里写死 */
@@ -17,9 +18,15 @@ export async function generateMetadata(): Promise<Metadata> {
         .map((word) => word.trim())
         .filter(Boolean)
     : undefined;
+  // 站点地址：NEXT_PUBLIC_SITE_URL > ORIGIN > Vercel 提供的域名 > 本地
+  // （用 siteOrigin() 统一口径，别在这里另算一套——否则配了 ORIGIN
+  //   却没配 NEXT_PUBLIC_SITE_URL 时，canonical 会指向 localhost）
   const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+    siteOrigin() !== "http://localhost:3000"
+      ? siteOrigin()
+      : process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : "http://localhost:3000";
   // 分享卡片图：设置页填了就用填的，没填用仓库里的渐变彩色图标
   const images = s.ogImage
     ? [s.ogImage]
@@ -54,7 +61,16 @@ export async function generateMetadata(): Promise<Metadata> {
     keywords,
     authors: s.author ? [{ name: s.author }] : undefined,
     icons,
-    openGraph: { title, description, type: "website", images },
+    // 首页的规范地址。带着 ?page=2、?tag=xxx 的那些页面由各自的
+    // generateMetadata 给出自己的 canonical，避免重复内容分散权重。
+    alternates: { canonical: "/" },
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      url: "/",
+      images,
+    },
     twitter: {
       card: images ? "summary_large_image" : "summary",
       title,

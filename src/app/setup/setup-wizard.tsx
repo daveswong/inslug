@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import PasskeyManager, { type PasskeyView } from "@/app/settings/passkey-manager";
 import TotpManager from "@/app/settings/totp-manager";
-import type { ConfigField } from "@/components/config-fields";
+import type { ConfigField } from "@/lib/config-keys";
 import type { DatabaseStatus } from "@/lib/mongodb";
 import { useT } from "@/components/i18n-provider";
 import type { ServiceFeature } from "@/components/service-config-fields";
@@ -51,6 +51,8 @@ type Props = {
   rpIdMatchesHost: boolean;
   /** ORIGIN 里的主机名 */
   originHost: string;
+  /** 数据库连上了但读不到凭据：这时不能免登录，得跟站长说清楚 */
+  credentialProbeFailed: boolean;
 };
 
 export default function SetupWizard({
@@ -75,6 +77,7 @@ export default function SetupWizard({
   requestHost,
   rpIdMatchesHost,
   originHost,
+  credentialProbeFailed,
 }: Props) {
   const t = useT();
   const STEPS = [
@@ -159,6 +162,13 @@ export default function SetupWizard({
       {step === 0 && (
         <>
           <h2 className="section-title">{t("身份验证与启动配置")}</h2>
+          {credentialProbeFailed && (
+            <p className="form-error">
+              {t(
+                "数据库连上了但读不到登录凭据：可能是数据库用户的权限不够。为了安全起见，这时不能免登录修改配置——先修好数据库权限再回来。"
+              )}
+            </p>
+          )}
           <p className="notice">
             {onVercel
               ? t(
@@ -325,7 +335,7 @@ export default function SetupWizard({
           <p className="notice">
             
             {t("主登录方式，绑好后 Touch ID / 指纹一按即可。")}
-            {passkeyCount > 0 && ` 当前已绑 ${passkeyCount} 把。`}
+            {passkeyCount > 0 && t("当前已绑 {n} 把。", { n: passkeyCount })}
           </p>
           <PasskeyManager
             passkeys={passkeys}
