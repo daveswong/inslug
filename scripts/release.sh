@@ -60,12 +60,10 @@ git_push() {
   done
 }
 
-/**
- * 拿 GitHub 的访问令牌。
- *
- * 优先用环境变量 GITHUB_TOKEN；没有的话问 git 的凭据助手
- * （你平时 push 能用，说明那儿存着）。
- */
+# 拿 GitHub 的访问令牌。
+#
+# 优先用环境变量 GITHUB_TOKEN；没有的话问 git 的凭据助手
+# （你平时 push 能用，说明那儿存着）。
 get_github_token() {
   if [ -n "${GITHUB_TOKEN:-}" ]; then
     echo "$GITHUB_TOKEN"
@@ -75,12 +73,10 @@ get_github_token() {
     sed -n 's/^password=//p' | head -1
 }
 
-/**
- * 自动写更新说明：上一个版本到这次的提交清单。
- *
- * 提交信息本身就是中文短句，直接拿来当说明最省事，
- * 也比 GitHub 的自动生成（英文）好用。
- */
+# 自动写更新说明：上一个版本到这次的提交清单。
+#
+# 提交信息本身就是中文短句，直接拿来当说明最省事，
+# 也比 GitHub 的自动生成（英文）好用。
 build_notes() {
   local tag="$1"
   local previous=""
