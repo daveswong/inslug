@@ -2,8 +2,6 @@
 
 一个基于 Node.js + Next.js 的 Blog web APP：让你专注于写作，让读者专注于阅读。
 
-自己部署的话，看下面的[部署与环境变量](#部署与环境变量)和[安装流程](#安装流程)。
-
 **路径短、界面干净、默认安全。** 没有账号系统，没有密码，没有追踪，没有评论，没有推荐算法，
 没有弹窗和花哨的装饰。那些烦人的东西离使用者远一点，人才有心思专注在创作本身。
 
@@ -32,12 +30,13 @@
 - **读写闭环**：首页时间线（只有日期 + 标题，无摘要无封面、要分页）→ 文章详情 → 站内搜索 → 写作页（BlockNote 类 Notion 所见即所得）→ 存 MongoDB。
 - **文章**：可见性三态 `draft`（草稿）/ `private`（私有）/ `public`（公开），访客只读 public，私有与草稿直接访问也 404；发布不超过 6 个月的公开文章标 `new`；可置顶（列表和详情都不显示置顶标记，位置本身就是信号）。
 - **标签与地址**：tag 手动创建 + 选择，未被任何文章引用的自动删除；公开标签目录只列 public 用过的标签，防草稿内容泄露；slug 由标题拼音 + 随机后缀生成，改标题不改 URL。
+- **文章附件**：任意类型文件（PDF、STEP、DXF、ZIP 之类都行），单个最大 50MB，走和图片同一套存储；上传后以一列下载链接挂在文章末尾供访客下载。下载链接一律强制下载——附件可能是 HTML、SVG 这类浏览器会直接渲染的类型，在自己域名下渲染访客带来的文件等于把会话交出去。
 - **登录**：Passkey（WebAuthn）为主、手机验证器 TOTP（扫码绑定、6 位码）为辅，**没有密码**；两把钥匙都丢了走 `/login?recovery=1` + `RECOVERY_TOKEN`。`proxy.ts` 只保护 `/write` 与 `/settings` 并粗筛 cookie，真正的验签在页面层。
-- **敏感操作邮件确认**：更换 / 解绑验证器、新增 / 删除 Passkey、重置配置都要发确认信，链接 10 分钟有效、只能用一次，确认页再点一次才生效（首次绑定验证器除外）。
+- **敏感操作邮件确认**：绑定 / 更换 / 解绑验证器、新增 / 删除 Passkey、重置配置都要发确认信，链接 10 分钟有效、只能用一次，确认页再点一次才生效。
 - **站点设置**：四组平铺——站点信息（基本信息 + SEO）/ 外观（主题、界面语言、图片地址、每页文章数、页脚）/ 社交链接（自定义标题 + 网址，条数不限）/ 安全（通知邮箱、Passkey、验证器）。一个保存按钮，只提交改过的字段；主题和界面语言独立、点一下即生效。
 - **对外输出**：RSS 2.0、`sitemap.xml`、`robots.txt`、自定义 404 都已实现，RSS 与 sitemap 只输出 public 文章；SEO 元信息、canonical、og、分享图齐全。
-- **可插拔服务**：图片 `vercel-blob` / `s3` / `local`，发信 `resend` / `smtp`，都在安装向导里选方案、填字段、写进 `.env`；正文里的图片只存 URL。
-- **安装与恢复**：`/setup` 五步向导（含域名自检）、`/reset` 恢复指引（可生成临时密钥，自己去服务端配置）、`/api/diag` 域名诊断、`npm run backup` 导出文章与设置。
+- **可插拔服务**：图片与附件 `vercel-blob` / `s3` / `local`，发信 `resend` / `smtp`，都在安装向导里选方案、填字段、写进 `.env`；正文里的图片和附件都只存 URL。
+- **安装与恢复**：`/setup` 五步向导（配环境变量 → 确认数据库 → 发确认邮件 → 绑两把钥匙 → 完成），`/reset` 走同一套流程并多一块「当前状态」和「重置配置」；`/api/diag` 域名诊断；`npm run backup` 导出文章与设置。
 - **不娇气**：数据库还没配好时首页 / 文章页显示安装提示，`rss.xml` 与 `sitemap.xml` 返回 503，而不是抛 500；`MONGODB_DB_NAME` 指向一个还不存在的库时，安装向导会自动建出来。
 
 ## 本地跑起来
@@ -56,7 +55,7 @@ npm run dev
 ```bash
 node scripts/test-connection.mjs   # 只读：ping + 列出集合
 node scripts/seed-demo.mjs         # 演示数据，可重复执行重灌
-npm run backup                     # 导出文章 / 标签 / 设置到 backups/，不导出凭据
+npm run backup                     # 导出文章 / 标签 / 设置 / 附件清单到 backups/，不导出凭据
 npx tsc --noEmit                   # 类型检查
 npm run build                      # 生产构建
 ```
@@ -66,14 +65,25 @@ npm run build                      # 生产构建
 
 ## 首次安装（`/setup`）
 
-五步：**服务器配置 → 站点信息 → 绑定 Passkey → 绑定手机验证器 → 完成**。
+五步：**服务器配置 → 确认邮箱 → 绑定 Passkey → 绑定手机验证器 → 完成**。
 
 第 1 步在站点**还没有任何登录凭据**时免登录（新部署可能连数据库都没配，除此之外别无入口）；一旦有了凭据，再改这些配置必须先登录，而且免登录时不会覆盖已有值。向导会摆出当前域名、服务器读到的 `RP_ID` 与 `ORIGIN`，对不上时当场报错，不用等浏览器抛英文错。
+
+第 1 步会明确告诉你**数据库连不连得上**——连不上就不许往下走，因为后面的确认邮件、钥匙绑定全靠它。
 
 `AUTH_SECRET` 与 `RECOVERY_TOKEN` 由程序生成（32 字节随机数，base64 后 44 字符），不接受手填，也只在生成那一次显示——请立刻存进密码管理器。填完主按钮：
 
 - **自有服务器 / Docker**：写入项目根目录 `.env`，刷新即生效，并顺手下载一份留底。
 - **Vercel**：文件系统只读，点「生成 .env 文件」下载，导入到 Vercel → 项目 → Settings → Environment Variables，**然后重新部署**。变量生效前紧急入口是关着的，漏掉重新部署这一步就会卡住。
+
+第 2 步只填**通知邮箱**，填完点「发送确认邮件」。程序发一封信到那个地址，**点信里的链接**才继续安装——
+这一步顺带验证了发信通道确实是通的（后面所有确认信都靠它），也保证邮箱是本人点过链接确认过的。
+
+点完链接回到向导，直接落在**绑定 Passkey** 那一步：
+
+- Passkey 和验证器**都能跳过**。跳过了程序会告诉你：之后只能用 `.env` 里的 `RECOVERY_TOKEN` 登录，随时可以回来补。
+- 绑验证器也要走邮件确认：扫二维码 → 输入 6 位码 → 发确认信 → 点信里的链接才真正生效。
+- 两把钥匙都配齐后点「完成安装」，程序会自动登录并把你送到**设置页**（站点名、简介、SEO 在那儿填）。
 
 Vercel 上的完整顺序：
 
@@ -81,10 +91,13 @@ Vercel 上的完整顺序：
 2. 打开 `/setup`，第 1 步填数据库地址、库名、`RP_ID`、`ORIGIN`，生成密钥并下载 `.env`
 3. 把 `.env` 导入 Vercel 环境变量，重新部署并等它跑完
 4. 回 `/login`——安装未完成时会自动显示紧急登录入口——用 `.env` 里的 `RECOVERY_TOKEN` 进门
-5. 继续第 2–5 步：站点信息（**通知邮箱要填**，见下）→ 绑 Passkey → 扫码绑验证器 → 点「完成安装」
+5. 第 2 步填通知邮箱 → 收信点链接 → 绑 Passkey → 扫码绑验证器 → 点「完成安装」进设置页
 
 > **绑 Passkey 的前置条件**：新增 Passkey 也要走邮件确认，所以第 1 步里得选好发信方案并填好凭据，第 2 步里得填通知邮箱，否则「申请绑定新的 Passkey」按钮是禁用的。确认信点开链接后再回向导点「完成绑定」。
 > 完成后 `settings.setupCompleted = true`，从登录页进首页不再自动改道。
+
+**`/reset` 走同一套流程**——两把钥匙都丢了时，在 `/reset` 页一样是：配环境变量 → 确认数据库 → 发确认邮件 → 绑两把钥匙 → 完成。
+它还多一块「当前状态」和「重置配置」，方便你先看清自己现在有什么。
 
 改这几项前先想清楚：`RP_ID` / `ORIGIN` 改了会让已绑定的 Passkey 失效；`AUTH_SECRET` 改了会让所有设备掉线、验证器要重绑；`MONGODB_URI` 改了会立刻重连数据库，页面可能短暂打不开。`/api/diag` 只返回 `rpId` / `origin` / 当前请求域名和匹配结论，不返回密钥或连接串。
 
@@ -274,14 +287,16 @@ src/
     settings/                 # 四组平铺的设置表单；Passkey、验证器、主题、语言在这里
     setup/  reset/            # 首次安装向导 / 恢复指引
     confirm/[token]/          # 邮件确认页（凭据变更真正生效的地方）
-    uploads/[...path]/        # 本地存储方案下的图片回读
+    uploads/[...path]/        # 本地存储方案下的文件回读（图片与附件）
     not-found.tsx             # 自定义 404
     rss.xml/  sitemap.xml/  robots.txt/
     api/                      # auth/*（passkey、totp、recovery、logout）、setup/*、upload*（三套存储）、diag
-  components/                 # BlockEditor、PostBody、SiteFooter、WriteFab、i18n-provider、install-hint、service-config-fields
+  components/                 # BlockEditor、PostBody、AttachmentList、SiteFooter、WriteFab、
+                               # i18n-provider、install-hint、service-config-fields
   lib/                         # mongodb / posts / settings / settings-file / auth / session / passkey / totp /
                                # secret-box / pending / change-request / env-store / env-config / service-config /
-                               # storage / mail / rate-limit / site-url / safe-path / i18n-core …
+                               # storage / upload-client / attachment-url / mail / rate-limit / site-url /
+                               # safe-path / i18n-core / image-compress …
   proxy.ts                     # 只粗筛 /write 与 /settings 的 cookie，验签留给页面层 isLoggedIn()
 config/*.example.json          # 配置模板（提交）；实际 database.json / locale.json / settings.json 被忽略
 locales/*.json                 # 界面语言包（键是中文原文）
