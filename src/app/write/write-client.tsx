@@ -2,7 +2,7 @@
 
 import type { ClientStorageProvider } from "@/lib/upload-client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import type { Block } from "@blocknote/core";
@@ -20,7 +20,21 @@ type Props = {
   availableTags: string[];
   storageProvider: ClientStorageProvider;
   siteOrigin: string;
+  /** 自动暂存间隔（分钟），由站点设置统一配置；0 表示关闭 */
+  autosaveMinutes: number;
 };
+
+type Draft = {
+  title: string;
+  blocks: Block[];
+  tags: string[];
+  visibility: Visibility;
+  pinned: boolean;
+  slugInput: string;
+  savedAt: number;
+};
+
+const draftKeyFor = (slug: string | null) => `inslog:autosave:${slug ?? "new"}`;
 
 export default function WriteClient({
   slug,
@@ -32,6 +46,7 @@ export default function WriteClient({
   availableTags,
   storageProvider,
   siteOrigin,
+  autosaveMinutes,
 }: Props) {
   const t = useT();
   // BlockNote 依赖浏览器 API，关闭 SSR。
@@ -63,8 +78,85 @@ export default function WriteClient({
   const [deleting, setDeleting] = useState(false);
   const [hint, setHint] = useState("");
 
+  // 自动暂存：间隔由站点设置统一下发；草稿只存在本机浏览器，不进数据库、不回显给服务器
+  const autosaveMin = Math.max(0, Math.floor(autosaveMinutes || 0));
+  const [restoredDraft, setRestoredDraft] = useState<Draft | null>(null);
+  const [editorKey, setEditorKey] = useState(0);
+
+  const [editorInitialBlocks, setEditorInitialBlocks] = useState(initialBlocks);
+
   // 正文块只在保存时取一次，避免每次输入都触发父组件重渲染
   const blocksRef = useRef<Block[]>(initialBlocks);
+  const draftKey = draftKeyFor(slug);
+
+  // 草稿里要存的最新值：正文放 ref，其它字段每次渲染同步进去
+  const draftValues = useRef({ title, tags, visibility, pinned, slugInput });
+  draftValues.current = { title, tags, visibility, pinned, slugInput };
+
+  useEffect(() => {
+    // 只在挂载时看一次草稿；有草稿就提示，绝不自动覆盖当前内容
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Draft;
+        if (parsed && (parsed.title?.trim() || parsed.blocks?.length)) {
+          setRestoredDraft(parsed);
+        }
+      }
+    } catch {
+      // 坏数据直接忽略，不打断写作
+    }
+  }, [draftKey]);
+
+  // 定时写草稿：填 0 表示关闭；有草稿待处理时暂停，免得覆盖掉它
+  useEffect(() => {
+    if (autosaveMin <= 0 || restoredDraft) return;
+    const id = window.setInterval(() => {
+      const v = draftValues.current;
+      const draft: Draft = {
+        title: v.title,
+        blocks: blocksRef.current,
+        tags: v.tags,
+        visibility: v.visibility,
+        pinned: v.pinned,
+        slugInput: v.slugInput,
+        savedAt: Date.now(),
+      };
+      try {
+        localStorage.setItem(draftKey, JSON.stringify(draft));
+      } catch {
+        // 存不进去就静默跳过，不打扰写作
+      }
+    }, autosaveMin * 60 * 1000);
+    return () => window.clearInterval(id);
+  }, [autosaveMin, draftKey, restoredDraft]);
+
+  const clearDraft = () => {
+    try {
+      localStorage.removeItem(draftKey);
+    } catch {
+      // 忽略
+    }
+  };
+
+  const restoreDraft = () => {
+    if (!restoredDraft) return;
+    setTitle(restoredDraft.title ?? "");
+    setTags(Array.isArray(restoredDraft.tags) ? restoredDraft.tags : []);
+    setVisibility(restoredDraft.visibility ?? "draft");
+    setPinned(Boolean(restoredDraft.pinned));
+    setSlugInput(restoredDraft.slugInput ?? "");
+    blocksRef.current = restoredDraft.blocks ?? [];
+    // BlockEditor 只在挂载时读 initialContent，换 key 强制重建才能灌入草稿正文
+    setEditorInitialBlocks(restoredDraft.blocks ?? []);
+    setEditorKey((k) => k + 1);
+    setRestoredDraft(null);
+  };
+
+  const discardDraft = () => {
+    clearDraft();
+    setRestoredDraft(null);
+  };
 
   const toggleTag = (tag: string) => {
     setTags(tags.includes(tag) ? tags.filter((t) => t !== tag) : [...tags, tag]);
@@ -100,6 +192,8 @@ export default function WriteClient({
       setHint(result.error);
       return;
     }
+    // 保存成功就清掉本机草稿，免得下次进来又提示恢复旧内容
+    clearDraft();
     // 保存成功就离开编辑页，直接看文章的实际效果
     // 这里故意不解除 saving，避免跳转前重复提交
     router.push(`/posts/${result.slug}`);
@@ -117,6 +211,7 @@ export default function WriteClient({
       setHint(result.error);
       return;
     }
+    clearDraft();
     router.push("/");
     router.refresh();
   };
@@ -127,6 +222,22 @@ export default function WriteClient({
         <a href={slug ? `/posts/${slug}` : "/"}>{t("← 返回")}</a>
         <span className="notice">{slug ? t("编辑文章") : t("新建文章")}</span>
       </div>
+
+      {restoredDraft && (
+        <div className="write-meta d-flex flex-wrap align-items-baseline">
+          <span className="write-meta-label">
+            {t("发现 {time} 的暂存草稿", {
+              time: new Date(restoredDraft.savedAt).toLocaleString(),
+            })}
+          </span>
+          <button type="button" className="visibility-option selected" onClick={restoreDraft}>
+            {t("恢复")}
+          </button>
+          <button type="button" className="visibility-option" onClick={discardDraft}>
+            {t("丢弃")}
+          </button>
+        </div>
+      )}
 
       <input
         className="write-title"
@@ -174,8 +285,9 @@ export default function WriteClient({
 
       <div className="write-editor">
         <BlockEditor
+          key={editorKey}
           storageProvider={storageProvider}
-          initialBlocks={initialBlocks}
+          initialBlocks={editorInitialBlocks}
           onChange={(blocks) => {
             blocksRef.current = blocks;
           }}

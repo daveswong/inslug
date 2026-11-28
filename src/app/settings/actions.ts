@@ -2,7 +2,7 @@
 
 // 站点设置的保存：只处理站点展示信息，不碰任何数据库连接配置
 import { isLoggedIn } from "@/lib/auth";
-import { saveSettings } from "@/lib/settings";
+import { normalizeAutosaveMinutes, saveSettings } from "@/lib/settings";
 import type { SocialLink } from "@/lib/types";
 import { getT } from "@/lib/i18n";
 
@@ -55,6 +55,9 @@ export async function saveSiteSettings(
       changes.postsPerPage = Number.isFinite(num)
         ? Math.min(50, Math.max(1, Math.round(num)))
         : 20;
+    }
+    if (has("autosaveMinutes")) {
+      changes.autosaveMinutes = normalizeAutosaveMinutes(value("autosaveMinutes"));
     }
     if (has("social")) {
       let links: unknown;

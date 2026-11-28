@@ -50,6 +50,8 @@ export interface SettingsDoc {
   setupCompleted: boolean;
   /** 界面语言：zh-CN / en；空字符串表示用默认（环境变量或本地配置） */
   uiLanguage: string;
+  /** 自动暂存间隔，单位分钟；0 表示关闭 */
+  autosaveMinutes: number;
   updatedAt: Date;
 }
 
@@ -69,4 +71,5 @@ export const DEFAULT_SETTINGS: Omit<SettingsDoc, "updatedAt"> = {
   notifyEmail: "",
   setupCompleted: false,
   uiLanguage: "",
+  autosaveMinutes: 5,
 };

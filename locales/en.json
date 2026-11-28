@@ -472,5 +472,10 @@
   "RECOVERY_TOKEN 是临时救急钥匙。绑定好 Passkey 和验证器后可以自行删除：从服务器 .env 里删掉 RECOVERY_TOKEN 这一行；Vercel 在项目 → Settings → Environment Variables 删除同名变量并重新部署。不删除也不会报错。": "RECOVERY_TOKEN is a temporary rescue key. Once your Passkey and authenticator are bound, you can delete it yourself: remove the RECOVERY_TOKEN line from the server's .env; on Vercel, delete the variable under Project → Settings → Environment Variables and redeploy. Leaving it in place does not cause an error.",
   "必须指定数据库，集群中没有时会自动创建": "Database name is required. It will be created automatically if it does not exist in the cluster.",
   "域名，请不要带 http:// 或 https://": "Domain name, without http:// or https://",
-  "站点的完整地址，例如 https://inslog.example.com。": "The full site address, e.g. https://inslog.example.com."
+  "站点的完整地址，例如 https://inslog.example.com。": "The full site address, e.g. https://inslog.example.com.",
+  "自动暂存间隔（分钟）": "Autosave interval (minutes)",
+  "填 0 关闭；草稿只存在写作这台设备的浏览器里": "Enter 0 to turn off. Drafts stay in the browser of the device you write on",
+  "发现 {time} 的暂存草稿": "Draft saved at {time} found",
+  "恢复": "Restore",
+  "丢弃": "Discard"
 }

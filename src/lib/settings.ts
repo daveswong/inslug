@@ -1,5 +1,22 @@
 import { getDb } from "./mongodb";
 import { DEFAULT_SETTINGS, type SettingsDoc, type SocialLinks } from "./types";
+
+/** 自动暂存间隔上限：一天，防止误填超大数字让定时器溢出 */
+const AUTOSAVE_MAX_MINUTES = 1440;
+
+/**
+ * 自动暂存间隔的统一校验：非数字、负数回退默认值，0 表示关闭，上限截断。
+ * 保存表单和读取配置文件都走这里，避免两条路径规则不一致。
+ */
+export function normalizeAutosaveMinutes(raw: unknown): number {
+  // 空值走默认值：0 是明确的「关闭」，不能把没填当成关闭
+  if (raw === null || raw === undefined || String(raw).trim() === "") {
+    return DEFAULT_SETTINGS.autosaveMinutes;
+  }
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0) return DEFAULT_SETTINGS.autosaveMinutes;
+  return Math.min(AUTOSAVE_MAX_MINUTES, Math.floor(n));
+}
 import { getEnvValue } from "./env-config";
 import { readSettingsFile, writeSettingsFile, type SettingsFileShape } from "./settings-file";
 
@@ -72,6 +89,7 @@ function sanitizeSettings(raw: SettingsFileShape): SettingsDoc {
   const postsPerPage = Number(rest.postsPerPage);
   const notifyEmail = String(rest.notifyEmail ?? "");
   const uiLanguage = String(rest.uiLanguage ?? "");
+  const autosaveMinutes = normalizeAutosaveMinutes(rest.autosaveMinutes);
 
   const text = (value: unknown): string =>
     typeof value === "string" ? value : value == null ? "" : String(value);
@@ -95,6 +113,7 @@ function sanitizeSettings(raw: SettingsFileShape): SettingsDoc {
     notifyEmail,
     setupCompleted: rest.setupCompleted === true,
     uiLanguage,
+    autosaveMinutes,
     _id: "site",
     updatedAt: toDate(rawUpdatedAt),
   } as SettingsDoc;
@@ -129,6 +148,7 @@ export async function getSettings(): Promise<SettingsDoc> {
         ...DEFAULT_SETTINGS,
         ...doc,
         social: normalizeSocial(doc.social),
+        autosaveMinutes: normalizeAutosaveMinutes(doc.autosaveMinutes),
         updatedAt: doc.updatedAt ?? new Date(0),
       } as SettingsDoc;
     }

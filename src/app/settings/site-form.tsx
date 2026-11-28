@@ -26,6 +26,7 @@ type Values = {
   seoDescription: string;
   seoKeywords: string;
   postsPerPage: number;
+  autosaveMinutes: number;
   footerText: string;
   notifyEmail: string;
   favicon: string;
@@ -56,6 +57,7 @@ function toValues(settings: SettingsDoc, prev?: Values): Values {
     seoDescription: settings.seoDescription,
     seoKeywords: settings.seoKeywords,
     postsPerPage: settings.postsPerPage,
+    autosaveMinutes: settings.autosaveMinutes,
     footerText: settings.footerText,
     notifyEmail: settings.notifyEmail ?? "",
     favicon: settings.favicon,
@@ -233,6 +235,27 @@ const [values, setValues] = useState<Values>(initial);
               onChange={(e) => set("postsPerPage", Number(e.target.value))}
             />
           </label>
+          <div className="field row gx-0 align-items-start">
+            <label className="field-label col-12 col-sm-2" htmlFor="autosave-minutes">
+              {t("自动暂存间隔（分钟）")}
+            </label>
+            <div className="col-12 col-sm-10">
+              <input
+                id="autosave-minutes"
+                name="_autosaveMinutes"
+                type="number"
+                min={0}
+                max={1440}
+                step={1}
+                className="w-100"
+                value={values.autosaveMinutes}
+                onChange={(e) => set("autosaveMinutes", Number(e.target.value))}
+              />
+              <span className="field-hint">
+                {t("填 0 关闭；草稿只存在写作这台设备的浏览器里")}
+              </span>
+            </div>
+          </div>
           <label className="field row gx-0 align-items-start">
             <span className="field-label col-12 col-sm-2">{t("页脚文字")}</span>
             <input
