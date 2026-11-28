@@ -63,6 +63,12 @@ function blocksToMarkdown(blocks, depth = 0) {
       lines.push("---");
     } else if (type === "image") {
       lines.push(`![${block.props?.caption ?? ""}](${block.props?.url ?? ""})`);
+    } else if (type === "file") {
+      lines.push(`[📎 ${block.props?.name ?? "文件"}](${block.props?.url ?? ""})`);
+    } else if (type === "audio") {
+      lines.push(`[🔊 ${block.props?.name ?? "音频"}](${block.props?.url ?? ""})`);
+    } else if (type === "video") {
+      lines.push(`[🎬 ${block.props?.name ?? "视频"}](${block.props?.url ?? ""})`);
     } else {
       lines.push(text);
     }
@@ -73,21 +79,7 @@ function blocksToMarkdown(blocks, depth = 0) {
   return lines.join("\n");
 }
 
-// 附件清单单独汇总一份：备份的是元数据，文件本体在对象存储里
-const allAttachments = [];
 for (const post of posts) {
-  const attachments = post.attachments ?? [];
-  if (attachments.length > 0) {
-    allAttachments.push({ slug: post.slug, attachments });
-  }
-}
-writeFileSync(
-  join(outDir, "attachments.json"),
-  JSON.stringify(allAttachments, null, 2) + "\n"
-);
-
-for (const post of posts) {
-  const attachments = post.attachments ?? [];
   const front = [
     "---",
     `title: ${JSON.stringify(post.title)}`,
@@ -95,32 +87,15 @@ for (const post of posts) {
     `visibility: ${post.visibility}`,
     `tags: ${JSON.stringify(post.tags ?? [])}`,
     `date: ${(post.publishedAt ?? post.createdAt).toISOString()}`,
-    // 附件存成 JSON 数组，换回来时能原样恢复
-    ...(attachments.length > 0
-      ? [`attachments: ${JSON.stringify(attachments)}`]
-      : []),
     "---",
     "",
   ].join("\n");
 
-  // 正文后面再列一遍，人看 markdown 时也知道有附件
-  const attachmentNote =
-    attachments.length > 0
-      ? [
-          "",
-          "## 附件",
-          "",
-          ...attachments.map(
-            (a) => `- [${a.name}](${a.url}) (${a.size} 字节)`
-          ),
-          "",
-        ].join("\n")
-      : "";
-
   const file = `${post.slug}.md`.replace(/[^a-zA-Z0-9._-]/g, "-");
+  // 文件/音视频都在正文块里，blocksToMarkdown 会一并转出来
   writeFileSync(
     join(outDir, "posts", file),
-    front + blocksToMarkdown(post.blocks) + "\n" + attachmentNote
+    front + blocksToMarkdown(post.blocks) + "\n"
   );
 }
 

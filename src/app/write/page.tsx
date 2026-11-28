@@ -39,7 +39,6 @@ export default async function WritePage({ searchParams }: Props) {
         initialPinned={post?.pinned ?? false}
         availableTags={tags}
         storageProvider={storageProvider}
-        initialAttachments={post?.attachments ?? []}
       />
       <SiteFooter />
     </main>

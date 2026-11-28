@@ -2,23 +2,6 @@ import type { Block } from "@blocknote/core";
 
 export type Visibility = "draft" | "private" | "public";
 
-/**
- * 文章附件。
- *
- * 正文里插不了附件块（编辑器只管排版），所以附件单独存一份，
- * 文章末尾按列表渲染给访客下载。
- */
-export interface Attachment {
-  /** 上传时的原始文件名，下载时显示用 */
-  name: string;
-  /** 存储里的地址 */
-  url: string;
-  /** 字节数 */
-  size: number;
-  /** MIME 类型。浏览器给什么就是什么，不准也没关系 */
-  type: string;
-}
-
 export interface PostDoc {
   _id?: unknown;
   slug: string;
@@ -32,8 +15,6 @@ export interface PostDoc {
   publishedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
-  /** 文章末尾的附件列表。没有附件时是空数组 */
-  attachments: Attachment[];
 }
 
 export interface TagDoc {

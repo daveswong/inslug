@@ -6,7 +6,7 @@ import { BlockNoteView } from "@blocknote/mantine";
 import { BlockNoteSchema, defaultBlockSpecs } from "@blocknote/core";
 import type { Block, PartialBlock } from "@blocknote/core";
 import { prepareImage } from "@/lib/image-compress";
-import { uploadImage, type ClientStorageProvider } from "@/lib/upload-client";
+import { uploadFile, type ClientStorageProvider } from "@/lib/upload-client";
 import "@blocknote/core/fonts/inter.css";
 import "@blocknote/mantine/style.css";
 import { useT } from "@/components/i18n-provider";
@@ -18,10 +18,10 @@ type Props = {
   storageProvider: ClientStorageProvider;
 };
 
-// 只保留排版类块。待办、折叠、音频、视频、文件是交互块，个人博客用不到，
-// 留着只会让斜杠菜单变杂。
+// 只去掉待办和折叠块：个人博客用不到这两种交互块。
+// 文件、音频、视频保留——附件就靠这些块插在正文里，不再单独做附件列表。
 const blockSpecs = { ...defaultBlockSpecs };
-for (const key of ["checkListItem", "toggleListItem", "audio", "video", "file"]) {
+for (const key of ["checkListItem", "toggleListItem"]) {
   delete (blockSpecs as Record<string, unknown>)[key];
 }
 const editorSchema = BlockNoteSchema.create({ blockSpecs });
@@ -40,22 +40,27 @@ export default function BlockEditor({
     schema: editorSchema,
     initialContent:
       initialBlocks.length > 0 ? (initialBlocks as PartialBlock[]) : undefined,
-    // 图片按当前存储方案上传，数据库里只留 URL
+    // 图片/文件/音视频都按当前存储方案上传，数据库里只留 URL。
+    // 图片先降采样再走图片通道（10MB）；其余文件不限类型，走附件通道（50MB）。
     uploadFile: async (file: File) => {
+      const isImage = file.type.startsWith("image/");
       try {
-        // 手机拍的大图先降采样/转 webp，再传
-        const prepared = await prepareImage(file);
-        return await uploadImage(prepared, storageProvider);
+        if (isImage) {
+          // 手机拍的大图先降采样/转 webp，再传
+          const prepared = await prepareImage(file);
+          return await uploadFile(prepared, storageProvider, "image");
+        }
+        return await uploadFile(file, storageProvider, "attachment");
       } catch (err) {
         const msg = err instanceof Error ? err.message : "";
         if (msg === "IMAGE_TYPE_NOT_ALLOWED") throw new Error(t("只支持 jpg / png / webp / gif / avif / svg 图片"));
         if (msg === "IMAGE_TOO_LARGE_CLIENT") throw new Error(t("图片超过 10MB，请先压缩"));
         if (msg.includes("[UNAUTHORIZED]")) throw new Error(t("登录已过期，请重新登录后再上传"));
         if (msg.includes("[BAD_TYPE]")) throw new Error(t("只支持图片文件（jpg/png/webp/gif）"));
-        if (msg.includes("[TOO_LARGE]")) throw new Error(t("图片超过 10MB，请压缩后再传"));
+        if (msg.includes("[TOO_LARGE]")) throw new Error(t(isImage ? "图片超过 10MB，请压缩后再传" : "文件超过 50MB，请换一个再传"));
         if (msg.includes("content type")) throw new Error(t("只支持图片文件（jpg/png/webp/gif）"));
-        if (msg.includes("too large")) throw new Error(t("图片超过 10MB，请压缩后再传"));
-        throw new Error(msg || t("图片上传失败，请重试"));
+        if (msg.includes("too large")) throw new Error(t(isImage ? "图片超过 10MB，请压缩后再传" : "文件超过 50MB，请换一个再传"));
+        throw new Error(msg || t(isImage ? "图片上传失败，请重试" : "文件上传失败，请重试"));
       }
     },
   });

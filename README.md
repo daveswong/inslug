@@ -29,12 +29,12 @@
 - **读写闭环**：首页时间线（只有日期 + 标题，无摘要无封面、要分页）→ 文章详情 → 站内搜索 → 写作页（BlockNote 类 Notion 所见即所得）→ 存 MongoDB。
 - **文章**：可见性三态 `draft`（草稿）/ `private`（私有）/ `public`（公开），访客只读 public，私有与草稿直接访问也 404；发布不超过 6 个月的公开文章标 `new`；可置顶（列表和详情都不显示置顶标记，位置本身就是信号）。
 - **标签与地址**：tag 手动创建 + 选择，未被任何文章引用的自动删除；公开标签目录只列 public 用过的标签，防草稿内容泄露；slug 由标题拼音 + 随机后缀生成，改标题不改 URL。
-- **文章附件**：任意类型文件（PDF、STEP、DXF、ZIP 之类都行），单个最大 50MB，走和图片同一套存储；上传后以一列下载链接挂在文章末尾供访客下载。下载链接一律强制下载——附件可能是 HTML、SVG 这类浏览器会直接渲染的类型，在自己域名下渲染访客带来的文件等于把会话交出去。
+- **文件与音视频**：直接在正文里用 BlockNote 的文件 / 音频 / 视频块插入，跟图片一样是正文的一部分，不再单独做附件列表。任意文件类型，单个最大 50MB，走和图片同一套存储，库里只存 URL。
 - **登录**：Passkey（WebAuthn）为主、手机验证器 TOTP（扫码绑定、6 位码）为辅，**没有密码**；两把钥匙都丢了走 `/login?recovery=1` + `RECOVERY_TOKEN`。`proxy.ts` 只保护 `/write` 与 `/settings` 并粗筛 cookie，真正的验签在页面层。
 - **敏感操作邮件确认**：绑定 / 更换 / 解绑验证器、新增 / 删除 Passkey 都要发确认信，链接 10 分钟有效、只能用一次，确认页再点一次才生效。
 - **站点设置**：四组平铺——站点信息（基本信息 + SEO）/ 外观（主题、界面语言、图片地址、每页文章数、页脚）/ 社交链接（自定义标题 + 网址，条数不限）/ 安全（通知邮箱、Passkey、验证器）。一个保存按钮，只提交改过的字段；主题和界面语言独立、点一下即生效。
 - **对外输出**：RSS 2.0、`sitemap.xml`、`robots.txt`、自定义 404 都已实现，RSS 与 sitemap 只输出 public 文章；SEO 元信息、canonical、og、分享图齐全。
-- **可插拔服务**：图片与附件 `vercel-blob` / `s3` / `local`，发信 `resend` / `smtp`，都在安装向导里选方案、填字段、写进 `.env`；正文里的图片和附件都只存 URL。
+- **可插拔服务**：图片与文件 `vercel-blob` / `s3` / `local`，发信 `resend` / `smtp`，都在安装向导里选方案、填字段、写进 `.env`；正文里的图片和文件都只存 URL。
 - **安装**：`/setup` 只有一步——配环境变量，检查通过即完成安装并跳到登录页；通知邮箱、Passkey、验证器都在首次登录后到站点设置里配。登不上用 `.env` / 环境变量里的 `RECOVERY_TOKEN` 从紧急入口进。站点没有重置功能。`npm run backup` 导出文章与设置。
 - **不娇气**：数据库还没配好时首页 / 文章页显示安装提示，`rss.xml` 与 `sitemap.xml` 返回 503，而不是抛 500；`MONGODB_DB_NAME` 指向一个还不存在的库时，安装向导会自动建出来。
 
@@ -54,7 +54,7 @@ npm run dev
 ```bash
 node scripts/test-connection.mjs   # 只读：ping + 列出集合
 node scripts/seed-demo.mjs         # 演示数据，可重复执行重灌
-npm run backup                     # 导出文章 / 标签 / 设置 / 附件清单到 backups/，不导出凭据
+npm run backup                     # 导出文章 / 标签 / 设置到 backups/，不导出凭据
 npx tsc --noEmit                   # 类型检查
 npm run build                      # 生产构建
 ```
@@ -360,15 +360,15 @@ src/
     settings/                 # 四组平铺的设置表单；Passkey、验证器、主题、语言在这里
     setup/                    # 首次安装向导（配环境变量 + 检查）
     confirm/[token]/          # 邮件确认页（凭据变更真正生效的地方）
-    uploads/[...path]/        # 本地存储方案下的文件回读（图片与附件）
+    uploads/[...path]/        # 本地存储方案下的文件回读（图片与文件）
     not-found.tsx             # 自定义 404
     rss.xml/  sitemap.xml/  robots.txt/
-    api/                      # auth/*（passkey、totp、recovery、logout）、setup/*、upload*（三套存储）、diag
-  components/                 # BlockEditor、PostBody、AttachmentList、SiteFooter、WriteFab、
+    api/                      # auth/*（passkey、totp、recovery、logout）、setup/*、upload*（三套存储）
+  components/                 # BlockEditor、PostBody、SiteFooter、WriteFab、
                                # i18n-provider、install-hint、service-config-fields
   lib/                         # mongodb / posts / settings / settings-file / auth / session / passkey / totp /
                                # secret-box / pending / change-request / env-store / env-config / service-config /
-                               # storage / upload-client / attachment-url / mail / rate-limit / site-url /
+                               # storage / upload-client / mail / rate-limit / site-url /
                                # safe-path / i18n-core / image-compress …
   proxy.ts                     # 只粗筛 /write 与 /settings 的 cookie，验签留给页面层 isLoggedIn()
 config/*.example.json          # 配置模板（提交）；实际 database.json / locale.json / settings.json 被忽略
