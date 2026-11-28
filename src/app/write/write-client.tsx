@@ -2,7 +2,7 @@
 
 import type { ClientStorageProvider } from "@/lib/upload-client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import type { Block } from "@blocknote/core";
@@ -19,6 +19,7 @@ type Props = {
   initialPinned: boolean;
   availableTags: string[];
   storageProvider: ClientStorageProvider;
+  siteOrigin: string;
 };
 
 export default function WriteClient({
@@ -30,15 +31,20 @@ export default function WriteClient({
   initialPinned,
   availableTags,
   storageProvider,
+  siteOrigin,
 }: Props) {
   const t = useT();
   // BlockNote 依赖浏览器 API，关闭 SSR。
-  // dynamic 放在组件内部：模块作用域拿不到 t()，
-  // 加载提示就会变成固定的中文，英文界面下露出来。
-  const BlockEditor = dynamic(() => import("@/components/BlockEditor"), {
-    ssr: false,
-    loading: () => <div className="notice">{t("编辑器加载中…")}</div>,
-  });
+  // 关键：dynamic 要缓存，不能在每次渲染时重新构造，否则下面任何 input 的
+  // setState 重渲染都会让编辑器被当成新组件卸载重挂载，表现为「每敲一个字闪一下」。
+  const BlockEditor = useMemo(
+    () =>
+      dynamic(() => import("@/components/BlockEditor"), {
+        ssr: false,
+        loading: () => <div className="notice">{t("编辑器加载中…")}</div>,
+      }),
+    [t]
+  );
   const VISIBILITY_OPTIONS: { value: Visibility; label: string }[] = [
     { value: "public", label: t("公开") },
     { value: "private", label: t("私有") },
@@ -208,18 +214,19 @@ export default function WriteClient({
           <span className="write-meta-hint">{t("置顶的文章排在列表最前面")}</span>
         </div>
         <div className="write-meta">
-          <label className="write-meta-label" htmlFor="post-slug">
-            {t("文章地址")}
-          </label>
-          <input
-            id="post-slug"
-            className="search-input"
-            type="text"
-            value={slugInput}
-            onChange={(e) => setSlugInput(e.target.value)}
-            placeholder={t("留空自动生成")}
-            aria-label={t("文章地址")}
-          />
+          <span className="write-meta-label">{t("文章地址")}</span>
+          <span className="write-slug-field">
+            <span className="write-slug-prefix">{siteOrigin}/posts/</span>
+            <input
+              id="post-slug"
+              className="write-slug-input"
+              type="text"
+              value={slugInput}
+              onChange={(e) => setSlugInput(e.target.value)}
+              placeholder={t("留空自动生成")}
+              aria-label={t("文章地址")}
+            />
+          </span>
           <span className="write-meta-hint">{t("只能用小写字母、数字和连字符，中文会自动转拼音")}</span>
         </div>
         <div className="write-action-row">

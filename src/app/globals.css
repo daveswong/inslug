@@ -912,6 +912,38 @@ pre.secret-key {
   border-top: 1px solid var(--line);
 }
 
+/* 文章地址：完整 URL 前缀 + 只有下划线的输入框，拼成一条地址 */
+.write-slug-field {
+  display: inline-flex;
+  align-items: baseline;
+  font-size: 0.85rem;
+}
+
+.write-slug-prefix {
+  color: var(--muted);
+}
+
+.write-slug-input {
+  width: 14rem;
+  max-width: 100%;
+  padding: 0.35rem 0;
+  font-size: 0.85rem;
+  color: var(--ink);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  outline: none;
+}
+
+.write-slug-input:focus {
+  border-bottom-color: var(--muted);
+}
+
+.write-slug-input::placeholder {
+  color: var(--muted);
+  opacity: 0.75;
+}
+
 /* 保存按钮与删除链接并排 */
 .write-action-row {
   display: flex;

@@ -4,6 +4,7 @@ import SiteFooter from "@/components/SiteFooter";
 import { isLoggedIn } from "@/lib/auth";
 import { getPostBySlug, listTags } from "@/lib/posts";
 import { getStorageProvider } from "@/lib/storage";
+import { siteOrigin } from "@/lib/site-url";
 import WriteClient from "./write-client";
 
 export const dynamic = "force-dynamic";
@@ -39,6 +40,7 @@ export default async function WritePage({ searchParams }: Props) {
         initialPinned={post?.pinned ?? false}
         availableTags={tags}
         storageProvider={storageProvider}
+        siteOrigin={siteOrigin()}
       />
       <SiteFooter />
     </main>
