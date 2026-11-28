@@ -88,16 +88,17 @@ export default function ImageField({
   };
 
   return (
-    <div className="field image-field">
-      <label className="field-label" htmlFor={inputId}>
+    <div className="field image-field row gx-0 align-items-start">
+      <label className="field-label col-12 col-sm-2" htmlFor={inputId}>
         {label}
       </label>
       {/* 右列容器：控件、说明、预览从上到下排，避免被栅格拆到左边去 */}
-      <div className="image-field-body">
-        <div className="image-field-row">
+      <div className="image-field-body col-12 col-sm-10">
+        <div className="image-field-row d-flex flex-wrap align-items-center">
           <input
             id={inputId}
             name={name}
+            className="w-100"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder={placeholder}

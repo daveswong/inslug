@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import SiteFooter from "@/components/SiteFooter";
 import { isLoggedIn } from "@/lib/auth";
 import { isDbConfigured } from "@/lib/mongodb";
-import { canWriteEnvFile, isVercel } from "@/lib/env-config";
+import { isVercel } from "@/lib/env-config";
 import { canWriteSettingsFile } from "@/lib/settings-file";
 import SetupWizard from "./setup-wizard";
 import { getSetupData } from "./setup-data";
@@ -39,7 +39,6 @@ export default async function SetupPage() {
   }
 
   const {
-    recoveryReady,
     rpId,
     origin,
     requestHost,
@@ -49,7 +48,6 @@ export default async function SetupPage() {
     dbConfigured,
     serviceFeatures,
     manualAuthItems,
-    generatedAuthItems,
   } = await getSetupData();
 
   return (
@@ -63,14 +61,11 @@ export default async function SetupPage() {
 
       <SetupWizard
         authItems={manualAuthItems}
-        generatedAuthItems={generatedAuthItems}
         serviceFeatures={serviceFeatures}
-        envWritable={canWriteEnvFile()}
         fileWritable={canWriteSettingsFile()}
         onVercel={isVercel()}
         dbStatus={dbStatus}
         dbConfigured={dbConfigured}
-        recoveryReady={recoveryReady}
         rpId={rpId}
         origin={origin}
         requestHost={requestHost}

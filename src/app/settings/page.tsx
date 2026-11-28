@@ -60,14 +60,11 @@ export default async function SettingsPage() {
       <PasskeyManager passkeys={passkeys} authorized={authorized} mailReady={canMail} />
       <h3 className="form-group">{t("手机验证器")}</h3>
       <TotpManager bound={bound} mailReady={canMail} />
-      <p className="notice">
-        {t("两把钥匙都丢了？用紧急密钥从")}<a href="/login?recovery=1">{t("这里登录")}</a>{t("。")}
-      </p>
     </>
   );
 
   return (
-    <main className="site">
+    <main className="site mx-auto">
       <header className="site-head">
         <h1 className="site-title">{t("站点设置")}</h1>
         {fileIssue && (

@@ -137,44 +137,49 @@ const [values, setValues] = useState<Values>(initial);
       <section className="section">
         <h2 className="section-title">{t("站点信息")}</h2>
         <div className="site-form">
-          <label className="field">
-            <span className="field-label">{t("站点名")}</span>
+          <label className="field row gx-0 align-items-start">
+            <span className="field-label col-12 col-sm-2">{t("站点名")}</span>
             <input
+              className="col-12 col-sm-10"
               name="_siteName"
               value={values.siteName}
               onChange={(e) => set("siteName", e.target.value)}
               required
             />
           </label>
-          <label className="field">
-            <span className="field-label">{t("简介")}</span>
+          <label className="field row gx-0 align-items-start">
+            <span className="field-label col-12 col-sm-2">{t("简介")}</span>
             <textarea
+              className="col-12 col-sm-10"
               name="_description"
               value={values.description}
               onChange={(e) => set("description", e.target.value)}
               rows={2}
             />
           </label>
-          <label className="field">
-            <span className="field-label">{t("作者")}</span>
+          <label className="field row gx-0 align-items-start">
+            <span className="field-label col-12 col-sm-2">{t("作者")}</span>
             <input
+              className="col-12 col-sm-10"
               name="_author"
               value={values.author}
               onChange={(e) => set("author", e.target.value)}
             />
           </label>
-          <label className="field">
-            <span className="field-label">{t("标题")}</span>
+          <label className="field row gx-0 align-items-start">
+            <span className="field-label col-12 col-sm-2">{t("标题")}</span>
             <input
+              className="col-12 col-sm-10"
               name="_seoTitle"
               value={values.seoTitle}
               onChange={(e) => set("seoTitle", e.target.value)}
               placeholder={t("留空用站点名")}
             />
           </label>
-          <label className="field">
-            <span className="field-label">{t("描述")}</span>
+          <label className="field row gx-0 align-items-start">
+            <span className="field-label col-12 col-sm-2">{t("描述")}</span>
             <textarea
+              className="col-12 col-sm-10"
               name="_seoDescription"
               value={values.seoDescription}
               onChange={(e) => set("seoDescription", e.target.value)}
@@ -182,9 +187,10 @@ const [values, setValues] = useState<Values>(initial);
               placeholder={t("留空用简介")}
             />
           </label>
-          <label className="field">
-            <span className="field-label">{t("关键词")}</span>
+          <label className="field row gx-0 align-items-start">
+            <span className="field-label col-12 col-sm-2">{t("关键词")}</span>
             <input
+              className="col-12 col-sm-10"
               name="_seoKeywords"
               value={values.seoKeywords}
               onChange={(e) => set("seoKeywords", e.target.value)}
@@ -215,9 +221,10 @@ const [values, setValues] = useState<Values>(initial);
             onChange={(v) => set("ogImage", v)}
             placeholder={t("图片地址，留空用默认渐变图标")}
           />
-          <label className="field">
-            <span className="field-label">{t("每页文章数")}</span>
+          <label className="field row gx-0 align-items-start">
+            <span className="field-label col-12 col-sm-2">{t("每页文章数")}</span>
             <input
+              className="col-12 col-sm-10"
               name="_postsPerPage"
               type="number"
               min={1}
@@ -226,9 +233,10 @@ const [values, setValues] = useState<Values>(initial);
               onChange={(e) => set("postsPerPage", Number(e.target.value))}
             />
           </label>
-          <label className="field">
-            <span className="field-label">{t("页脚文字")}</span>
+          <label className="field row gx-0 align-items-start">
+            <span className="field-label col-12 col-sm-2">{t("页脚文字")}</span>
             <input
+              className="col-12 col-sm-10"
               name="_footerText"
               value={values.footerText}
               onChange={(e) => set("footerText", e.target.value)}
@@ -246,7 +254,7 @@ const [values, setValues] = useState<Values>(initial);
             // key 用稳定的 id，不用下标：
             // 下标作 key 时，删掉中间一条，React 会复用错误的 DOM 节点，
             // 焦点会跳到不相干的那一条链接上。
-            <div className="social-row" key={link.id}>
+            <div className="social-row d-flex flex-wrap" key={link.id}>
               <input
                 className="search-input"
                 value={link.title}
@@ -279,9 +287,10 @@ const [values, setValues] = useState<Values>(initial);
       <section className="section">
         <h2 className="section-title">{t("安全")}</h2>
         <div className="site-form">
-          <label className="field">
-            <span className="field-label">{t("通知邮箱")}</span>
+          <label className="field row gx-0 align-items-start">
+            <span className="field-label col-12 col-sm-2">{t("通知邮箱")}</span>
             <input
+              className="col-12 col-sm-10"
               name="_notifyEmail"
               type="email"
               value={values.notifyEmail}
@@ -292,7 +301,7 @@ const [values, setValues] = useState<Values>(initial);
         {securityExtras && <div className="settings-extras">{securityExtras}</div>}
       </section>
 
-      <div className="form-actions">
+      <div className="form-actions d-flex align-items-center">
         <button
           className="btn btn-outline-light btn-plain"
           type="submit"

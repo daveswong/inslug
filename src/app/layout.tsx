@@ -56,7 +56,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     metadataBase: new URL(siteUrl),
-    title: { default: title, template: `%s · ${s.siteName}` },
+    // 页面有自己的标题时直接用它，不追加站点名；没设置时才回退到站点名。
+    title,
     description,
     keywords,
     authors: s.author ? [{ name: s.author }] : undefined,

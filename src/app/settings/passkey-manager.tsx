@@ -138,9 +138,9 @@ export default function PasskeyManager({
       {passkeys.length === 0 ? (
         <p className="notice">{t("还没有绑定 Passkey。")}</p>
       ) : (
-        <ul className="passkey-list">
+        <ul className="passkey-list list-unstyled">
           {passkeys.map((key) => (
-            <li key={key.credentialId}>
+            <li className="d-flex flex-wrap align-items-center justify-content-between" key={key.credentialId}>
               <span>
                 {key.credentialId.slice(0, 12)}{t("… · 绑于")} {key.createdAt.slice(0, 10)}
                 {key.lastUsedAt && t(" · 最近使用 {date}", { date: key.lastUsedAt.slice(0, 10) })}

@@ -35,7 +35,7 @@ export default function LanguageSelect({ value }: { value: string }) {
 
   return (
     <div className="language-select">
-      <div className="tag-list">
+      <div className="tag-list d-flex flex-wrap">
         {OPTIONS.map((option) => (
           <button
             key={option.value}

@@ -75,7 +75,7 @@ export default async function ConfirmPage({
   const isFailed = result === "failed";
 
   return (
-    <main className="site">
+    <main className="site mx-auto">
       <header className="site-head">
         <h1 className="site-title">{isDone ? t("已完成") : t("确认变更")}</h1>
       </header>
@@ -150,20 +150,20 @@ export default async function ConfirmPage({
                   : t("删除一把 Passkey。")}
             </p>
 
-            <dl className="confirm-meta">
-              <dt>{t("申请时间")}</dt>
-              <dd>{formatDateTime(doc.createdAt)}</dd>
-              <dt>{t("来源 IP")}</dt>
-              <dd>{doc.ip}</dd>
-              <dt>{t("设备")}</dt>
-              <dd>{doc.ua.slice(0, 120) || t("未知")}</dd>
+            <dl className="confirm-meta row gx-4 gy-1 my-4">
+              <dt className="col-12 col-sm-3">{t("申请时间")}</dt>
+              <dd className="col-12 col-sm-9">{formatDateTime(doc.createdAt)}</dd>
+              <dt className="col-12 col-sm-3">{t("来源 IP")}</dt>
+              <dd className="col-12 col-sm-9">{doc.ip}</dd>
+              <dt className="col-12 col-sm-3">{t("设备")}</dt>
+              <dd className="col-12 col-sm-9">{doc.ua.slice(0, 120) || t("未知")}</dd>
             </dl>
 
             <p className="notice">
               
               {t("确认后所有设备都需要重新登录。不是你发起的就关掉这页，什么都不会变。")}
             </p>
-            <form action={applyChange} className="form-actions">
+            <form action={applyChange} className="form-actions d-flex align-items-center">
               <input type="hidden" name="token" value={token} />
               <button className="btn btn-outline-light btn-plain" type="submit">
                 

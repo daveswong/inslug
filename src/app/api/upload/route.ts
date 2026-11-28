@@ -33,14 +33,14 @@ export async function POST(req: Request) {
     );
   }
 
-  // Blob 的 SDK 只认进程环境变量，这里把运行时配置的值临时注入
+  // 显式把令牌传给 SDK，不修改 process.env：前台请求绝不能写环境变量。
   const blobToken = await getServiceValue("BLOB_READ_WRITE_TOKEN");
-  if (blobToken) process.env.BLOB_READ_WRITE_TOKEN = blobToken;
 
   try {
     const result = await handleUpload({
       body,
       request: req,
+      token: blobToken || undefined,
       // 没有这个判断就等于开了个公开图床，任何人都能往你的 store 里塞文件
       onBeforeGenerateToken: async (_pathname, clientPayload) => {
         if (!(await isLoggedIn())) {

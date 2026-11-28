@@ -49,7 +49,7 @@ export async function generateMetadata({
 
   return {
     // 带标签时给「标签：xxx」，不带时**整个 title 字段都不写**，
-    // 让它继承 layout 里的站点名。
+    // 让它继承 layout 里的标题（没设置标题时才用站点名）。
     //
     // 别写成 title: undefined——显式给 undefined 会被当成「本页明确不要标题」，
     // 把继承来的 default 覆盖掉，结果 <title> 和 og:title 整个消失，
@@ -88,7 +88,7 @@ export default async function Home({ searchParams }: Props) {
   const socialLinks = settings.social.filter((link) => link.title && link.url);
 
   return (
-    <main className="site">
+    <main className="site mx-auto">
       <header className="site-head">
         <h1 className="site-title">
           <a href="/">{settings.siteName}</a>
@@ -97,7 +97,7 @@ export default async function Home({ searchParams }: Props) {
       </header>
 
       <section className="section">
-        <form className="search-form" action="/search" method="get">
+        <form className="search-form d-flex" action="/search" method="get">
           <input
             className="search-input"
             type="search"
@@ -111,7 +111,7 @@ export default async function Home({ searchParams }: Props) {
           </button>
         </form>
         {tags.length > 0 && (
-          <div className="tag-list">
+          <div className="tag-list d-flex flex-wrap">
             {tags.map((name) => (
               <a href={canonicalHref(1, name)} key={name}>
                 {name}
@@ -134,10 +134,10 @@ export default async function Home({ searchParams }: Props) {
             )}
           </p>
         ) : (
-          <ul className="post-list">
+          <ul className="post-list list-unstyled m-0 p-0">
             {items.map((post) => (
-              <li className="post-item" key={post.slug}>
-                <time className="post-date" dateTime={formatDate(postDisplayDate(post))}>
+              <li className="post-item d-flex align-items-baseline" key={post.slug}>
+                <time className="post-date flex-shrink-0" dateTime={formatDate(postDisplayDate(post))}>
                   {formatDate(postDisplayDate(post))}
                 </time>
                 <span className="post-title">
@@ -153,7 +153,7 @@ export default async function Home({ searchParams }: Props) {
           </ul>
         )}
         {totalPages > 1 && (
-          <nav className="pager">
+          <nav className="pager d-flex align-items-baseline">
             {page > 1 ? <a href={pageHref(page - 1)}>{t("上一页")}</a> : <span className="pager-off">{t("上一页")}</span>}
             <span className="pager-index">
               {page} / {totalPages}
@@ -164,7 +164,7 @@ export default async function Home({ searchParams }: Props) {
       </section>
 
       {socialLinks.length > 0 && (
-        <nav className="site-links">
+        <nav className="site-links d-flex flex-wrap">
           {socialLinks.map((link) => (
             <a href={link.url} key={`${link.title}-${link.url}`} rel="noopener noreferrer">
               {link.title}

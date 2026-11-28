@@ -86,7 +86,6 @@ a:hover {
 
 .site {
   max-width: 720px;
-  margin: 0 auto;
   padding: 3rem 1.25rem 4rem;
 }
 
@@ -116,8 +115,6 @@ a:hover {
 }
 
 .site-links {
-  display: flex;
-  flex-wrap: wrap;
   gap: 0.9rem;
   font-size: 0.85rem;
 }
@@ -142,21 +139,12 @@ a:hover {
   margin-top: 2rem;
 }
 
-.post-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
 .post-item {
-  display: flex;
   gap: 1rem;
-  align-items: baseline;
   padding: 0.5rem 0;
 }
 
 .post-date {
-  flex: 0 0 auto;
   color: var(--muted);
   font-size: 0.85rem;
   font-variant-numeric: tabular-nums;
@@ -177,9 +165,7 @@ a:hover {
 
 /* 分页：上一页 / 页码 / 下一页，纯文字 */
 .pager {
-  display: flex;
   gap: 1.25rem;
-  align-items: baseline;
   margin-top: 1.75rem;
   font-size: 0.85rem;
 }
@@ -195,21 +181,17 @@ a:hover {
 }
 
 .tag-list {
-  display: flex;
-  flex-wrap: wrap;
   gap: 0.4rem 1rem;
   margin-top: 1rem;
   font-size: 0.9rem;
 }
 
 .search-form {
-  display: flex;
   gap: 0.5rem;
 }
 
 /* 登录页：Passkey 是主按钮，验证器 6 位码是另一条路 */
 .login-form {
-  display: flex;
   gap: 0.5rem;
   max-width: 420px;
   margin-top: 0.75rem;
@@ -287,7 +269,6 @@ a:hover {
 
 /* 页脚里的"退出登录"是表单提交，样式上要跟旁边的链接一模一样 */
 .foot-logout {
-  display: inline;
   margin: 0;
 }
 
@@ -316,16 +297,10 @@ a:hover {
 }
 
 .passkey-list {
-  list-style: none;
-  margin: 0 0 0.75rem;
-  padding: 0;
+  margin-bottom: 0.75rem;
 }
 
 .passkey-list li {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
   gap: 0.5rem 1rem;
   padding: 0.4rem 0;
   border-bottom: 1px solid var(--line);
@@ -343,10 +318,7 @@ a:hover {
 }
 
 .image-field-row {
-  display: flex;
-  flex-wrap: wrap;
   gap: 0.5rem;
-  align-items: center;
 }
 
 .image-field-row input {
@@ -406,7 +378,6 @@ a:hover {
 /* 验证码输入和按钮别挤成竖排 */
 .totp-form {
   max-width: 460px;
-  flex-wrap: wrap;
 }
 
 .totp-form .search-input {
@@ -426,30 +397,6 @@ a:hover {
   word-break: break-all;
 }
 
-/* 首次安装向导：步骤条保持文字驱动，不做卡片和进度条 */
-.setup-steps {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1.25rem;
-  list-style: none;
-  margin: 0 0 1.5rem;
-  padding: 0;
-}
-
-.setup-steps button {
-  background: none;
-  border: 0;
-  padding: 0;
-  font: inherit;
-  color: var(--muted);
-  cursor: pointer;
-}
-
-.setup-steps li.current button {
-  color: var(--ink);
-  font-weight: 600;
-}
-
 .setup-done {
   color: var(--muted);
   font-weight: 400;
@@ -460,9 +407,6 @@ a:hover {
 }
 
 .setup-nav {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
   gap: 0.75rem;
   margin-top: 1.5rem;
 }
@@ -483,15 +427,10 @@ a:hover {
 
 /* 密钥生成器：生成后把值摆出来让人复制或下载 */
 .secret-list {
-  list-style: none;
-  margin: 0.75rem 0 0;
-  padding: 0;
+  margin-top: 0.75rem;
 }
 
 .secret-list li {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
   gap: 0.5rem;
   padding: 0.4rem 0;
   border-bottom: 1px solid var(--line);
@@ -503,18 +442,9 @@ a:hover {
 }
 
 .secret-key {
-  flex: 1 1 100%;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.78rem;
   color: var(--ink);
-  word-break: break-all;
-}
-
-.secret-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
 }
 
 .config-fields {
@@ -531,9 +461,6 @@ a:hover {
 }
 
 .config-item-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
   gap: 0.5rem;
   margin-bottom: 0.25rem;
 }
@@ -558,15 +485,10 @@ a:hover {
 }
 
 .config-checklist {
-  list-style: none;
   margin: 0.5rem 0;
-  padding: 0;
 }
 
 .config-checklist li {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
   gap: 0.6rem;
   padding: 0.3rem 0;
   border-bottom: 1px solid var(--line);
@@ -605,8 +527,6 @@ pre.secret-key {
 
 /* 自定义社交链接：标题 + 网址 + 删除，一行一条 */
 .social-row {
-  display: flex;
-  flex-wrap: wrap;
   gap: 0.5rem;
   margin-bottom: 0.65rem;
 }
@@ -646,10 +566,6 @@ pre.secret-key {
 }
 
 .field {
-  display: grid;
-  grid-template-columns: 7rem 1fr;
-  gap: 0.3rem 1rem;
-  align-items: start;
   margin-bottom: 0.65rem;
 }
 
@@ -686,8 +602,6 @@ pre.secret-key {
 }
 
 .form-actions {
-  display: flex;
-  align-items: center;
   gap: 0.9rem;
   margin-top: 1.75rem;
 }
@@ -703,10 +617,6 @@ pre.secret-key {
 
 /* 确认页的变更摘要：左标签右值，窄屏也放得下 */
 .confirm-meta {
-  display: grid;
-  grid-template-columns: max-content 1fr;
-  gap: 0.4rem 1.5rem;
-  margin: 1.5rem 0;
   font-size: 0.9rem;
 }
 
@@ -717,17 +627,6 @@ pre.secret-key {
 .confirm-meta dd {
   margin: 0;
   word-break: break-word;
-}
-
-@media (max-width: 520px) {
-  .field {
-    grid-template-columns: 1fr;
-    gap: 0.25rem;
-  }
-
-  .field-label {
-    padding-top: 0;
-  }
 }
 
 .notice {
@@ -751,8 +650,6 @@ pre.secret-key {
 }
 
 .post-head-tags {
-  display: flex;
-  flex-wrap: wrap;
   gap: 0.9rem;
   margin-top: 0.5rem;
   font-size: 0.85rem;
@@ -763,8 +660,6 @@ pre.secret-key {
 
 /* 写作页 */
 .write-bar {
-  display: flex;
-  align-items: baseline;
   gap: 1rem;
   font-size: 0.85rem;
   margin-bottom: 1.5rem;
@@ -826,9 +721,6 @@ pre.secret-key {
 
 /* 可见性选择：公开 / 私有 / 草稿，纯文字 */
 .write-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
   gap: 0.45rem 0.9rem;
   font-size: 0.85rem;
 }
@@ -859,8 +751,6 @@ pre.secret-key {
 
 /* 置顶开关：跟可见性按钮一样低调 */
 .pin-toggle {
-  display: inline-flex;
-  align-items: center;
   gap: 0.4rem;
   font-size: 0.85rem;
   color: var(--ink);
@@ -879,8 +769,6 @@ pre.secret-key {
 
 /* 新建标签：下划线输入框 + 纯文字按钮，跟文章地址框同一种低调风格 */
 .write-tag-add {
-  display: flex;
-  align-items: baseline;
   gap: 0.8rem;
   margin-top: 0.8rem;
 }
@@ -941,9 +829,6 @@ pre.secret-key {
 
 /* 底部操作区：可见性一行，保存按钮在下面一行，都靠左 */
 .write-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
   gap: 1rem;
   padding-top: 1.25rem;
   border-top: 1px solid var(--line);
@@ -951,8 +836,6 @@ pre.secret-key {
 
 /* 文章地址：完整 URL 前缀 + 只有下划线的输入框，拼成一条地址 */
 .write-slug-field {
-  display: inline-flex;
-  align-items: baseline;
   font-size: 0.85rem;
 }
 
@@ -983,10 +866,7 @@ pre.secret-key {
 
 /* 保存按钮与删除链接并排 */
 .write-action-row {
-  display: flex;
-  align-items: center;
   gap: 1.2rem;
-  flex-wrap: wrap;
 }
 
 /* 删除改成低调的链接样式，跟详情页的返回/编辑链接一致 */
@@ -1011,14 +891,10 @@ pre.secret-key {
 
 /* 文章头部：日期 + 低调操作链接 */
 .post-meta-line {
-  display: flex;
-  align-items: baseline;
   gap: 1.2rem;
-  flex-wrap: wrap;
 }
 
 .post-meta-links {
-  display: flex;
   gap: 1rem;
   font-size: 0.82rem;
 }

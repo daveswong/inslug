@@ -27,7 +27,7 @@ export default async function SearchPage({ searchParams }: Props) {
     : { items: [], total: 0 };
 
   return (
-    <main className="site">
+    <main className="site mx-auto">
       <header className="site-head">
         <h1 className="site-title">
           <a href="/">{t("搜索")}</a>
@@ -35,7 +35,7 @@ export default async function SearchPage({ searchParams }: Props) {
       </header>
 
       <section className="section">
-        <form className="search-form" action="/search" method="get">
+        <form className="search-form d-flex" action="/search" method="get">
           <input
             className="search-input"
             type="search"
@@ -61,11 +61,11 @@ export default async function SearchPage({ searchParams }: Props) {
           <p className="notice">{t("没有匹配的文章。")}</p>
         ) : (
           <>
-            <ul className="post-list">
+            <ul className="post-list list-unstyled m-0 p-0">
               {items.map((post) => (
-                <li className="post-item" key={post.slug}>
+                <li className="post-item d-flex align-items-baseline" key={post.slug}>
                   <time
-                    className="post-date"
+                    className="post-date flex-shrink-0"
                     dateTime={formatDate(postDisplayDate(post))}
                   >
                     {formatDate(postDisplayDate(post))}

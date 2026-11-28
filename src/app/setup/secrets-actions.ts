@@ -8,28 +8,18 @@
  * - 不会出现人为的弱口令
  * - 密码里的特殊字符不需要用户自己转义
  *
- * 自部署：直接写进 .env，刷新即生效。
- * Vercel：文件系统只读，生成后交给用户复制到项目环境变量里。
- *
- * 值只在这一次响应里返回给浏览器，不会存进数据库，也不会写进日志。
+ * 生成后只在这一次响应里返回给浏览器，由 .env 文件带回去；
+ * 程序不会写服务器上的环境变量，也不会存进数据库或日志。
  */
 import { randomBytes } from "node:crypto";
-import { isLoggedIn } from "@/lib/auth";
-import { getT } from "@/lib/i18n";
-import { canWriteEnvFile, setEnvValues } from "@/lib/env-config";
-import { hasCredentials } from "./config-actions";
 
-export type SecretsResult =
-  | {
-      ok: true;
-      /** 会话签名密钥 */
-      authSecret: string;
-      /** 紧急入口密钥 */
-      recoveryToken: string;
-      /** 是否已经写进 .env（Vercel 上为 false） */
-      written: boolean;
-    }
-  | { ok: false; error: string };
+export type SecretsResult = {
+  ok: true;
+  /** 会话签名密钥 */
+  authSecret: string;
+  /** 紧急入口密钥 */
+  recoveryToken: string;
+};
 
 /** 生成一把新密钥：32 字节随机数，base64 */
 function newSecret(): string {
@@ -37,25 +27,23 @@ function newSecret(): string {
 }
 
 export async function generateSecretsAction(): Promise<SecretsResult> {
-  const t = await getT();
+  return {
+    ok: true,
+    authSecret: newSecret(),
+    recoveryToken: newSecret(),
+  };
+}
 
-  // 站点还没初始化时允许免登录生成；已经初始化了就必须先登录
-  const loggedIn = await isLoggedIn();
-  if (!loggedIn && (await hasCredentials())) {
-    return { ok: false, error: t("站点已经初始化，请先登录再修改配置") };
-  }
+export type RecoveryTokenResult = {
+  ok: true;
+  recoveryToken: string;
+};
 
-  const authSecret = newSecret();
-  const recoveryToken = newSecret();
-
-  const writable = canWriteEnvFile();
-  if (writable) {
-    const result = setEnvValues({
-      AUTH_SECRET: authSecret,
-      RECOVERY_TOKEN: recoveryToken,
-    });
-    if (!result.ok) return { ok: false, error: result.error };
-  }
-
-  return { ok: true, authSecret, recoveryToken, written: writable };
+/**
+ * 紧急登录页单独生成一把恢复密钥。
+ * 只在本次响应里返回给浏览器：不写环境变量、不写数据库、不生效，
+ * 用户自行保存到 .env / Vercel 并重新部署 / 重启后才生效。
+ */
+export async function generateRecoveryTokenAction(): Promise<RecoveryTokenResult> {
+  return { ok: true, recoveryToken: newSecret() };
 }

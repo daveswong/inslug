@@ -5,7 +5,7 @@ import { getT } from "@/lib/i18n";
 export default async function NotFound() {
   const t = await getT();
   return (
-    <main className="site">
+    <main className="site mx-auto">
       <header className="site-head">
         <h1 className="site-title">{t("页面不存在")}</h1>
         <p className="site-desc">

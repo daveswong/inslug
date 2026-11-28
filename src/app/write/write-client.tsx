@@ -123,7 +123,7 @@ export default function WriteClient({
 
   return (
     <>
-      <div className="write-bar">
+      <div className="write-bar d-flex align-items-baseline">
         <a href={slug ? `/posts/${slug}` : "/"}>{t("← 返回")}</a>
         <span className="notice">{slug ? t("编辑文章") : t("新建文章")}</span>
       </div>
@@ -138,7 +138,7 @@ export default function WriteClient({
       />
 
       <div className="write-tags">
-        <div className="tag-list">
+        <div className="tag-list d-flex flex-wrap">
           {tagOptions.map((tag) => (
             <button
               type="button"
@@ -151,7 +151,7 @@ export default function WriteClient({
             </button>
           ))}
         </div>
-        <div className="write-tag-add">
+        <div className="write-tag-add d-flex align-items-baseline">
           <input
             className="write-tag-input"
             type="text"
@@ -183,8 +183,8 @@ export default function WriteClient({
       </div>
 
       {/* 先选可见性，按钮在它下面（都靠左），按钮文案跟着可见性变 */}
-      <div className="write-actions">
-        <div className="write-meta">
+      <div className="write-actions d-flex flex-column align-items-start">
+        <div className="write-meta d-flex flex-wrap align-items-baseline">
           <span className="write-meta-label">{t("可见性")}</span>
           {VISIBILITY_OPTIONS.map((option) => (
             <button
@@ -200,8 +200,8 @@ export default function WriteClient({
             </button>
           ))}
         </div>
-        <div className="write-meta">
-          <label className="pin-toggle">
+        <div className="write-meta d-flex flex-wrap align-items-baseline">
+          <label className="pin-toggle d-inline-flex align-items-center">
             <input
               type="checkbox"
               checked={pinned}
@@ -211,9 +211,9 @@ export default function WriteClient({
           </label>
           <span className="write-meta-hint">{t("置顶的文章排在列表最前面")}</span>
         </div>
-        <div className="write-meta">
+        <div className="write-meta d-flex flex-wrap align-items-baseline">
           <span className="write-meta-label">{t("文章地址")}</span>
-          <span className="write-slug-field">
+          <span className="write-slug-field d-inline-flex align-items-baseline">
             <span className="write-slug-prefix">{siteOrigin}/posts/</span>
             <input
               id="post-slug"
@@ -227,7 +227,7 @@ export default function WriteClient({
           </span>
           <span className="write-meta-hint">{t("只能用小写字母、数字和连字符，中文会自动转拼音")}</span>
         </div>
-        <div className="write-action-row">
+        <div className="write-action-row d-flex flex-wrap align-items-center">
           <button
             className="btn btn-outline-light btn-plain"
             type="button"

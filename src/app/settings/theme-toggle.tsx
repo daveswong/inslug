@@ -34,7 +34,7 @@ export default function ThemeToggle() {
   };
 
   return (
-    <div className="tag-list">
+    <div className="tag-list d-flex flex-wrap">
       {OPTIONS.map((option) => (
         <button
           key={option.value}

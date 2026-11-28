@@ -30,7 +30,7 @@ export default async function WritePage({ searchParams }: Props) {
   ]);
 
   return (
-    <main className="site write-page">
+    <main className="site write-page mx-auto">
       <WriteClient
         slug={post?.slug ?? null}
         initialTitle={post?.title ?? ""}

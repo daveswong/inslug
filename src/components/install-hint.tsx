@@ -8,7 +8,7 @@ import { getT } from "@/lib/i18n";
 export default async function InstallHint() {
   const t = await getT();
   return (
-    <main className="site">
+    <main className="site mx-auto">
       <header className="site-head">
         <h1 className="site-title">{t("站点还没配置好")}</h1>
         <p className="site-desc">

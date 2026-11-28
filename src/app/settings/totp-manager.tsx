@@ -137,7 +137,7 @@ export default function TotpManager({
           内层 form 会被浏览器丢弃，里面的 submit 按钮和回车都去提交外层表单，
           于是输验证码 / 粘贴到一半就把整页刷掉了。改用普通 div + 点击绑定。
         */}
-        <div className="login-form totp-form">
+        <div className="login-form totp-form d-flex flex-wrap">
           <input
             className="search-input"
             type="text"
@@ -185,7 +185,7 @@ export default function TotpManager({
       {bound ? (
         <>
           <p className="notice">{t("已经绑了一把验证器。")}</p>
-          <div className="tag-list">
+          <div className="tag-list d-flex flex-wrap">
             <button
               className="btn btn-outline-light btn-plain"
               type="button"

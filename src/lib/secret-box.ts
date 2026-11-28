@@ -9,7 +9,7 @@ import { getEnvValue } from "./env-config";
  * 会让已存的 secret 解不开（等价于验证器失效，需要重新绑定）。
  *
  * 密钥来源必须和 session.ts 一致（都用 getEnvValue）：
- * 引导程序把 AUTH_SECRET 写进 .env 后，进程环境变量不会跟着变——
+ * 用户在服务器 .env 里配置 AUTH_SECRET 后，进程环境变量不会跟着变——
  * 两处取值口径不一致会导致「会话用新密钥、加密用旧密钥」，验证器直接失效。
  */
 

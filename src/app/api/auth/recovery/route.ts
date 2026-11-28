@@ -16,23 +16,16 @@ function same(a: string, b: string): boolean {
 export async function POST(req: Request) {
   const t = await getT();
   const expected = getEnvValue("RECOVERY_TOKEN");
-  // 没设、或者设得太短（随手写的几个字符不算密钥），就当这个入口不存在
+  // 没设、或者设得太短：不是错误，前端只提示去服务器 / 平台后台设置。
   if (!expected || expected.length < 16) {
-    return NextResponse.json(
-      {
-        error: t(
-          "服务器上没有 RECOVERY_TOKEN。刚在安装向导生成的 .env 要先导入到环境变量并重新部署才生效。"
-        ),
-      },
-      { status: 404 }
-    );
+    return NextResponse.json({ ok: false, code: "NOT_CONFIGURED" });
   }
 
   const key = `recovery:${clientKey(req)}`;
   const gate = await rateLimit(key, 3);
   if (!gate.allowed) {
     return NextResponse.json(
-      { error: `尝试次数过多，请 ${gate.minutes} 分钟后再试` },
+      { error: t("尝试次数过多，请 {minutes} 分钟后再试", { minutes: String(gate.minutes) }) },
       { status: 429 }
     );
   }

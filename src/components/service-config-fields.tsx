@@ -4,8 +4,8 @@
  * 服务类配置（图片存储 / 发信）的字段编辑器。
  *
  * 每个功能块先选方案（provider），再只显示这个方案需要的字段——
- * 没选的那套不参与，也不必填。只负责收集和呈现字段，保存统一由父组件的
- * 「保存到 .env / 生成 .env 文件」按钮完成。
+ * 没选的那套不参与，也不必填。只负责收集和呈现字段，统一由父组件的
+ * 「生成 .env 文件」按钮写进下载的文件。
  */
 import { useT } from "@/components/i18n-provider";
 
@@ -65,10 +65,9 @@ export default function ServiceConfigFields({
 
             {feature.note && <p className="field-hint">{feature.note}</p>}
 
-            <label className="field">
-              <span className="field-label">{t("用哪种")}</span>
+            <label className="d-block">
               <select
-                className="search-input"
+                className="search-input w-100"
                 value={choice}
                 onChange={(e) =>
                   onChange({ ...values, [feature.choiceKey]: e.target.value })
@@ -84,7 +83,7 @@ export default function ServiceConfigFields({
 
             {visible.map((field) => (
               <div className="config-item" key={field.key}>
-                <div className="config-item-head">
+                <div className="config-item-head d-flex flex-wrap align-items-baseline">
                   <span className="config-item-label">{field.label}</span>
                   <code className="config-item-key">{field.key}</code>
                   {field.configured && (
@@ -101,7 +100,6 @@ export default function ServiceConfigFields({
                   placeholder={field.secret ? t("留空表示不改") : field.hint}
                   autoComplete="off"
                 />
-                <p className="field-hint">{field.hint}</p>
               </div>
             ))}
           </fieldset>

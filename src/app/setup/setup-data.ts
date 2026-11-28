@@ -26,7 +26,6 @@ export async function getSetupData(): Promise<{
   authorized: boolean;
   hasTotp: boolean;
   mailReady: boolean;
-  recoveryReady: boolean;
   rpId: string;
   origin: string;
   requestHost: string;
@@ -37,16 +36,6 @@ export async function getSetupData(): Promise<{
   dbConfigured: boolean;
   serviceFeatures: Awaited<ReturnType<typeof buildServiceFeatures>>;
   manualAuthItems: {
-    key: string;
-    label: string;
-    hint: string;
-    secret: boolean;
-    configured: boolean;
-    generated: boolean;
-    options?: { value: string; label: string }[];
-    value: string;
-  }[];
-  generatedAuthItems: {
     key: string;
     label: string;
     hint: string;
@@ -77,9 +66,6 @@ export async function getSetupData(): Promise<{
   } catch {
     hasTotp = false;
   }
-
-  // 服务器上有没有 RECOVERY_TOKEN：紧急登录入口开不开，全看这个。
-  const recoveryReady = (getEnvValue("RECOVERY_TOKEN") ?? "").length >= 16;
 
   // Passkey 的域名配置对不对得上当前这个站点。
   // 浏览器只说「The RP ID "x" is invalid for this domain」，不说是哪个域名不对，
@@ -133,7 +119,6 @@ export async function getSetupData(): Promise<{
     authorized,
     hasTotp,
     mailReady: await mailReady().catch(() => false),
-    recoveryReady,
     rpId,
     origin,
     requestHost,
@@ -144,7 +129,5 @@ export async function getSetupData(): Promise<{
     serviceFeatures,
     // 手填的：数据库地址、库名、域名这些
     manualAuthItems: authItems.filter((item) => !item.generated),
-    // 程序生成的：会话密钥、紧急密钥
-    generatedAuthItems: authItems.filter((item) => item.generated),
   };
 }

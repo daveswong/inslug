@@ -24,7 +24,7 @@ export default async function SiteFooter() {
           {" · "}
           <a href="/settings">{t("设置")}</a>
           {" · "}
-          <form className="foot-logout" action="/api/auth/logout" method="post">
+          <form className="foot-logout d-inline" action="/api/auth/logout" method="post">
             <button className="foot-link" type="submit">
               {t("退出登录")}
             </button>

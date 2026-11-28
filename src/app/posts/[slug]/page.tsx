@@ -64,15 +64,15 @@ export default async function PostPage({ params }: Props) {
   const date = formatDate(postDisplayDate(post));
 
   return (
-    <main className="site">
+    <main className="site mx-auto">
       <article>
         <header className="post-head">
           <h1 className="post-head-title">{post.title}</h1>
-          <div className="post-meta-line">
+          <div className="post-meta-line d-flex flex-wrap align-items-baseline">
             <time className="post-date" dateTime={date}>
               {date}
             </time>
-            <span className="post-meta-links">
+            <span className="post-meta-links d-flex">
               <a href="/">{t("返回首页")}</a>
               {post.visibility !== "public" && (
                 <span className="post-state">{post.visibility}</span>
@@ -81,7 +81,7 @@ export default async function PostPage({ params }: Props) {
             </span>
           </div>
           {post.tags.length > 0 && (
-            <div className="post-head-tags">
+            <div className="post-head-tags d-flex flex-wrap">
               {post.tags.map((tag) => (
                 <a href={`/?tag=${encodeURIComponent(tag)}`} key={tag}>
                   {`#${tag}`}

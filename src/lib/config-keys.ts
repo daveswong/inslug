@@ -6,8 +6,8 @@
  *   站点设置存在哪儿）。只在安装 / 重置引导里设置，设置页不提供修改入口——改了等于换锁。
  * - service：邮件与图片存储的凭据。同样只在安装 / 重置引导里设置。
  *
- * 两组都写进同一个地方：项目根目录的 .env 文件（Vercel 上是环境变量）。
- * 早先服务类存过数据库，现在也改成了 .env——改乱了在服务端一眼能查到、改回来。
+ * 安装向导只负责把两组值生成到同一个 .env 文件里，由用户自行保存到服务器
+ * 或导入平台后台；程序不会写服务器上的环境变量。
  *
  * service 组里再按「功能块」分：图片存储、邮件。每个功能块有一个 provider 选择器，
  * 选了哪个 provider 就只显示它的那几个字段——不选的那套不参与，也不必填。
@@ -71,7 +71,7 @@ export const CONFIG_KEYS: ConfigKey[] = [
     key: "MONGODB_DB_NAME",
     group: "auth",
     label: "库名",
-    hint: "同一个 MongoDB 集群里可以跑多个站点，用不同的库名区分。必须明确填一个——留空会连到默认库，可能读到同集群里别的站点的数据。填一个还不存在的库名，安装时会自动建出来。",
+    hint: "必须指定数据库，集群中没有时会自动创建",
     secret: false,
   },
   {
@@ -94,14 +94,14 @@ export const CONFIG_KEYS: ConfigKey[] = [
     key: "RP_ID",
     group: "auth",
     label: "Passkey 域名主体",
-    hint: "必须是正式域名的主机名，例如 inslog.example.com。填错会导致已绑定的 Passkey 失效。",
+    hint: "域名，请不要带 http:// 或 https://",
     secret: false,
   },
   {
     key: "ORIGIN",
     group: "auth",
     label: "站点地址",
-    hint: "站点的完整地址，例如 https://inslog.example.com。确认邮件里的链接按它拼。",
+    hint: "站点的完整地址，例如 https://inslog.example.com。",
     secret: false,
   },
   {

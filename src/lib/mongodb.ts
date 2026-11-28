@@ -5,13 +5,13 @@ import { getEnvValue } from "./env-config";
 
 /**
  * 数据库连接：
- * - 运行时配置里的 MONGODB_URI（引导程序写进 .env，或部署时注入的环境变量）
+ * - 运行时配置里的 MONGODB_URI（用户在服务器 .env 配置，或部署平台注入的环境变量）
  * - 库名：MONGODB_DB_NAME > 连接串里的路径；两者都没有就报错，不猜默认值
  *   （猜默认值会悄悄连到同 cluster 里的别的库，读到别人站点的凭据）
  * - 本地开发读 config/database.json（被 gitignore，不提交）
  *
  * 全局缓存 client，避免 serverless 冷启动时重复建连。
- * 连接串变了要重新连：引导程序改完 MONGODB_URI 后不用重启就能生效。
+ * 连接串变了要重新连：服务器 .env 更新后不用重启就能生效；Vercel 需要重新部署。
  */
 
 type DbConfig = { uri: string; dbName: string };
