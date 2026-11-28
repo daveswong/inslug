@@ -42,5 +42,5 @@
   "engines": {
     "node": ">=20.9.0"
   },
-  "description": "一个自己用的博客：路径短、界面干净、默认安全，专注创作、保存与传播自己的内容。"
+  "description": "一个基于 Node.js + Next.js 的 Blog APP：让作者专注于写作，让读者专注于阅读。"
 }
