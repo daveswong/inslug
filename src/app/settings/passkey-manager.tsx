@@ -94,6 +94,12 @@ export default function PasskeyManager({
         setError(
           t("浏览器没有放行：可能取消了确认，或页面嵌在别的窗口里。请在独立的浏览器标签页打开本站再试。")
         );
+      } else if (name === "InvalidStateError") {
+        // 浏览器原样抛英文（The authenticator was previously registered），
+        // 不直接显示，换成多语言提示
+        setError(
+          t("这个验证器已经在这台设备上注册过了。换一个设备，或先在浏览器里移除本站已保存的 Passkey 再试。")
+        );
       } else {
         setError(e instanceof Error ? e.message : t("绑定失败"));
       }

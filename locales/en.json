@@ -351,7 +351,7 @@
   "用 .env 里的 RECOVERY_TOKEN 从紧急入口进入。": "Use RECOVERY_TOKEN from .env via emergency sign-in.",
   "配置尚未生效：Vercel 需导入 .env 并重新部署，之后紧急登录才可用。": "Not active yet: on Vercel, import .env and redeploy before emergency sign-in works.",
   "填好各项，下载生成的 .env。": "Fill in the fields, then download the generated .env.",
-  "重新部署并等待完成。": "Redeploy and wait for it to finish.",
+  "重新部署并等待完成，然后刷新本页。": "Redeploy and wait for it to finish, then refresh this page.",
   "按当前域名，应填：{host}": "For the current domain, use: {host}",
   "改成当前站点的域名，不带协议。": "Use this site's domain, without the scheme.",
   "ORIGIN 与当前域名不符，确认邮件链接会指向别处。应填 https://{host}": "ORIGIN does not match this domain, so confirmation links point elsewhere. Use https://{host}",
@@ -449,7 +449,7 @@
   "配置服务器的运行环境变量。": "Configure the server's runtime environment variables.",
   "安装完成。请用 .env 里的 RECOVERY_TOKEN 登录，然后到站点设置里配置通知邮箱和身份验证（Passkey、验证器）。": "Setup is complete. Sign in with RECOVERY_TOKEN from .env, then go to site settings to set up your notification email and sign-in methods (Passkey, authenticator).",
   "配置完成后会跳到登录页。首次请用 .env 里的 RECOVERY_TOKEN 从紧急入口进入。": "Once configured you'll be taken to the sign-in page. For the first time, use RECOVERY_TOKEN from .env via the emergency entry.",
-  "回到本页点「检查配置，完成安装」，通过后会跳到登录页。": "Back on this page, click Check configuration and finish setup — you'll go to the sign-in page once it passes.",
+  "刷新后的页面点「检查配置，完成安装」，通过后会跳到登录页。记得先刷新——不刷新直接点，旧页面会报 Server Action 找不到。": "On the refreshed page, click Check configuration and finish setup — you'll go to the sign-in page once it passes. Refresh first: clicking on the stale page will report a Server Action not found error.",
   "进不去就用紧急密钥：": "If you can't sign in, use the recovery key: ",
   "从这里登录": "Sign in here",
   "两把钥匙都丢了？用紧急密钥从": "Lost both keys? Sign in with the recovery key ",
@@ -459,5 +459,6 @@
   "文章地址": "Post address",
   "留空自动生成": "Leave blank to generate automatically",
   "只能用小写字母、数字和连字符，中文会自动转拼音": "Lowercase letters, digits and hyphens only; Chinese is converted to pinyin",
-  "这个地址已被占用，换一个吧": "This address is already taken, please choose another"
+  "这个地址已被占用，换一个吧": "This address is already taken, please choose another",
+  "这个验证器已经在这台设备上注册过了。换一个设备，或先在浏览器里移除本站已保存的 Passkey 再试。": "This authenticator is already registered on this device. Try a different device, or first remove this site's saved passkey in your browser."
 }

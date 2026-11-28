@@ -144,9 +144,9 @@ export default function SetupWizard({
               "到 Vercel 项目 → Settings → Environment Variables，上传这个 .env 文件。"
             )}
           </li>
-          <li>{t("重新部署并等待完成。")}</li>
+          <li>{t("重新部署并等待完成，然后刷新本页。")}</li>
           <li>
-            {t("回到本页点「检查配置，完成安装」，通过后会跳到登录页。")}
+            {t("刷新后的页面点「检查配置，完成安装」，通过后会跳到登录页。记得先刷新——不刷新直接点，旧页面会报 Server Action 找不到。")}
           </li>
         </ol>
       )}
