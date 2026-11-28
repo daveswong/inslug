@@ -18,7 +18,7 @@ export default async function SiteFooter() {
   return (
     <footer className="site-foot">
       <a href="/">{t("首页")}</a> · {footerText || "© 2026"}{" "}
-      <a href="https://github.com/daveswong/inslog">inslog on GitHub</a>
+      <a href="https://github.com/insapp-dev/inslog">inslog on GitHub</a>
       {loggedIn ? (
         <>
           {" · "}

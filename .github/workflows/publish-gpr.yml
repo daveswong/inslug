@@ -20,18 +20,7 @@ jobs:
         with:
           node-version: 20
           registry-url: https://npm.pkg.github.com
-          scope: '@daveswong'
-
-      # GitHub Packages 的 scope 必须是 GitHub 账号，npmjs 上用的是 @insapp-dev
-      - name: 临时改为 @daveswong/inslog
-        run: |
-          node <<'EOF'
-          const fs = require('fs');
-          for (const f of ['package.json', 'package-lock.json']) {
-            const s = fs.readFileSync(f, 'utf8');
-            fs.writeFileSync(f, s.replace(/"name": "@insapp-dev\/inslog"/g, '"name": "@daveswong/inslog"'));
-          }
-          EOF
+          scope: '@insapp-dev'
 
       - run: npm ci
 

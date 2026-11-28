@@ -16,7 +16,7 @@
 
 set -euo pipefail
 
-REPO_SLUG="daveswong/inslog"
+REPO_SLUG="insapp-dev/inslog"
 DEV_BRANCH="nightly"
 PUBLISH_BRANCH="main"
 

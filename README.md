@@ -24,7 +24,7 @@
 
 推荐 Vercel：把 Production Branch / Branch Tracking 设为 `main`，避免推 `nightly` 影响正式站点。
 
-1. 导入 `daveswong/inslog`，Framework Preset 选 Next.js，根目录留空，Deploy。
+1. 导入 `insapp-dev/inslog`，Framework Preset 选 Next.js，根目录留空，Deploy。
 2. 打开 `/setup`，填数据库地址、库名、`RP_ID`、`ORIGIN`，选发信 / 存储方案，点「生成 .env 文件」。
 3. 把下载的 `.env` 导入 Vercel 环境变量，重新部署；库名必须明确，`AUTH_SECRET` 和 `RECOVERY_TOKEN` 自动生成、页面不显示。
 4. 回 `/setup` 点「检查配置，完成安装」，通过后跳登录页。
