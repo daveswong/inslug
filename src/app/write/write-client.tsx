@@ -154,7 +154,7 @@ export default function WriteClient({
         </div>
         <div className="write-tag-add">
           <input
-            className="search-input"
+            className="write-tag-input"
             type="text"
             value={newTag}
             onChange={(e) => setNewTag(e.target.value)}
@@ -167,8 +167,7 @@ export default function WriteClient({
             placeholder={t("新建标签后回车")}
             aria-label={t("新建标签")}
           />
-          <button className="btn btn-outline-light btn-plain" type="button" onClick={addTag}>
-            
+          <button className="write-tag-add-btn" type="button" onClick={addTag}>
             {t("添加")}
           </button>
         </div>

@@ -876,11 +876,47 @@ pre.secret-key {
   font-size: 0.8rem;
 }
 
+/* 新建标签：下划线输入框 + 纯文字按钮，跟文章地址框同一种低调风格 */
 .write-tag-add {
   display: flex;
-  gap: 0.5rem;
-  max-width: 320px;
-  margin-top: 0.9rem;
+  align-items: baseline;
+  gap: 0.8rem;
+  margin-top: 0.8rem;
+}
+
+.write-tag-input {
+  width: 10rem;
+  max-width: 100%;
+  padding: 0.35rem 0;
+  font-size: 0.85rem;
+  color: var(--ink);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  outline: none;
+}
+
+.write-tag-input:focus {
+  border-bottom-color: var(--muted);
+}
+
+.write-tag-input::placeholder {
+  color: var(--muted);
+  opacity: 0.75;
+}
+
+.write-tag-add-btn {
+  padding: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  background: none;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.write-tag-add-btn:hover {
+  color: var(--link);
 }
 
 .write-editor {
