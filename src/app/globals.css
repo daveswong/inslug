@@ -912,6 +912,34 @@ pre.secret-key {
   border-top: 1px solid var(--line);
 }
 
+/* 保存按钮与删除链接并排 */
+.write-action-row {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+}
+
+/* 删除改成低调的链接样式，跟详情页的返回/编辑链接一致 */
+.write-delete-link {
+  padding: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  background: none;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.write-delete-link:hover {
+  color: var(--link);
+}
+
+.write-delete-link:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 /* 文章头部：日期 + 低调操作链接 */
 .post-meta-line {
   display: flex;

@@ -51,6 +51,8 @@ export default function WriteClient({
   const [newTag, setNewTag] = useState("");
   const [visibility, setVisibility] = useState<Visibility>(initialVisibility);
   const [pinned, setPinned] = useState(initialPinned);
+  // 编辑时预填当前地址，留空表示让系统自动生成（新建）或保持原样（编辑）
+  const [slugInput, setSlugInput] = useState(slug ?? "");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [hint, setHint] = useState("");
@@ -80,6 +82,7 @@ export default function WriteClient({
     setHint(t("保存中…"));
     const result = await savePost({
       slug,
+      customSlug: slugInput,
       title,
       blocks: blocksRef.current,
       tags,
@@ -204,25 +207,41 @@ export default function WriteClient({
           </label>
           <span className="write-meta-hint">{t("置顶的文章排在列表最前面")}</span>
         </div>
-        <button
-          className="btn btn-outline-light btn-plain"
-          type="button"
-          disabled={saving}
-          onClick={handleSave}
-        >
-          {saveLabel}
-        </button>
-        {slug && (
+        <div className="write-meta">
+          <label className="write-meta-label" htmlFor="post-slug">
+            {t("文章地址")}
+          </label>
+          <input
+            id="post-slug"
+            className="search-input"
+            type="text"
+            value={slugInput}
+            onChange={(e) => setSlugInput(e.target.value)}
+            placeholder={t("留空自动生成")}
+            aria-label={t("文章地址")}
+          />
+          <span className="write-meta-hint">{t("只能用小写字母、数字和连字符，中文会自动转拼音")}</span>
+        </div>
+        <div className="write-action-row">
           <button
             className="btn btn-outline-light btn-plain"
             type="button"
-            disabled={saving || deleting}
-            onClick={handleDelete}
+            disabled={saving}
+            onClick={handleSave}
           >
-            
-            {t("删除这篇文章")}
+            {saveLabel}
           </button>
-        )}
+          {slug && (
+            <button
+              className="write-delete-link"
+              type="button"
+              disabled={saving || deleting}
+              onClick={handleDelete}
+            >
+              {t("删除这篇文章")}
+            </button>
+          )}
+        </div>
       </div>
     </>
   );

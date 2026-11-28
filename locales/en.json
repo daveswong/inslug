@@ -455,5 +455,9 @@
   "两把钥匙都丢了？用紧急密钥从": "Lost both keys? Sign in with the recovery key ",
   "这里登录": "here",
   "这是最后一把 Passkey，删掉后如果没有绑定手机验证器，就只能用 RECOVERY_TOKEN 从紧急入口登录。确定继续？需要邮件确认后才会生效。": "This is your last Passkey. If no authenticator is bound, you'll only be able to sign in with RECOVERY_TOKEN via the emergency entry after deleting it. Continue? Deletion takes effect after email confirmation.",
-  "同一个 MongoDB 集群里可以跑多个站点，用不同的库名区分。必须明确填一个——留空会连到默认库，可能读到同集群里别的站点的数据。填一个还不存在的库名，安装时会自动建出来。": "A single MongoDB cluster can host multiple sites, each in its own database. You must set this explicitly — leaving it empty connects to the default database and may read another site's data in the same cluster. A name that doesn't exist yet will be created during installation."
+  "同一个 MongoDB 集群里可以跑多个站点，用不同的库名区分。必须明确填一个——留空会连到默认库，可能读到同集群里别的站点的数据。填一个还不存在的库名，安装时会自动建出来。": "A single MongoDB cluster can host multiple sites, each in its own database. You must set this explicitly — leaving it empty connects to the default database and may read another site's data in the same cluster. A name that doesn't exist yet will be created during installation.",
+  "文章地址": "Post address",
+  "留空自动生成": "Leave blank to generate automatically",
+  "只能用小写字母、数字和连字符，中文会自动转拼音": "Lowercase letters, digits and hyphens only; Chinese is converted to pinyin",
+  "这个地址已被占用，换一个吧": "This address is already taken, please choose another"
 }

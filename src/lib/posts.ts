@@ -43,25 +43,43 @@ function publishedAtFor(v: Visibility, existing: Date | null, now: Date): Date |
   return existing ?? now;
 }
 
+/** 自定义地址撞车时抛出，让上层提示用户换一个，而不是报「数据库连接异常」 */
+export class SlugConflictError extends Error {
+  constructor() {
+    super("SLUG_CONFLICT");
+    this.name = "SlugConflictError";
+  }
+}
+
 export async function createPost(input: {
   title: string;
   blocks: unknown[];
   tags: string[];
   visibility: Visibility;
   pinned?: boolean;
+  /** 用户手填的地址；留空则自动生成 */
+  customSlug?: string;
 }): Promise<PostDoc> {
   const db = await getDb();
   const posts = db.collection<PostDoc>("posts");
   const now = new Date();
 
-  // 随机后缀碰撞概率极低，但重名标题仍然检查一遍，绝不让两篇文章共用一个地址。
-  // 注意循环写法：每生成一个 slug 都要检查一次，
-  // 原来那种「先判断再生成」的写法会漏掉最后一次生成的那个。
-  let slug = makeSlug(input.title);
-  for (let attempt = 0; attempt < 6; attempt++) {
-    const clash = await posts.findOne({ slug });
-    if (!clash) break;
+  let slug: string;
+  if (input.customSlug) {
+    // 用户指定的地址不带随机后缀，撞车必须报错，不能悄悄换一个
+    if (await posts.findOne({ slug: input.customSlug })) {
+      throw new SlugConflictError();
+    }
+    slug = input.customSlug;
+  } else {
+    // 自动生成：随机后缀碰撞概率极低，但重名标题仍然检查一遍，绝不让两篇文章共用一个地址。
+    // 每生成一个 slug 都要检查一次，「先判断再生成」会漏掉最后一次生成的那个。
     slug = makeSlug(input.title);
+    for (let attempt = 0; attempt < 6; attempt++) {
+      const clash = await posts.findOne({ slug });
+      if (!clash) break;
+      slug = makeSlug(input.title);
+    }
   }
 
   const doc: PostDoc = {
@@ -89,11 +107,20 @@ export async function updatePost(
     tags: string[];
     visibility: Visibility;
     pinned?: boolean;
+    /** 用户改过地址时传入的新 slug；留空或不变则保持原地址 */
+    newSlug?: string;
   }
 ): Promise<PostDoc | null> {
   const db = await getDb();
-  const existing = await db.collection<PostDoc>("posts").findOne({ slug });
+  const posts = db.collection<PostDoc>("posts");
+  const existing = await posts.findOne({ slug });
   if (!existing) return null;
+
+  // 地址改了才做重名检查和写入；不变时连查都不用查
+  const finalSlug = input.newSlug && input.newSlug !== slug ? input.newSlug : slug;
+  if (finalSlug !== slug && (await posts.findOne({ slug: finalSlug }))) {
+    throw new SlugConflictError();
+  }
 
   const now = new Date();
   const publishedAt = publishedAtFor(
@@ -102,10 +129,11 @@ export async function updatePost(
     now
   );
 
-  await db.collection<PostDoc>("posts").updateOne(
+  await posts.updateOne(
     { slug },
     {
       $set: {
+        slug: finalSlug,
         title: input.title,
         blocks: input.blocks as PostDoc["blocks"],
         plainText: blocksToPlainText(input.blocks),
@@ -121,6 +149,8 @@ export async function updatePost(
   return {
     ...existing,
     ...input,
+    // 返回的 slug 必须是库里实际写入的那个，前端跳转要用
+    slug: finalSlug,
     // plainText 是从 blocks 算出来的，input 里没有这个字段；
     // 不补上的话，返回的是旧值，跟库里实际写入的对不上
     plainText: blocksToPlainText(input.blocks),
