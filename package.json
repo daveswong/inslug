@@ -1,6 +1,6 @@
 {
   "name": "@insapp-dev/inslog",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "一个基于 Node.js + Next.js 的 Blog APP：让作者专注于写作，让读者专注于阅读。",
   "license": "MIT",
   "repository": {
