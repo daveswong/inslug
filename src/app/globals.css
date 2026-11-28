@@ -770,9 +770,10 @@ pre.secret-key {
   margin-bottom: 1.5rem;
 }
 
+/* 保存/删除反馈：跟在按钮下方，字号小、颜色淡 */
 .write-save-hint {
-  margin-left: auto;
   color: var(--muted);
+  font-size: 0.85rem;
 }
 
 .write-title {

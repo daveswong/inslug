@@ -126,7 +126,6 @@ export default function WriteClient({
       <div className="write-bar">
         <a href={slug ? `/posts/${slug}` : "/"}>{t("← 返回")}</a>
         <span className="notice">{slug ? t("编辑文章") : t("新建文章")}</span>
-        <span className="write-save-hint">{hint}</span>
       </div>
 
       <input
@@ -248,6 +247,7 @@ export default function WriteClient({
             </button>
           )}
         </div>
+        {hint && <div className="write-save-hint">{hint}</div>}
       </div>
     </>
   );
