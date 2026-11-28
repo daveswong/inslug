@@ -418,3 +418,5 @@ npm run release
 要改东西就在 `nightly` 上改，测通了再发布。
 
 **提交信息用中文短句**，说清做了什么就行，不用套 Conventional Commits。
+
+正式站点的部署分支由 Vercel 后台的 Production Branch（Branch Tracking）指定：只有推该分支才会更新正式域名，推其它分支只产生预览部署，不影响正式站点。
