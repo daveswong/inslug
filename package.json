@@ -1,7 +1,26 @@
 {
-  "name": "inslog",
+  "name": "@insapp-dev/inslog",
   "version": "0.1.0",
-  "private": true,
+  "description": "一个基于 Node.js + Next.js 的 Blog APP：让作者专注于写作，让读者专注于阅读。",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/daveswong/inslog.git"
+  },
+  "homepage": "https://inslog.insapp.tech",
+  "files": [
+    "README.md",
+    "LICENSE",
+    "package.json",
+    "next.config.ts",
+    "next-env.d.ts",
+    "tsconfig.json",
+    "src/",
+    "public/",
+    "config/*.example.json",
+    "locales/",
+    "scripts/"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -41,6 +60,5 @@
   },
   "engines": {
     "node": ">=20.9.0"
-  },
-  "description": "一个基于 Node.js + Next.js 的 Blog APP：让作者专注于写作，让读者专注于阅读。"
+  }
 }

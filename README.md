@@ -1,10 +1,14 @@
 # inslog
 
+[![npm version](https://img.shields.io/npm/v/@insapp-dev/inslog)](https://www.npmjs.com/package/@insapp-dev/inslog)
+
 一个基于 Node.js + Next.js 的 Blog APP：让作者专注于写作，让读者专注于阅读。
 
 **路径短、界面干净、默认安全。** 单用户、单站点、纯自用；没有账号系统、密码、追踪、评论、推荐算法、弹窗和花哨装饰。不做多用户、后台、社交、统计，也没有主题模板。
 
 **归属权在你手里。** 内容在 MongoDB，文件在 Vercel Blob / S3 / 本地磁盘，邮件走 Resend / SMTP。服务可换，配置由你自己保存。公开部署需在页脚保留源码链接。
+
+安装：`npm i @insapp-dev/inslog`
 
 ## 能做什么
 
